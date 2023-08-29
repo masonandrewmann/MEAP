@@ -1,9 +1,18 @@
+/*
+  Example that tests the basic harware setup of a M.E.A.P. board.
+  
+  Plays a constant sine wave at 440Hz and prints to the console 
+  whenever a DIP switch or capacitive touch input is pressed.
+
+  Mason Mann, CC0
+ */
+
 #include <MozziGuts.h>
 #include <Oscil.h>
 #include <mozzi_rand.h>
 #include <mozzi_midi.h>
 #include <Mux.h>
-#include <tables/sin8192_int8.h>
+#include <tables/sin8192_int8.h> // loads sine wavetable
 
 #define CONTROL_RATE 64 // Hz, powers of 2 are most reliable
 
@@ -24,6 +33,7 @@ int touchThreshold = 20;
 // variables for potentiometers
 int potVals[] = {0, 0};
 
+// Oscillator objects
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
 
 
