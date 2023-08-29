@@ -1,6 +1,6 @@
 /*
-  Provides a basic blank template for building MEAP programs
-  Includes definitions of read functions but doesn't use them.
+  Example plays through sequence on loop. Sequence is 
+  defined using variables mySeqNotes and mySeqLens
 
   Mason Mann, CC0
  */
@@ -17,8 +17,8 @@
 using namespace admux;
 
 // variables for playing sequence
-uint8_t myNoteSequence[] = {88, 86, 78, 80, 85, 83, 74, 76, 83, 81, 73, 76, 81}; // notes referred to by MIDI note number
-int myLenSequence[] = {250, 250, 500, 500, 250, 250, 500, 500, 250, 250, 500, 500, 1500}; // length of notes in milliseconds
+uint8_t mySeqNotes[] = {88, 86, 78, 80, 85, 83, 74, 76, 83, 81, 73, 76, 81}; // notes referred to by MIDI note number
+int mySeqLens[] = {250, 250, 500, 500, 250, 250, 500, 500, 250, 250, 500, 500, 1500}; // length of notes in milliseconds
 int seqInd = 0;
 int seqLen = 13;
 unsigned long seqTimer = 250;
@@ -41,8 +41,8 @@ void loop(){
 void updateControl(){
   if(millis() > seqTimer){ // check if current note needs to end
     seqInd = (seqInd + 1) % seqLen; // move to next step of sequence
-    mySine.setFreq(mtof(myNoteSequence[seqInd])); // set oscillator frequeency to current pitch
-    seqTimer = seqTimer + myLenSequence[seqInd]; // set ending time of current note
+    mySine.setFreq(mtof(mySeqNotes[seqInd])); // set oscillator frequeency to current pitch
+    seqTimer = seqTimer + mySeqLens[seqInd]; // set ending time of current note
   }
 }
 
