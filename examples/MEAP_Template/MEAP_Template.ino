@@ -10,6 +10,8 @@
 #include <mozzi_rand.h>
 #include <mozzi_midi.h>
 #include <Mux.h>
+#include <tables/sin8192_int8.h> // loads sine wavetable
+
 
 #define CONTROL_RATE 64 // Hz, powers of 2 are most reliable
 
@@ -30,10 +32,13 @@ int touchThreshold = 20;
 // variables for potentiometers
 int potVals[] = {0, 0};
 
-
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
 
 void setup(){
   startMozzi();
+
+  mySine.setFreq(440); //set frequency of sine oscillator
+
 }
 
 
@@ -47,7 +52,8 @@ void updateControl(){
 
 
 AudioOutput_t updateAudio(){
-  return MonoOutput::from8Bit(0); 
+  int myVal = mySine.next();
+  return MonoOutput::from8Bit(myVal);
 }
 
 void readDip(){
@@ -142,7 +148,7 @@ void readTouch(){
   for (int i = 0; i < 8; i++){
     touchRead(touchPins[i]);  
     pinVal = touchRead(touchPins[i]);   
-    if (pinVal < threshold){
+    if (pinVal < touchThreshold){
       touchVals[i] = 1; 
     } else {
       touchVals[i] = 0;

@@ -12,6 +12,7 @@
 #include <mozzi_rand.h>
 #include <mozzi_midi.h>
 #include <Mux.h>
+#include <SPI.h>
 #include <tables/sin8192_int8.h> // loads sine wavetable
 
 #define CONTROL_RATE 64 // Hz, powers of 2 are most reliable
@@ -19,23 +20,24 @@
 using namespace admux;
 
 // variables for DIP switches
-Mux mux(Pin(5, INPUT, PinType::Digital), Pinset(16, 17, 18));
-int dipPins[] = {2, 1, 0, 3, 4, 7, 5, 6};
+Mux mux(Pin(34, INPUT, PinType::Digital), Pinset(16, 17, 12));
+//int dipPins[] = {2, 1, 0, 3, 4, 7, 5, 6};
+int dipPins[] = {6, 5, 7, 4, 3, 0, 1, 2};
 int dipVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevDipVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // variables for capacitive touch pads
-int touchPins[] = {4, 13, 27, 33, 2, 15, 14, 32};
+//int touchPins[] = {4, 13, 27, 33, 2, 15, 14, 32};
+int touchPins[] = {2, 13, 27, 32, 4, 15, 14, 33};
+int touchAvgs[] = {100, 100, 100, 100, 100, 100, 100, 100};
 int touchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevTouchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int touchThreshold = 20;
 
-// variables for potentiometers
-int potVals[] = {0, 0};
-
-// Oscillator objects
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
 
+// variables for potentiometers
+int potVals[] = {0, 0};
 
 void setup(){
   Serial.begin(115200);
@@ -56,13 +58,15 @@ void updateControl(){
 }
 
 
-AudioOutput_t updateAudio(){
-  return MonoOutput::from8Bit(mySine.next()); 
+int updateAudio(){
+//  uint16_t myVal = mySine.next();
+  return MonoOutput::from8Bit(mySine.next());
 }
 
 void readDip(){
   //Read DIP values using mux
   for (int i = 0; i < 8; i++) {
+    mux.read(i); //read once and throw away result (for reliability)
     mux.read(i); //read once and throw away result (for reliability)
     dipVals[dipPins[i]] = mux.read(i);
   }
@@ -151,9 +155,9 @@ void readDip(){
 void readTouch(){
   int pinVal = 0;
   for (int i = 0; i < 8; i++){
-    touchRead(touchPins[i]);  
-    pinVal = touchRead(touchPins[i]);   
-    if (pinVal < threshold){
+    pinVal = touchRead(touchPins[i]);  
+    touchAvgs[i] = 0.6 * touchAvgs[i] + 0.4 * pinVal; 
+    if (touchAvgs[i] < touchThreshold){
       touchVals[i] = 1; 
     } else {
       touchVals[i] = 0;
@@ -178,7 +182,7 @@ void readTouch(){
           if(touchVals[i]){ // pad 2 pressed
             Serial.println("pad 2 pressed");
           } else { // pad 2 released
-            Serial.println("pad w released");
+            Serial.println("pad 2 released");
           }
           break;
         case 3:

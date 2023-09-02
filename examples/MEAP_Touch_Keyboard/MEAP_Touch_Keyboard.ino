@@ -19,12 +19,13 @@ using namespace admux;
 
 // variables for DIP switches
 Mux mux(Pin(5, INPUT, PinType::Digital), Pinset(16, 17, 18));
-int dipPins[] = {2, 1, 0, 3, 4, 7, 5, 6};
+int dipPins[] = {6, 5, 7, 4, 3, 0, 1, 2};
 int dipVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevDipVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
 // variables for capacitive touch pads
-int touchPins[] = {4, 13, 27, 33, 2, 15, 14, 32};
+int touchPins[] = {2, 13, 27, 32, 4, 15, 14, 33};
+int touchAvgs[] = {100, 100, 100, 100, 100, 100, 100, 100};
 int touchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevTouchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int touchThreshold = 20;
@@ -36,7 +37,7 @@ int potVals[] = {0, 0};
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
 
 // variables for envelope
-ADSR <AUDIO_RATE, AUDIO_RATE> myEnv;
+ADSR <AUDIO_RATE, AUDIO_RATE> envelope;
 unsigned int duration, attack, decay, sustain, release_ms;
 
 
@@ -163,9 +164,9 @@ void readDip(){
 void readTouch(){
   int pinVal = 0;
   for (int i = 0; i < 8; i++){
-    touchRead(touchPins[i]);  
     pinVal = touchRead(touchPins[i]);   
-    if (pinVal < threshold){
+    touchAvgs[i] = 0.6 * touchAvgs[i] + 0.4 * pinVal; 
+    if (touchAvgs[i] < touchThreshold){
       touchVals[i] = 1; 
     } else {
       touchVals[i] = 0;
