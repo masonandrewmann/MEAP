@@ -29,7 +29,7 @@ Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
 
 void setup(){
   startMozzi();
-  mySine.setFreq(mtof(myNoteSequence[0]));
+  mySine.setFreq(mtof(mySeqNotes[0]));
 }
 
 
@@ -41,7 +41,7 @@ void loop(){
 void updateControl(){
   if(millis() > seqTimer){ // check if current note needs to end
     seqInd = (seqInd + 1) % seqLen; // move to next step of sequence
-    mySine.setFreq(mtof(mySeqNotes[seqInd])); // set oscillator frequeency to current pitch
+    mySine.setFreq(mtof(mySeqNotes[seqInd])); // set oscillator frequency to current pitch
     seqTimer = seqTimer + mySeqLens[seqInd]; // set ending time of current note
   }
 }
