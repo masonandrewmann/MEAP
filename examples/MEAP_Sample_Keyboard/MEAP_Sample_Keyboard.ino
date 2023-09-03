@@ -45,6 +45,7 @@ void setup(){
   Serial.begin(115200);
   aSampleFreq =  (float)harp_c3_SAMPLERATE / (float) harp_c3_NUM_CELLS;
   aSample.setFreq(aSampleFreq); // play at the speed it was recorded
+  aSample.rangeWholeSample();
 }
 
 
