@@ -34,12 +34,12 @@ unsigned int duration, attack, decay, sustain, release_ms;
 // variables for potentiometers
 int potVals[] = {0, 0};
 
+
 void setup(){
   Serial.begin(115200);
   randSeed(); // fresh random
   startMozzi(CONTROL_RATE);
   aOscil.setFreq(440); //set frequency of sine oscillator
-  noteDelay.set(2000); // 2 second countdown
 }
 
 
@@ -96,6 +96,7 @@ void updateControl(){
 
 
 int updateAudio(){
+
   return MonoOutput::from16Bit((int) (gain * aOscil.next()));
 }
 

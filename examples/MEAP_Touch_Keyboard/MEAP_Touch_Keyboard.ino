@@ -71,7 +71,7 @@ void updateControl(){
 
 AudioOutput_t updateAudio(){
   envelope.update();
-  return MonoOutput::from16Bit((int) (envelope.next() * mySine.next()));
+  return MonoOutput::from16Bit(0);
 }
 
 void readDip(){

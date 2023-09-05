@@ -226,8 +226,8 @@ void readTouch(){
 
 void readPots(){
   mozziAnalogRead(0);
-  potVals[0] = mozziAnalogRead(0);
+  potVals[0] = mozziAnalogRead(36);
   
   mozziAnalogRead(1);
-  potVals[1] = mozziAnalogRead(1);
+  potVals[1] = mozziAnalogRead(39);
 }
