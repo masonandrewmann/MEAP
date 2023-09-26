@@ -21,7 +21,7 @@ using namespace admux;
 
 // variables for DIP switches
 Mux mux(Pin(34, INPUT, PinType::Digital), Pinset(16, 17, 12));
-int dipPins[] = {6, 5, 7, 4, 3, 0, 1, 2};
+int dipPins[] = {5, 6, 7, 4, 3, 0, 2, 1};
 int dipVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevDipVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -39,6 +39,7 @@ int potVals[] = {0, 0};
 
 void setup(){
   Serial.begin(115200);
+  pinMode(34, INPUT);
   startMozzi();
   mySine.setFreq(440); //set frequency of sine oscillator
 }
@@ -50,7 +51,7 @@ void loop(){
 
 
 void updateControl(){
-  readDip(); // reads DIP switches
+  readDip(); // reads DIP switch65es
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
 }
@@ -64,8 +65,9 @@ int updateAudio(){
 void readDip(){
   //Read DIP values using mux
   for (int i = 0; i < 8; i++) {
+//    int myVal = mux.read(i);
     mux.read(i); //read once and throw away result (for reliability)
-    mux.read(i); //read once and throw away result (for reliability)
+    mux.read(i);
     dipVals[dipPins[i]] = mux.read(i);
   }
 
@@ -226,8 +228,8 @@ void readTouch(){
 
 void readPots(){
   mozziAnalogRead(0);
-  potVals[0] = mozziAnalogRead(36);
+  potVals[0] = mozziAnalogRead(39);
   
   mozziAnalogRead(1);
-  potVals[1] = mozziAnalogRead(39);
+  potVals[1] = mozziAnalogRead(36);
 }
