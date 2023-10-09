@@ -193,7 +193,7 @@ void readTouch(){
           break;
         case 3:
           if(touchVals[i]){ // pad 3 pressed
-            aSample.setFreq((float)(aSampleFreq * pow(5, 2.0/12.0)));
+            aSample.setFreq((float)(aSampleFreq * pow(2, 2.0/12.0)));
             aSample.start();
           } else { // pad 3 released
 
@@ -209,6 +209,8 @@ void readTouch(){
           break;
         case 5:
           if(touchVals[i]){ // pad 5 pressed
+            Serial.println(aSampleFreq);
+            Serial.println((float)(aSampleFreq * pow(2, 9.0/12.0)));
             aSample.setFreq((float)(aSampleFreq * pow(2, 9.0/12.0)));
             aSample.start();
           } else { // pad 5 released

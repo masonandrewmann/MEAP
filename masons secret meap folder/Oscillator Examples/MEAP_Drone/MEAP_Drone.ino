@@ -1,19 +1,39 @@
-/*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+/*  Plays a fluctuating ambient wash using pairs
+    of slightly detuned oscillators, following an example
+    from Miller Puckette's Pure Data manual.
 
-  Mason Mann, CC0
- */
+    The detune frequencies are modified by chance in
+    updateControl(), and the outputs of 12 audio
+    oscillators are summed in updateAudio().
+
+    Demonstrates the use of fixed-point Q16n16
+    format numbers, mtof() for converting midi note
+    values to frequency, and xorshift96() for random numbers.
+
+    This sketch is pushing the limits of computing power on the
+    8-biit AVR boards. At the time of this writing, you will have
+    to manually alter your platform.txt file to use optimization
+    for speed rather than size on Arduino Uno and similar.
+    (Alternatively, remove one of the oscillators)
+
+    Circuit: Audio output on digital pin 9 on a Uno or similar, or
+    DAC/A14 on Teensy 3.1, or
+    check the README or http://sensorium.github.io/Mozzi/
+
+    Mozzi documentation/API
+    https://sensorium.github.io/Mozzi/doc/html/index.html
+
+    Mozzi help/discussion/announcements:
+    https://groups.google.com/forum/#!forum/mozzi-users
+
+    Tim Barrass 2012, CC by-nc-sa.
+*/
 
 #include <MozziGuts.h>
-#include <Oscil.h>
-#include <mozzi_rand.h>
-#include <mozzi_midi.h>
 #include <Mux.h>
-#include <SPI.h>
-#include <tables/sin8192_int8.h> // loads sine wavetable
+#include <Oscil.h>
+#include <mozzi_midi.h>
+#include <tables/cos8192_int8.h>
 
 #define CONTROL_RATE 64 // Hz, powers of 2 are most reliable
 
@@ -35,14 +55,90 @@ int touchThreshold = 20;
 // variables for potentiometers
 int potVals[] = {0, 0};
 
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
+// harmonics
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos1(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos2(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos3(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos4(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos5(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos6(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos7(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos8(COS8192_DATA);
+
+// duplicates but slightly off frequency for adding to originals
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos1b(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos2b(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos3b(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos4b(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos5b(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos6b(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos7b(COS8192_DATA);
+Oscil<COS8192_NUM_CELLS, AUDIO_RATE> aCos8b(COS8192_DATA);
+
+// base pitch frequencies in Q16n16 fixed int format (for speed later)
+float f1,f2,f3,f4,f5,f6, f7, f8;//,f7;
+
+float amp1, amp2, amp3, amp4, amp5, amp6, amp7, amp8;
+
+float wobbleOffset = 0;
+
+
 
 
 void setup(){
+  startMozzi();
   Serial.begin(115200);
   pinMode(34, INPUT);
-  startMozzi();
-  mySine.setFreq(440); //set frequency of sine oscillator
+
+//  // select base frequencies using mtof (midi to freq) and fixed-point numbers
+//  f1 = mtof(48);
+//  f2 = mtof(74);
+//  f3 = mtof(64);
+//  f4 = mtof(77);
+//  f5 = mtof(67);
+//  f6 = mtof(57);
+//  f7 = mtof(60);
+//  f8 = mtof(72);
+
+  // select base frequencies using mtof (midi to freq) and fixed-point numbers
+  f1 = mtof(48);
+  f2 = mtof(55);
+  f3 = mtof(60);
+  f4 = mtof(64);
+  f5 = mtof(67);
+  f6 = mtof(72);
+  f7 = mtof(76);
+  f8 = mtof(79);
+
+  // set Oscils with chosen frequencies
+  aCos1.setFreq(f1);
+  aCos2.setFreq(f2);
+  aCos3.setFreq(f3);
+  aCos4.setFreq(f4);
+  aCos5.setFreq(f5);
+  aCos6.setFreq(f6);
+  aCos7.setFreq(f7);
+  aCos8.setFreq(f8);
+
+  // set frequencies of duplicate oscillators
+  aCos1b.setFreq(f1 + 1.0f);
+  aCos2b.setFreq(f2 + 1.5f);
+  aCos3b.setFreq(f3 + 2.0f);
+  aCos4b.setFreq(f4 + 2.5f);
+  aCos5b.setFreq(f5 + 3.0f);
+  aCos6b.setFreq(f6 + 3.5f);
+  aCos7b.setFreq(f7 + 4.0f);
+  aCos8b.setFreq(f8 + 4.5f);
+
+  // is oscillator on or not
+  amp1 = 1;
+  amp2 = 1;
+  amp3 = 1;
+  amp4 = 1;
+  amp5 = 1;
+  amp6 = 1;
+  amp7 = 1;
+  amp8 = 1;
 }
 
 
@@ -52,15 +148,35 @@ void loop(){
 
 
 void updateControl(){
-  readDip(); // reads DIP switches
+  readDip(); // reads DIP switch65es
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
+
+  wobbleOffset = (potVals[0] / 4095.0) * 5;
+
+  
+  aCos1b.setFreq((float)(f1 + 1.0 + wobbleOffset));
+  aCos2b.setFreq((float)(f2 + 1.5 + wobbleOffset));
+  aCos3b.setFreq((float)(f3 + 2.0 + wobbleOffset));
+  aCos4b.setFreq((float)(f4 + 2.5 + wobbleOffset));
+  aCos5b.setFreq((float)(f5 + 3.0 + wobbleOffset));
+  aCos6b.setFreq((float)(f6 + 3.5 + wobbleOffset));
+  aCos7b.setFreq((float)(f7 + 4.0 + wobbleOffset));
+  aCos8b.setFreq((float)(f8 + 4.5 + wobbleOffset));
 }
 
 
-int updateAudio(){
-//  uint16_t myVal = mySine.next();
-  return MonoOutput::from8Bit(mySine.next());
+AudioOutput_t updateAudio(){
+  int asig =
+    (aCos1.next() + aCos1b.next()) * touchVals[0] +
+    (aCos2.next() + aCos2b.next()) * touchVals[1] +
+    (aCos3.next() + aCos3b.next()) * touchVals[2] +
+    (aCos4.next() + aCos4b.next()) * touchVals[3] +
+    (aCos5.next() + aCos5b.next()) * touchVals[4] +
+    (aCos6.next() + aCos6b.next()) * touchVals[5] +
+    (aCos7.next() + aCos7b.next()) * touchVals[6] +
+    (aCos8.next() + aCos8b.next()) * touchVals[7];
+  return MonoOutput::fromAlmostNBit(12, asig);
 }
 
 void readDip(){

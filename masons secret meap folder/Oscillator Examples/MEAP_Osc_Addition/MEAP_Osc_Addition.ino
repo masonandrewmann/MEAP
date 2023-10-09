@@ -32,17 +32,18 @@ int touchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevTouchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int touchThreshold = 20;
 
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc1(SIN8192_DATA);
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc2(SIN8192_DATA);
+
 // variables for potentiometers
 int potVals[] = {0, 0};
-
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
-
 
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
-  startMozzi();
-  mySine.setFreq(440); //set frequency of sine oscillator
+  startMozzi(CONTROL_RATE);
+  osc1.setFreq(440); //set frequency of sine oscillator
+  osc1.setFreq(880); //set frequency of sine oscillator
 }
 
 
@@ -52,15 +53,19 @@ void loop(){
 
 
 void updateControl(){
-  readDip(); // reads DIP switches
+  readDip(); // reads DIP switch65es
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
+  osc1.setFreq((float)map(potVals[0], 0, 4095, 100, 1000));
+  osc2.setFreq((float)map(potVals[1], 0, 4095, 100, 1000));
+//  Serial.println(potVals[0]);
 }
 
 
 int updateAudio(){
-//  uint16_t myVal = mySine.next();
-  return MonoOutput::from8Bit(mySine.next());
+  int osc1Val = osc1.next();
+  int osc2Val = osc2.next();
+  return MonoOutput::fromAlmostNBit(9, osc1Val + osc2Val);
 }
 
 void readDip(){

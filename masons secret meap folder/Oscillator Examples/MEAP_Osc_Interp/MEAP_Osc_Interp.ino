@@ -14,6 +14,7 @@
 #include <Mux.h>
 #include <SPI.h>
 #include <tables/sin8192_int8.h> // loads sine wavetable
+#include <tables/saw8192_int8.h> // loads sine wavetable
 
 #define CONTROL_RATE 64 // Hz, powers of 2 are most reliable
 
@@ -32,17 +33,21 @@ int touchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevTouchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int touchThreshold = 20;
 
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
+Oscil<SAW8192_NUM_CELLS, AUDIO_RATE> mySaw(SAW8192_DATA);
+
+float myRoot = 440;
+
+float myInterpVal = 0;
+
 // variables for potentiometers
 int potVals[] = {0, 0};
-
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
-
 
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
   startMozzi();
-  mySine.setFreq(440); //set frequency of sine oscillator
+  mySine.setFreq(myRoot); //set frequency of sine oscillator
 }
 
 
@@ -52,15 +57,18 @@ void loop(){
 
 
 void updateControl(){
-  readDip(); // reads DIP switches
+  readDip(); // reads DIP switch65es
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
+  myInterpVal = ((float)potVals[1])/4095.0;
+  Serial.println(myInterpVal);
 }
 
 
 int updateAudio(){
-//  uint16_t myVal = mySine.next();
-  return MonoOutput::from8Bit(mySine.next());
+  float mySineVal = mySine.next();
+  float mySawVal = mySaw.next();
+  return MonoOutput::from8Bit(mySineVal * myInterpVal + mySawVal * (1.0 - myInterpVal));
 }
 
 void readDip(){
@@ -168,6 +176,7 @@ void readTouch(){
         case 0:
           if(touchVals[i]){ // pad 0 pressed
             Serial.println("pad 0 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 0.0/12.0));
           } else { // pad 0 released
             Serial.println("pad 0 released");
           }
@@ -175,6 +184,7 @@ void readTouch(){
         case 1:
           if(touchVals[i]){ // pad 1 pressed
             Serial.println("pad 1 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 2.0/12.0));
           } else { // pad 1 released
             Serial.println("pad 1 released");
           }
@@ -182,6 +192,7 @@ void readTouch(){
         case 2:
           if(touchVals[i]){ // pad 2 pressed
             Serial.println("pad 2 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 4.0/12.0));
           } else { // pad 2 released
             Serial.println("pad 2 released");
           }
@@ -189,6 +200,7 @@ void readTouch(){
         case 3:
           if(touchVals[i]){ // pad 3 pressed
             Serial.println("pad 3 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 5.0/12.0));
           } else { // pad 3 released
             Serial.println("pad 3 released");
           }
@@ -196,6 +208,7 @@ void readTouch(){
         case 4:
           if(touchVals[i]){ // pad 4 pressed
             Serial.println("pad 4 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 7.0/12.0));
           } else { // pad 4 released
             Serial.println("pad 4 released");
           }
@@ -203,6 +216,7 @@ void readTouch(){
         case 5:
           if(touchVals[i]){ // pad 5 pressed
             Serial.println("pad 5 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 9.0/12.0));
           } else { // pad 5 released
             Serial.println("pad 5 released");
           }
@@ -210,6 +224,7 @@ void readTouch(){
         case 6:
           if(touchVals[i]){ // pad 6 pressed
             Serial.println("pad 6 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 11.0/12.0));
           } else { // pad 6 released
             Serial.println("pad 6 released");
           }
@@ -217,6 +232,7 @@ void readTouch(){
         case 7:
           if(touchVals[i]){ // pad 7 pressed
             Serial.println("pad 7 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 12.0/12.0));
           } else { // pad 7 released
             Serial.println("pad 7 released");
           }

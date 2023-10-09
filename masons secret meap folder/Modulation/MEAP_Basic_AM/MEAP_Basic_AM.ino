@@ -1,8 +1,9 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
+  Basic AM Patch
   
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Plays a constant sine wave at 440Hz modulates its amplitude using another sine wave.
+  Pot 1 controls the modulation oscillator's frequency.
+  Pot 2 controls modulation depth.
 
   Mason Mann, CC0
  */
@@ -32,17 +33,20 @@ int touchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevTouchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int touchThreshold = 20;
 
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc1(SIN8192_DATA);
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc2(SIN8192_DATA);
+
+int modDepth = 0;
+
 // variables for potentiometers
 int potVals[] = {0, 0};
-
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
-
 
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
-  startMozzi();
-  mySine.setFreq(440); //set frequency of sine oscillator
+  startMozzi(CONTROL_RATE);
+  osc1.setFreq(440); //set frequency of sine oscillator
+  osc2.setFreq(440); //set frequency of sine oscillator
 }
 
 
@@ -52,15 +56,19 @@ void loop(){
 
 
 void updateControl(){
-  readDip(); // reads DIP switches
+  readDip(); // reads DIP switch65es
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
+  osc1.setFreq((float)map(potVals[0], 0, 4095, 1, 1000));
+  modDepth = map(potVals[1], 0, 4095, 0, 255);
+//  Serial.println(potVals[0]);
 }
 
 
 int updateAudio(){
-//  uint16_t myVal = mySine.next();
-  return MonoOutput::from8Bit(mySine.next());
+  long osc1Val = osc1.next() * modDepth;
+  int osc2Val = osc2.next();
+  return MonoOutput::fromAlmostNBit(24, osc1Val * osc2Val);
 }
 
 void readDip(){
