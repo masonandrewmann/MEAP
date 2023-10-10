@@ -1,8 +1,7 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Basic oscillator pitch control with touch keyboard
+
+  Press touch pads to control pitch of oscillator.
 
   Mason Mann, CC0
  */

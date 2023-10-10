@@ -1,8 +1,7 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Wavetable selection for one oscillator
+
+  Flip DIP Switch #1 to switch oscillator between saw and sine
 
   Mason Mann, CC0
  */

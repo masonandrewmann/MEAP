@@ -1,32 +1,14 @@
-/*  Plays a fluctuating ambient wash using pairs
-    of slightly detuned oscillators, following an example
-    from Miller Puckette's Pure Data manual.
+/*  
+  Sine wave drone based around beating patterns between detuned sine waves
 
-    The detune frequencies are modified by chance in
-    updateControl(), and the outputs of 12 audio
-    oscillators are summed in updateAudio().
+  Touch pads activate different pairs of detuned sine waves corresponding to notes in a C major chord
 
-    Demonstrates the use of fixed-point Q16n16
-    format numbers, mtof() for converting midi note
-    values to frequency, and xorshift96() for random numbers.
+  Each time a pad is pressed, the corresponding sine wave is played with first 8 harmonics 
+  at random amplitudes.
 
-    This sketch is pushing the limits of computing power on the
-    8-biit AVR boards. At the time of this writing, you will have
-    to manually alter your platform.txt file to use optimization
-    for speed rather than size on Arduino Uno and similar.
-    (Alternatively, remove one of the oscillators)
+  Pot #1 will increase the detuning amount, speeding up
 
-    Circuit: Audio output on digital pin 9 on a Uno or similar, or
-    DAC/A14 on Teensy 3.1, or
-    check the README or http://sensorium.github.io/Mozzi/
-
-    Mozzi documentation/API
-    https://sensorium.github.io/Mozzi/doc/html/index.html
-
-    Mozzi help/discussion/announcements:
-    https://groups.google.com/forum/#!forum/mozzi-users
-
-    Tim Barrass 2012, CC by-nc-sa.
+  Mason Mann, CC0
 */
 
 #include <MozziGuts.h>
