@@ -32,8 +32,8 @@ void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
   startMozzi(CONTROL_RATE);
-  osc1.setFreq(440); //set frequency of sine oscillator
-  osc2.setFreq(440); //set frequency of sine oscillator
+  osc1.setFreq(440); //set frequency of modulation oscillator
+  osc2.setFreq(440); //set frequency of carrier oscillator
 }
 
 
@@ -44,15 +44,14 @@ void loop(){
 
 void updateControl(){
   readPots(); // reads potentiometers
-  osc1.setFreq((float)map(potVals[0], 0, 4095, 1, 1000));
-  modDepth = Q7n0_to_Q7n8(map(potVals[1], 0, 4095, 0, 127));
+  osc1.setFreq((float)map(potVals[0], 0, 4095, 1, 1000)); // set mod oscillator range to 1->1000Hz
+  modDepth = Q7n0_to_Q7n8(map(potVals[1], 0, 4095, 0, 127)); // convert mod depth to fixed point signed int
 }
 
 
 int updateAudio(){
-//  Q16n16 deviation = Q7n0_to_Q7n8(modDepth); // convert mod depth to 16n16 unsigned int
   Q15n16 modulation = modDepth * osc1.next() >> 8; // calculate mod depth in 15n16 signed int
-  return MonoOutput::from8Bit(osc2.phMod(modulation * 4)); // apply phase mod to carrier oscillator
+  return MonoOutput::from8Bit(osc2.phMod(modulation * 4)); // scale by factor of 4 and apply phase mod to carrier oscillator 
 }
 
 void readPots(){
