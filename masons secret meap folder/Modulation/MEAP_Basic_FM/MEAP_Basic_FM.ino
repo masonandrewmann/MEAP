@@ -23,7 +23,7 @@ using namespace admux;
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc1(SIN8192_DATA);
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc2(SIN8192_DATA);
 
-int modDepth = 0;
+Q16n16 modDepth = 0;
 
 // variables for potentiometers
 int potVals[] = {0, 0};
@@ -45,14 +45,14 @@ void loop(){
 void updateControl(){
   readPots(); // reads potentiometers
   osc1.setFreq((float)map(potVals[0], 0, 4095, 1, 1000));
-  modDepth = map(potVals[1], 0, 4095, 0, 127);
+  modDepth = Q7n0_to_Q7n8(map(potVals[1], 0, 4095, 0, 127));
 }
 
 
 int updateAudio(){
-  Q16n16 deviation = Q7n0_to_Q7n8(modDepth); // convert mod depth to 16n16 unsigned int
-  Q15n16 modulation = deviation * osc1.next() >> 8; // calculate mod depth in 15n16 signed int
-  return MonoOutput::from8Bit(osc2.phMod(modulation)); // apply phase mod to carrier oscillator
+//  Q16n16 deviation = Q7n0_to_Q7n8(modDepth); // convert mod depth to 16n16 unsigned int
+  Q15n16 modulation = modDepth * osc1.next() >> 8; // calculate mod depth in 15n16 signed int
+  return MonoOutput::from8Bit(osc2.phMod(modulation * 4)); // apply phase mod to carrier oscillator
 }
 
 void readPots(){
