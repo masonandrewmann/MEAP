@@ -1,8 +1,8 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Example of Attack-Decay Envelope
+
+  Knobs control attack and decay times
+  Touch pad #0 triggers note
 
   Mason Mann, CC0
  */
@@ -13,7 +13,9 @@
 #include <mozzi_midi.h>
 #include <Mux.h>
 #include <SPI.h>
+#include <Ead.h>
 #include <tables/sin8192_int8.h> // loads sine wavetable
+
 
 #define CONTROL_RATE 64 // Hz, powers of 2 are most reliable
 
@@ -36,13 +38,17 @@ int touchThreshold = 20;
 int potVals[] = {0, 0};
 
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
+Ead myEnv(CONTROL_RATE); // resolution will be CONTROL_RATE
 
+int gain;
 
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
   startMozzi();
   mySine.setFreq(440); //set frequency of sine oscillator
+  myEnv.setAttack(10);
+  myEnv.setDecay(500);
 }
 
 
@@ -55,11 +61,17 @@ void updateControl(){
   readDip(); // reads DIP switches
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
+
+  int atkTime = map(potVals[0], 0, 4095, 10, 1000);
+  int decTime = map(potVals[1], 0, 4095, 10, 1000);
+  myEnv.setAttack(atkTime);
+  myEnv.setDecay(decTime);
+  gain = myEnv.next();
 }
 
 
 int updateAudio(){
-  return MonoOutput::from8Bit(mySine.next());
+  return MonoOutput::fromAlmostNBit(16,mySine.next()*gain);
 }
 
 void readDip(){
@@ -167,6 +179,7 @@ void readTouch(){
         case 0:
           if(touchVals[i]){ // pad 0 pressed
             Serial.println("pad 0 pressed");
+            myEnv.start();
           } else { // pad 0 released
             Serial.println("pad 0 released");
           }

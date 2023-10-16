@@ -1,8 +1,7 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Basic oscillator pitch control with touch keyboard
+
+  Press touch pads to control pitch of oscillator.
 
   Mason Mann, CC0
  */
@@ -14,6 +13,7 @@
 #include <Mux.h>
 #include <SPI.h>
 #include <tables/sin8192_int8.h> // loads sine wavetable
+#include <Ead.h>
 
 #define CONTROL_RATE 64 // Hz, powers of 2 are most reliable
 
@@ -32,17 +32,23 @@ int touchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int prevTouchVals[] = {0, 0, 0, 0, 0, 0, 0, 0};
 int touchThreshold = 20;
 
-// variables for potentiometers
-int potVals[] = {0, 0};
-
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
 
+float myRoot = 440;
+
+Ead myEnv(CONTROL_RATE); // resolution will be CONTROL_RATE
+int gain;
+
+// variables for potentiometers
+int potVals[] = {0, 0};
 
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
   startMozzi();
-  mySine.setFreq(440); //set frequency of sine oscillator
+  mySine.setFreq(myRoot); //set frequency of sine oscillator
+  myEnv.setAttack(10);
+  myEnv.setDecay(500);
 }
 
 
@@ -52,14 +58,20 @@ void loop(){
 
 
 void updateControl(){
-  readDip(); // reads DIP switches
+  readDip(); // reads DIP switch65es
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
+
+  int atkTime = map(potVals[0], 0, 4095, 10, 1000);
+  int decTime = map(potVals[1], 0, 4095, 10, 1000);
+  myEnv.setAttack(atkTime);
+  myEnv.setDecay(decTime);
+  gain = myEnv.next();
 }
 
 
 int updateAudio(){
-  return MonoOutput::from8Bit(mySine.next());
+  return MonoOutput::fromAlmostNBit(16,mySine.next()*gain);
 }
 
 void readDip(){
@@ -167,6 +179,8 @@ void readTouch(){
         case 0:
           if(touchVals[i]){ // pad 0 pressed
             Serial.println("pad 0 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 0.0/12.0));
+            myEnv.start();
           } else { // pad 0 released
             Serial.println("pad 0 released");
           }
@@ -174,6 +188,8 @@ void readTouch(){
         case 1:
           if(touchVals[i]){ // pad 1 pressed
             Serial.println("pad 1 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 2.0/12.0));
+            myEnv.start();
           } else { // pad 1 released
             Serial.println("pad 1 released");
           }
@@ -181,6 +197,8 @@ void readTouch(){
         case 2:
           if(touchVals[i]){ // pad 2 pressed
             Serial.println("pad 2 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 4.0/12.0));
+            myEnv.start();
           } else { // pad 2 released
             Serial.println("pad 2 released");
           }
@@ -188,6 +206,8 @@ void readTouch(){
         case 3:
           if(touchVals[i]){ // pad 3 pressed
             Serial.println("pad 3 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 5.0/12.0));
+            myEnv.start();
           } else { // pad 3 released
             Serial.println("pad 3 released");
           }
@@ -195,6 +215,8 @@ void readTouch(){
         case 4:
           if(touchVals[i]){ // pad 4 pressed
             Serial.println("pad 4 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 7.0/12.0));
+            myEnv.start();
           } else { // pad 4 released
             Serial.println("pad 4 released");
           }
@@ -202,6 +224,8 @@ void readTouch(){
         case 5:
           if(touchVals[i]){ // pad 5 pressed
             Serial.println("pad 5 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 9.0/12.0));
+            myEnv.start();
           } else { // pad 5 released
             Serial.println("pad 5 released");
           }
@@ -209,6 +233,8 @@ void readTouch(){
         case 6:
           if(touchVals[i]){ // pad 6 pressed
             Serial.println("pad 6 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 11.0/12.0));
+            myEnv.start();
           } else { // pad 6 released
             Serial.println("pad 6 released");
           }
@@ -216,6 +242,8 @@ void readTouch(){
         case 7:
           if(touchVals[i]){ // pad 7 pressed
             Serial.println("pad 7 pressed");
+            mySine.setFreq(myRoot * (float)pow(2, 12.0/12.0));
+            myEnv.start();
           } else { // pad 7 released
             Serial.println("pad 7 released");
           }

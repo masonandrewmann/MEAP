@@ -1,8 +1,7 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Example of basic volume control
+
+  Potentiometer #1 controls the volume of a single sine wave
 
   Mason Mann, CC0
  */
@@ -36,13 +35,17 @@ int touchThreshold = 20;
 int potVals[] = {0, 0};
 
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine2(SIN8192_DATA);
 
+int gain = 0;
+int gain2 = 0;
 
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
   startMozzi();
   mySine.setFreq(440); //set frequency of sine oscillator
+  mySine2.setFreq(659.25f);
 }
 
 
@@ -55,11 +58,15 @@ void updateControl(){
   readDip(); // reads DIP switches
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
+
+  gain = map(potVals[0], 0, 4092, 0, 255);
+  gain2 = map(potVals[1], 0, 4092, 0, 255); 
 }
 
 
 int updateAudio(){
-  return MonoOutput::from8Bit(mySine.next());
+//  uint16_t myVal = mySine.next();
+  return MonoOutput::fromAlmostNBit(17, mySine.next() * gain + mySine2.next() * gain2);
 }
 
 void readDip(){
