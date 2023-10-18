@@ -32,6 +32,7 @@ int mySeqNotes[] = {48, 52, 55, 59, 62, 65, 69, 72}; // notes referred to by MID
 int mySeqLens[] = {250, 250, 250, 250, 250, 250, 250, 250}; // length of notes in milliseconds
 int seqInd = 0;
 int seqLen = 8;
+
 int seqInc = 1;
 
 // variables for capacitive touch pads
