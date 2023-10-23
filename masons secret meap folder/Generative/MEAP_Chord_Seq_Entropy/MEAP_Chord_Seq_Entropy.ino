@@ -46,32 +46,35 @@ Ead env2(CONTROL_RATE); // resolution will be CONTROL_RATE
 Ead env3(CONTROL_RATE); // resolution will be CONTROL_RATE
 Ead env4(CONTROL_RATE); // resolution will be CONTROL_RATE
 
+// envelope values
 int gain1 = 0;
 int gain2 = 0;
 int gain3 = 0;
 int gain4 = 0;
 
-int majScale[] = {0, 2, 4, 5, 7, 9, 11};
-int scaleRoot = 60;
-int chordRoot = 2;
-int triad[] = {0, 2, 4};
+int majScale[] = {0, 2, 4, 5, 7, 9, 11}; // template for building major scale on top of 12TET
+int scaleRoot = 60; // root of major scale
+
+int triad[] = {0, 2, 4}; // template for triad on top of major scale
+int chordRoot = 2; // root of triad
 
 EventDelay noteDelay;
-int noteLength = 400;
-int arpCounter = 0;
+int noteLength = 400; // number of milliseconds between notes of arpeggio
+int arpCounter = 0; // current note of arpeggio (0->3)
 
-int treeLevel = 4;
+int treeLevel = 4; // what level of chord tree are we on
 
-int entropy = 0;
+int entropy = 0; // amount of entropy from 0 to 100
 
-uint16_t myRandom = 0;
-int myMappedNum = 0;
+uint16_t myRandom = 0; // variable for raw random number
+int myMappedNum = 0; // variable for mapped random number
 
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
   startMozzi(CONTROL_RATE);
-  
+
+  //set oscillators to pitches of first chord (iii chord on c major scale)
   osc1.setFreq(mtof(scaleRoot + majScale[(triad[0] + chordRoot)%8]));
   osc2.setFreq(mtof(scaleRoot + majScale[(triad[1] + chordRoot)%8]));
   osc3.setFreq(mtof(scaleRoot + majScale[(triad[2] + chordRoot)%8]));
@@ -79,7 +82,7 @@ void setup(){
 
   setAtkDec(10, 1000); // sets all envelopes at once, function defined at bottom of code
 
-  noteDelay.start(noteLength); 
+  noteDelay.start(noteLength); //start first note timer
 
   randomSeed(10); // initializes random number generator
   xorshiftSeed((long)random(1000));
@@ -126,7 +129,7 @@ void updateControl(){
         case 2: // branches: IV or ii
               myRandom = xorshift96();
               myMappedNum = map(myRandom, 0, 65535, 0, 2);
-              if (myMappedNum == 0){ // 33% chance of ii, 66% chance off vi
+              if (myMappedNum == 0){ // 33% chance of ii, 66% chance off IV
                 chordRoot = 1;
               } else{
                 chordRoot = 3;
@@ -191,6 +194,8 @@ void updateControl(){
 
 
 int updateAudio(){
+  // adds all four oscillators together and multiplies them by envelope
+  // 18 bit because... each gain*osc takes up 16 bits and 4 16 bit number added together fit in 18 bits
   return MonoOutput::fromAlmostNBit(18, gain1 * osc1.next() + gain2 * osc2.next() + gain3 * osc3.next() + gain4 * osc4.next());
 }
 
