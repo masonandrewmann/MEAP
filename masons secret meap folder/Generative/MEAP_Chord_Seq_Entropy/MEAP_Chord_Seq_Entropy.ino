@@ -1,5 +1,8 @@
 /*
-  Example that generates baroque-style chord progressions in the key of C majnor
+  Example that generates baroque-style chord progressions in the key of C major
+
+  Pot #1 Control attack time of envelope
+  Pot #2 Controls entropy amount
 
   Mason Mann, CC0
  */

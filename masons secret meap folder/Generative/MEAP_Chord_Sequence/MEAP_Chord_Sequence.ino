@@ -1,8 +1,8 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Example that generates baroque-style chord progressions in the key of C major
+
+  Pot #1 Control attack time of envelope
+  Pot #2 Controls tempo of sequence
 
   Mason Mann, CC0
  */
@@ -103,7 +103,7 @@ void updateControl(){
   readPots(); // reads potentiometers
 
 //  setAtkDec(map(potVals[0], 0, 4095, 10, 2000), map(potVals[1], 0, 4095, 10, 2000));
-  noteLength = map(potVals[1], 0, 4095, 50, 2000);
+  noteLength = map(potVals[1], 4095, 0, 100, 1000);
   setAtkDec(map(potVals[0], 0, 4095, 10, 2000), 2000);
 
   if(noteDelay.ready()){
