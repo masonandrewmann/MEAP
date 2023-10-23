@@ -102,7 +102,9 @@ void updateControl(){
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
 
-  setAtkDec(map(potVals[0], 0, 4095, 10, 2000), map(potVals[1], 0, 4095, 10, 2000));
+//  setAtkDec(map(potVals[0], 0, 4095, 10, 2000), map(potVals[1], 0, 4095, 10, 2000));
+  noteLength = map(potVals[1], 0, 4095, 50, 2000);
+  setAtkDec(map(potVals[0], 0, 4095, 10, 2000), 2000);
 
   if(noteDelay.ready()){
     if(arpCounter == 4){

@@ -20,8 +20,8 @@
 
 using namespace admux;
 
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc1(SIN8192_DATA);
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> osc2(SIN8192_DATA);
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> carrierOsc(SIN8192_DATA);
+Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> modulatorOsc(SIN8192_DATA);
 
 Q16n16 modDepth = 0;
 
@@ -32,8 +32,8 @@ void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
   startMozzi(CONTROL_RATE);
-  osc1.setFreq(440); //set frequency of modulation oscillator
-  osc2.setFreq(440); //set frequency of carrier oscillator
+  carrierOsc.setFreq(440); //set frequency of carrier oscillator
+  modulatorOsc.setFreq(440); //set frequency of modulation oscillator
 }
 
 
@@ -44,14 +44,14 @@ void loop(){
 
 void updateControl(){
   readPots(); // reads potentiometers
-  osc1.setFreq((float)map(potVals[0], 0, 4095, 1, 1000)); // set mod oscillator range to 1->1000Hz
-  modDepth = Q7n0_to_Q7n8(map(potVals[1], 0, 4095, 0, 127)); // convert mod depth to fixed point signed int
+  modulatorOsc.setFreq((float)map(potVals[0], 0, 4095, 1, 1000)); // set mod oscillator range to 1->1000Hz
+  modDepth = Q7n0_to_Q7n8(map(potVals[1], 0, 4095, 0, 127)); // convert mod depth to fixed point signed int between 0 and 127
 }
 
 
 int updateAudio(){
-  Q15n16 modulation = modDepth * osc1.next() >> 8; // calculate mod depth in 15n16 signed int
-  return MonoOutput::from8Bit(osc2.phMod(modulation * 4)); // scale by factor of 4 and apply phase mod to carrier oscillator 
+  Q15n16 modulation = modDepth * modulatorOsc.next() >> 8; // calculate mod depth in 15n16 signed int
+  return MonoOutput::from8Bit(carrierOsc.phMod(modulation * 4)); // scale by factor of 4 and apply phase mod to carrier oscillator 
 }
 
 void readPots(){
