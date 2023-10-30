@@ -97,7 +97,7 @@ void updateControl(){
 
   if(noteDelay.ready()){ // if it is time to play the next note
     
-    setAtkDec(map(potVals[0], 0, 4095, 10, 2000), 2000); // pot #1 controls attack time of envelope
+    setAtkDec(map(potVals[0], 0, 4095, 10, 2000), 2000); // pot #1 controls attack time of envelope, decay is fixed at 2000 milliseconds
 
     // --------------------WHAT STATE SHOULD WE MOVE TO NEXT?--------------------------------------
     if(arpCounter == 4){ // if we have finished our arpeggio, prepare to move to next chord
