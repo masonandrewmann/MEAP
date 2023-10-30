@@ -75,10 +75,10 @@ void setup(){
   startMozzi(CONTROL_RATE);
 
   //set oscillators to pitches of first chord (iii chord on c major scale)
-  osc1.setFreq(mtof(scaleRoot + majScale[(triad[0] + chordRoot)%8]));
-  osc2.setFreq(mtof(scaleRoot + majScale[(triad[1] + chordRoot)%8]));
-  osc3.setFreq(mtof(scaleRoot + majScale[(triad[2] + chordRoot)%8]));
-  osc4.setFreq(2 * mtof(scaleRoot + majScale[(triad[0] + chordRoot)%8]));
+  osc1.setFreq(mtof(scaleRoot + majScale[(triad[0] + chordRoot)%7]));
+  osc2.setFreq(mtof(scaleRoot + majScale[(triad[1] + chordRoot)%7]));
+  osc3.setFreq(mtof(scaleRoot + majScale[(triad[2] + chordRoot)%7]));
+  osc4.setFreq(2 * mtof(scaleRoot + majScale[(triad[0] + chordRoot)%7]));
 
   setAtkDec(10, 1000); // sets all envelopes at once, function defined at bottom of code
 
@@ -97,10 +97,20 @@ void loop(){
 void updateControl(){
   readPots(); // reads potentiometers
 
-  setAtkDec(map(potVals[0], 0, 4095, 10, 2000), 2000); // pot #1 controls attack time of envelope
+
+  
   entropy = map(potVals[1], 0, 4095, 0, 100); // pot #2 controls amount of entropy, which chooses order of notes in arpeggio
 
   if(noteDelay.ready()){ // if it is time to play the next note
+    myRandom = xorshift96();
+    int myEntropy = map(myRandom, 0, 65535, 0, 100); // decide if we should have a random attack time
+    myRandom = xorshift96();
+    int myDecay = map(myRandom, 0, 65535, 10, 2000); // decide if we should have a random attack time
+    if (myEntropy < entropy){
+      setAtkDec(map(myEntropy, 0, 100, 10, 2000), myDecay); // pot #1 controls attack time of envelope
+    } else{
+      setAtkDec(map(potVals[0], 0, 4095, 10, 2000), 2000); // pot #1 controls attack time of envelope
+    }
 
     // --------------------WHAT STATE SHOULD WE MOVE TO NEXT?--------------------------------------
     if(arpCounter == 4){ // if we have finished our arpeggio, prepare to move to next chord
@@ -115,42 +125,42 @@ void updateControl(){
       // --------------------WHAT HAPPENS IN EACH STATE?-------------------------------------------
       switch(treeLevel){ // choose chord based on tree level
         case 4: // leaves : iii
-          chordRoot = 2; 
+          chordRoot = 2; // iii chord (E minor)
           break;
         case 3: // twigs: I or vi
               myRandom = xorshift96();
               myMappedNum = map(myRandom, 0, 65535, 0, 3);
               if (myMappedNum == 0){ // 25% chance of I, 75% chance of vi
-                chordRoot = 0;
+                chordRoot = 0; // I chord (C major)
               } else{
-                chordRoot = 5;
+                chordRoot = 5; // vi chord (A minor)
               }
           break;
         case 2: // branches: IV or ii
               myRandom = xorshift96();
               myMappedNum = map(myRandom, 0, 65535, 0, 2);
               if (myMappedNum == 0){ // 33% chance of ii, 66% chance off IV
-                chordRoot = 1;
+                chordRoot = 1; // ii chord (D minor)
               } else{
-                chordRoot = 3;
+                chordRoot = 3; // IV chord (F major)
               }
           break;
         case 1: // boughs: V or vii˚
               myRandom = xorshift96();
               myMappedNum = map(myRandom, 0, 65535, 0, 3);
               if (myMappedNum == 0){ // 25% chance of vii˚, 75% chance of V
-                chordRoot = 6;
+                chordRoot = 6; // vii˚ chord (B diminished)
               } else{
-                chordRoot = 4;
+                chordRoot = 4; // V chord (G major)
               }
           break;
         case 0: // trunk: I or vi
               myRandom = xorshift96();
               myMappedNum = map(myRandom, 0, 65535, 0, 3);
               if (myMappedNum == 0){ // 25% chance of vi, 75% chance of I
-                chordRoot = 5;
+                chordRoot = 5; // vi chord (A minor)
               } else{
-                chordRoot = 0; 
+                chordRoot = 0; // I chord (C major)
               }
           break;
       }

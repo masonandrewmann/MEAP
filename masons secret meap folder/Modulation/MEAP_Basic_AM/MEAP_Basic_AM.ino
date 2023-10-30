@@ -68,7 +68,7 @@ void updateControl(){
 
 
 int updateAudio(){
-  long carrierVal = carrierOsc.next() * modDepth;
+  int carrierVal = carrierOsc.next() * modDepth;
   int modulatorVal = modulatorOsc.next();
   return MonoOutput::fromAlmostNBit(24, carrierVal * modulatorVal);
 }
