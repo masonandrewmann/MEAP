@@ -1,8 +1,10 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
+  Demonstrates basic random manipulations of sample playback. Plays sample at regular tempo
+  and randomly modifies playback.
+
+  Pot #1 controls entropy
+  Pot #2 controls tempo
   
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
 
   Mason Mann, CC0
  */
@@ -38,9 +40,9 @@ int touchThreshold = 20;
 int potVals[] = {0, 0};
 
 // variables for sample
-Sample <(long)vocal_samp_NUM_CELLS, AUDIO_RATE> mySample(vocal_samp_DATA);
-//Sample <clari_NUM_CELLS, AUDIO_RATE> mySample(clari_DATA);
+Sample <vocal_samp_NUM_CELLS, AUDIO_RATE> mySample(vocal_samp_DATA);
 float mySampleFreq;
+int myNoteNum = 0;
 
 int sampStart = 0;
 int sampLen = 2000;
@@ -62,8 +64,7 @@ void setup(){
   pinMode(34, INPUT);
   startMozzi();
 
-  mySampleFreq = (float)vocal_samp_SAMPLERATE / (float) (long)vocal_samp_NUM_CELLS;
-//  mySampleFreq = (float)vocal_samp_SAMPLERATE / (float) clari_NUM_CELLS;
+  mySampleFreq = (float)vocal_samp_SAMPLERATE / (float)vocal_samp_NUM_CELLS;
   mySample.setFreq(mySampleFreq);
 
   noteDelay.start(noteLength); //starts first note timer
@@ -98,8 +99,8 @@ void updateControl(){
       myRandom = xorshift96();
 //      myMappedNum = map(myRandom, 0, 65535, 50, 200);
 //      float myFreqMul = myMappedNum / 100.0;
-      myMappedNum = map(myRandom, 0, 65535, 0, 3);
-      mySample.setFreq(mySampleFreq * (float)pow(2, (float)majScale[(chordRoot + triad[myMappedNum])%7]/12.0));
+      myNoteNum = map(myRandom, 0, 65535, 0, 3);
+      
       
       //generate random start point
       myRandom = xorshift96();
@@ -107,39 +108,19 @@ void updateControl(){
   
       //generate random length
       myRandom = xorshift96();
-      int rand1 = map(myRandom, 0, 65535, 50, 4000);
+      int rand1 = map(myRandom, 0, 65535, 50, 6000);
 
       myRandom = xorshift96();
-      int rand2 = map(myRandom, 0, 65535, 50, 4000);
+      int rand2 = map(myRandom, 0, 65535, 50, 6000);
 
       sampLen = max(rand1, rand2);
     }
 
-   
+    mySample.setFreq(mySampleFreq * (float)pow(2, (float)majScale[(chordRoot + triad[myNoteNum])%7]/12.0));
     mySample.setStart(sampStart);
     mySample.setEnd(sampStart + sampLen);
     mySample.start();
 
-    //-------- RANDOMIZING NOTE LENGTH -----------
-
-//    myRandom = xorshift96();
-//    myMappedNum = map(myRandom, 0, 65535, 0, 100);
-//    if( myMappedNum < entropy){
-//      myRandom = xorshift96();
-//      myMappedNum = map(myRandom, 0, 65535, 0, 4);
-//      switch(myMappedNum){
-//        case 0:
-//          noteDelay.start(noteLength / 2);
-//        case 1: 
-//          noteDelay.start(noteLength / 4);
-//        case 2:
-//          noteDelay.start(noteLength * 2);
-//        case 3:
-//          noteDelay.start(noteLength * 4);        
-//      }
-//    } else {
-//      noteDelay.start(noteLength);
-//    }
     noteDelay.start(noteLength);
   }
 }

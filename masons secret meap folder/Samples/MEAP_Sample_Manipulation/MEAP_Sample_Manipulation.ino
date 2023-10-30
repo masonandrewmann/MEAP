@@ -1,8 +1,19 @@
 /*
-  Example that tests the basic harware setup of a M.E.A.P. board.
-  
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
+  Demonstrates manipulation of one sample with potentiometers
+
+  Pressing touch pad 0 triggers the sample
+
+  Pot #1 Controls starting location of sample
+
+  Pot #2 Controls direction and speed of sample playback
+      - fully clockwise is double speed forwards
+      - fully counterclockwise is double speed backwards
+      - in the center is zero speed so sample will play very slowly to not at all
+
+  NOTE: these two knobs interact with each other. if you want to play your sound backwards
+  and your starting location is at zero, there won't be any sample data to read. If you're
+  playing backwards, your starting location should be towards the clockwise end of the range
+  and if you're playing forwards it should be towards the counterclockwise end of the range
 
   Mason Mann, CC0
  */
@@ -37,8 +48,7 @@ int touchThreshold = 20;
 int potVals[] = {0, 0};
 
 // variables for sample
-//Sample <(long)vocal_samp_NUM_CELLS, AUDIO_RATE> mySample(vocal_samp_DATA);
-Sample <36853l, AUDIO_RATE> mySample(vocal_samp_DATA);
+Sample <vocal_samp_NUM_CELLS, AUDIO_RATE> mySample(vocal_samp_DATA);
 float mySampleFreq;
 
 
@@ -47,8 +57,7 @@ void setup(){
   pinMode(34, INPUT);
   startMozzi();
 
-//  mySampleFreq = (float)vocal_samp_SAMPLERATE / (float) (long)vocal_samp_NUM_CELLS;
-  mySampleFreq = (float)vocal_samp_SAMPLERATE / (float) 36853l;
+  mySampleFreq = (float)vocal_samp_SAMPLERATE / (float)vocal_samp_NUM_CELLS;
   mySample.setFreq(mySampleFreq);
 }
 
