@@ -72,9 +72,10 @@ void updateControl(){
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
 
-  mySample.setStart(map(potVals[0], 0, 4095, 0, 36853l));
+  mySample.setStart(map(potVals[0], 0, 4095, 0, vocal_samp_NUM_CELLS));
+  
   float freqMul = map(potVals[1], 0, 4095, -200, 200); // playback speed -2 to +2
-  freqMul = freqMul / 100;
+  freqMul = freqMul / 100; // number between -2 and +2
   mySample.setFreq(mySampleFreq * freqMul);
 }
 

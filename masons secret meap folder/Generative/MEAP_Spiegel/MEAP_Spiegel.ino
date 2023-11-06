@@ -2,7 +2,6 @@
   Example that generates baroque-style chord progressions in the key of C major
 
   Pot #1 Control attack time of envelope
-  Pot #2 Controls entropy amount
 
   Mason Mann, CC0
  */
@@ -67,6 +66,8 @@ int treeLevel = 4; // what level of chord tree are we on
 uint16_t myRandom = 0; // variable for raw random number
 int myMappedNum = 0; // variable for mapped random number
 
+int entropy = 0; // between 0 and 100
+
 void setup(){
   Serial.begin(115200);
   pinMode(34, INPUT);
@@ -95,6 +96,8 @@ void loop(){
 void updateControl(){
   readPots(); // reads potentiometers
 
+  entropy = map(potVals[1], 0, 4095, 0, 100);
+  
   if(noteDelay.ready()){ // if it is time to play the next note
     
     setAtkDec(map(potVals[0], 0, 4095, 10, 2000), 2000); // pot #1 controls attack time of envelope, decay is fixed at 2000 milliseconds
@@ -159,7 +162,15 @@ void updateControl(){
     noteDelay.start(noteLength); // set length of note
 
     // --------------------Handling Arpeggio--------------------
-      switch(arpCounter){
+     int arpNote = arpCounter;
+     
+      myRandom = xorshift96();
+      myMappedNum = map(myRandom, 0, 65535, 0, 100); // GENERATE NUMBER BETWEEN 0 AND 100
+      if (myMappedNum < entropy){
+        //choose random note from chord
+        arpNote = myMappedNum % 4;
+      }
+      switch(arpNote){
         case 0:
           env1.start();
           break;

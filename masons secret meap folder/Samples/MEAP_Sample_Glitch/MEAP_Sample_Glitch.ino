@@ -97,8 +97,9 @@ void updateControl(){
     if( myMappedNum < entropy){
       //generate random pitch
       myRandom = xorshift96();
-//      myMappedNum = map(myRandom, 0, 65535, 50, 200);
-//      float myFreqMul = myMappedNum / 100.0;
+      myMappedNum = map(myRandom, 0, 65535, 50, 200);
+//      float myFreqMul = myMappedNum / 100.0; //0.5 -> 2.0
+//      mySample.setFreq(mySampleFreq * myFreqMul); 
       myNoteNum = map(myRandom, 0, 65535, 0, 3);
       
       
@@ -117,6 +118,7 @@ void updateControl(){
     }
 
     mySample.setFreq(mySampleFreq * (float)pow(2, (float)majScale[(chordRoot + triad[myNoteNum])%7]/12.0));
+    
     mySample.setStart(sampStart);
     mySample.setEnd(sampStart + sampLen);
     mySample.start();

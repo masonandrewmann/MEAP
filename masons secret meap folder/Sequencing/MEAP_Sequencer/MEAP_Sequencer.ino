@@ -19,10 +19,8 @@
 using namespace admux;
 
 // variables for playing sequence
-int mySeqNotes[] = {88, 86, 78, 80, 85, 83, 74, 76, 83, 81, 73, 76, 81}; // notes referred to by MIDI note number
-int mySeqLens[] = {250, 250, 500, 500, 250, 250, 500, 500, 250, 250, 500, 500, 1500}; // length of notes in milliseconds
-int seqInd = 0;
-int seqLen = 13;
+int mySeqNotes[16] = {0}; // notes referred to by MIDI note number
+int sixteenth = 125;
 
 int gain;
 
@@ -38,10 +36,10 @@ int potVals[] = {0, 0};
 
 void setup(){
   startMozzi(CONTROL_RATE);
-  mySine.setFreq(mtof(mySeqNotes[0]));
+  mySine.setFreq(440);
   noteDelay.start(mySeqLens[0]); // 2 second countdown
-  myEnv.setAttack(10);
-  myEnv.setDecay(500);
+  myEnv.setAttack(1);
+  myEnv.setDecay(1);
 }
 
 
@@ -55,9 +53,9 @@ void updateControl(){
 
 
   if(noteDelay.ready()){
-    seqInd = (seqInd + 1) % seqLen; // move to next step of sequence
-    mySine.setFreq(mtof(mySeqNotes[seqInd])); // set oscillator frequency to current pitch
-    noteDelay.start(mySeqLens[seqInd]); // set ending time of current note
+//    seqInd = (seqInd + 1) % seqLen; // move to next step of sequence
+//    mySine.setFreq(mtof(mySeqNotes[seqInd])); // set oscillator frequency to current pitch
+//    noteDelay.start(mySeqLens[seqInd]); // set ending time of current note
     myEnv.start();
   }
   

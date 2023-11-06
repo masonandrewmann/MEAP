@@ -4,7 +4,7 @@
   Pot #1 controls entropy
   Pot #2 control tempo
 
-  Touch pads control chord root on a major scale
+  Touch pads control chord root on a major scale908
 
   DIP 1-3 toggle between vocal and bell samples
 
@@ -275,7 +275,7 @@ void updateControl(){
 
 
 int updateAudio(){
-  return MonoOutput::fromAlmostNBit(10, mySample.next() + sample2.next() + sample3.next());
+  return MonoOutput::fromAlmostNBit(9, mySample.next() + sample2.next() + sample3.next());
 }
 
 void readDip(){
