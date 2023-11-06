@@ -145,6 +145,7 @@ void updateControl(){
       } else if (state == 2) { // ----IN DECRESCENDO STATE----
         if (density < 5){ // if density is above threshold, move to theme state
           state = 0;
+          bass.setFreq(70); // reset bass note freq
         } else{ // otherwise, decrease density and repeat
           myRandom = xorshift96();
           density -= map(myRandom, 0, 65535, 2, 10);
