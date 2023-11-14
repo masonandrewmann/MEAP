@@ -67,7 +67,7 @@ int noiseSeq[] = {0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0};
 int seqIndex = 0;
 
 EventDelay sampleDelay;
-int sixteenth = 80 ;
+int sixteenth = 80;
 
 float clickFreq;
 
