@@ -37,9 +37,9 @@ int potVals[] = {0, 0};
 void setup(){
   startMozzi(CONTROL_RATE);
   mySine.setFreq(440);
-  noteDelay.start(mySeqLens[0]); // 2 second countdown
-  myEnv.setAttack(1);
-  myEnv.setDecay(1);
+  noteDelay.start(sixteenth); // 2 second countdown
+  myEnv.setAttack(10);
+  myEnv.setDecay(100);
 }
 
 
