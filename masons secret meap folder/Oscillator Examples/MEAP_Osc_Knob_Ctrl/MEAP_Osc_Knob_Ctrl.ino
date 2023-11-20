@@ -55,7 +55,9 @@ void updateControl(){
   readTouch(); // reads capacitive touch pads
   readPots(); // reads potentiometers
   mySine.setFreq((float)map(potVals[0], 0, 4095, 100, 500));
-//  Serial.println(potVals[0]);
+  Serial.print(potVals[0]);
+  Serial.print(" ");
+  Serial.println(potVals[1]);
 }
 
 

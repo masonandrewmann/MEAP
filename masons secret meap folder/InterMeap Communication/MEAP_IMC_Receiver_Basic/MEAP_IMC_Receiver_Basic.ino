@@ -37,14 +37,14 @@ int potVals[] = {0, 0};
 
 Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> mySine(SIN8192_DATA);
 
-const int imc1Pin = 18;
-const int imc2Pin = 23;
+const int imc0Pin = 18;
+const int imc1Pin = 23;
 
+int imc0Val = 0;
 int imc1Val = 0;
-int imc2Val = 0;
 
+int imc0Prev = 0;
 int imc1Prev = 0;
-int imc2Prev = 0;
 
 
 void setup(){
@@ -53,8 +53,8 @@ void setup(){
   startMozzi();
   mySine.setFreq(440); //set frequency of sine oscillator
 
+  pinMode(imc0Pin, INPUT);
   pinMode(imc1Pin, INPUT);
-  pinMode(imc2Pin, INPUT);
 }
 
 
@@ -250,15 +250,15 @@ void readPots(){
 
 void readImc(){
     //imc reading
-  int imc1Val = digitalRead(imc1Pin);
-  if (imc1Val != imc1Prev && imc1Val == HIGH){
+  int imc0Val = digitalRead(imc0Pin);
+  if (imc0Val != imc0Prev && imc0Val == HIGH){
     Serial.println("imc1 high");
   }
-  imc1Prev = imc1Val;
+  imc0Prev = imc0Val;
 
-  int imc2Val = digitalRead(imc2Pin);
-  if (imc2Val != imc2Prev && imc2Val == HIGH){
+  int imc1Val = digitalRead(imc1Pin);
+  if (imc1Val != imc1Prev && imc1Val == HIGH){
     Serial.println("imc2 high");
   }
-  imc2Prev = imc2Val;
+  imc1Prev = imc1Val;
 }
