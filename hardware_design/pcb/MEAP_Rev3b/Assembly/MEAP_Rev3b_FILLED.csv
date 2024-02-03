@@ -1,0 +1,26 @@
+Designator,Comment,Footprint,LCSC
+"C3, C5",10n,Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder,C57112
+C6,220n,Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder,C21120
+"C7, C9",1000p,Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder,C1588
+"C8, C10",470p,Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder,C1620
+"C12, C13, C14, C15, C16, C17, C18, C19, C20, C24",100n,Capacitor_SMD:C_0603_1608Metric_Pad1.08x0.95mm_HandSolder,C14663
+"C21, C29",10u,Capacitor_SMD:CP_Elec_4x5.4,C3001227
+"C22, C23, C26, C27",1u,Capacitor_SMD:CP_Elec_4x5.4,C116391
+D1,1N4148,Diode_SMD:D_SOD-323,C2128
+J17,USB_B_Micro,Connector_USB:USB_Micro-B_Molex-105017-0001,C136000
+"R1, R30",330,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C23138
+"R2, R11, R14, R15, R16, R17, R18, R19, R20, R21, R26, R27, R28, R29",10k,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C25804
+"R3, R4",100k,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C25803
+R5,20k,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C4184
+"R7, R8, R9, R10",7k5,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C23234
+"R12, R13",47,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C23182
+"R22, R23",220,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C22962
+"R24, R25",1k,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C21190
+"R31, R32, R33, R34, R37, R40",1000,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C21190
+"R35, R36",50k,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C25819
+"R38, R41",100,Resistor_SMD:R_0603_1608Metric_Pad0.98x0.95mm_HandSolder,C22775
+U1,MCP6002-xMC,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,C7377
+U2,LM1117-3.3,Package_TO_SOT_SMD:SOT-223,C23984
+U3,MCP6002-xSN,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,C7377
+U5,PT8211,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,C5260468
+U9,NE5532,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,C7426

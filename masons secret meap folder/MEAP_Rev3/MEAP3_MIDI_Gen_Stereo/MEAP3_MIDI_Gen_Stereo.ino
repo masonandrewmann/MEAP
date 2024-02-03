@@ -392,8 +392,8 @@ void readTouch(){
 }
 
 void readPots(){
-  potVals[0] = 4095 - mozziAnalogRead(9);
-  potVals[1] = 4095 - mozziAnalogRead(10);
+  potVals[0] = mozziAnalogRead(9);
+  potVals[1] = mozziAnalogRead(10);
 }
 
 long irand(long howsmall, long howbig){ // generates a random integer between howsmall and howbig (inclusive of both numbers)
