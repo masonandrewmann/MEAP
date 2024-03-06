@@ -113,15 +113,15 @@ bool stop_flag = false;
 int sequence[] = { 48, 52, 55, 59, 60, 59, 55, 52,
                    48, 52, 55, 59, 60, 59, 55, 52,
                    48, 53, 57, 60, 64, 60, 57, 53,
-                   48, 53, 57, 60, 64, 60, 57, 53 };
+                   48, 53, 57, 60, 64, 60, 57, 53 }; // sine arps
 int sequence_index = 0;
 
 int seq2[] = { 67, -1, -1, 67, 60, 67, -1, 69,
-               -1, -1, -1, -1, -1, -1, -1, -1 };
+               -1, -1, -1, -1, -1, -1, -1, -1 }; // gtr
 int seq3[] = { 64, -1, -1, 64, -1, 64, -1, -1,
-               -1, -1, -1, -1, -1, -1, 64, -1 };
+               -1, -1, -1, -1, -1, -1, 64, -1 }; // gtr
 int seq4[] = { -1, 48, 52, 50, 43, -1, -1, -1,
-               -1, -1, 52, -1, 45, -1, -1, -1 };
+               -1, -1, 52, -1, 45, -1, -1, -1 }; // piano
 int seq2_index = 0;
 
 void setup() {
@@ -600,4 +600,20 @@ void noteOffHandler(int note) {
       }
     }
   }
+}
+
+long irand(long howsmall, long howbig)
+{ // generates a random integer between howsmall and howbig (inclusive of both numbers)
+  howbig++;
+  if (howsmall >= howbig)
+  {
+    return howsmall;
+  }
+  long diff = howbig - howsmall;
+  return (xorshift96() % diff) + howsmall;
+}
+
+float frand() // generates a random float between 0 and 1 with 4 decimals of precision
+{
+  return (xorshift96() % 10000 / 10000.f);
 }

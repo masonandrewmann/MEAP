@@ -55,31 +55,28 @@ C_maj_DATA, // 7 -   Guitar chords
 C_min_DATA, // 8 -   DEAD ZONE
 C_dim_DATA, // 9 -   DEADZONE
 C_aug_DATA, // 10 -  DEAD ZONE
-// cass_piano_DATA, // 11 - Cassette Piano
-// piano_4C_DATA, // 12 - Higher Piano
-toy_piano_DATA, // 13 - Toy Piano
-marimba_DATA, // 14 - Marimba
-marimba_rev_DATA, // 15 - Marimba with reverb
-steel_drum_DATA, // 16 - Steel Drum
-organ_DATA, // 17 - Organ
-rez_organ_DATA, // 18 - Resonant Organ
-buzzyOrgan_DATA, // 19 - Buzzy Organ
-org_5th_DATA, // 20 - 5ths Organ
-uke_DATA, // 21 - Ukulele
-harp2_DATA, // 22 - High Harp
-tine_DATA, // 23 - Plucked Melodica Tine
-lead_gtr_DATA, // 24 - Lead Guitar
-upright_bass_DATA, // 25 - Upright Bass
-mono_bass_DATA, // 26 - Mono Synth Bass
-shimmer_DATA, // 27 - Shimmer 
-fantasy_DATA, // 28 - Fantasy
-korg_bow_DATA, // 29 - Korg Bow
-lead_synth_DATA, // 30 - Lead Synth
-buzzy_DATA, // 31 - Buzzy Synth
-flute_DATA, // 32 - Flute
-strings_DATA, // 33 - Strings
-vox_DATA, // 34 - Vox
-// belldrone_DATA, // 35 - Bell Drone
+toy_piano_DATA, // 11 - Toy Piano
+marimba_DATA, // 12 - Marimba
+marimba_rev_DATA, // 13 - Marimba with reverb
+steel_drum_DATA, // 14 - Steel Drum
+organ_DATA, // 15 - Organ
+rez_organ_DATA, // 16 - Resonant Organ
+buzzyOrgan_DATA, // 17 - Buzzy Organ
+org_5th_DATA, // 18 - 5ths Organ
+uke_DATA, // 19 - Ukulele
+harp2_DATA, // 20 - High Harp
+tine_DATA, // 21 - Plucked Melodica Tine
+lead_gtr_DATA, // 22 - Lead Guitar
+upright_bass_DATA, // 23 - Upright Bass
+mono_bass_DATA, // 24 - Mono Synth Bass
+shimmer_DATA, // 25 - Shimmer 
+fantasy_DATA, // 26 - Fantasy
+korg_bow_DATA, // 27 - Korg Bow
+lead_synth_DATA, // 28 - Lead Synth
+buzzy_DATA, // 29 - Buzzy Synth
+flute_DATA, // 30 - Flute
+strings_DATA, // 31 - Strings
+vox_DATA, // 32 - Vox
 };
 
 

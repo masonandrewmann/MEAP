@@ -7,6 +7,15 @@
   Mason Mann, CC0
  */
 
+/* i want internal knobs to control... rather than the midi knobs
+   cutoff 
+   resonance
+   attack 
+   decay
+   portamento
+
+*/
+
 #include <MozziGuts.h>
 #include <Oscil.h>
 #include <mozzi_midi.h>
@@ -27,8 +36,6 @@
 #define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
 
 #define DEBUG 1  // 1 to enable serial prints, 0 to disable
-
-#define CLOCK
 
 #if DEBUG == 1
 #define debug(x) Serial.print(x)
@@ -344,7 +351,6 @@ void Meap::updateTouch(int number, bool pressed) {
 
 void clockStep() {
   if (sequencer_state == PLAYING) {
-    midi_step_num = (midi_step_num + 1) % 24;
     if (midi_step_num % 24 == 0) {
       // debug("q");
     }
@@ -362,6 +368,8 @@ void clockStep() {
     }
     debugln(" ");
   }
+
+  midi_step_num = (midi_step_num + 1) % 24;
 }
 
 
@@ -396,6 +404,47 @@ void midiEventHandler() {
     case midi::Continue:  // ---------- MIDI START MESSAGE RECEIVED ----------
       sequencer_state = PLAYING;
       debugln("continue");
+      break;
+    case midi::ControlChange:  // ---------- MIDI CONTROL CHANGE RECEIVED ----------
+      data1 = MIDI.getData1();
+      data2 = MIDI.getData2();
+      switch (data1) {
+        case 71:  // knob #1
+          break;
+        case 74:  //knob #2
+          break;
+        case 84:  //knob #3
+          break;
+        case 7:  //knob #4
+          break;
+        case 91:  // knob 5
+          break;
+        case 93:  //knob #6
+          break;
+        case 5:  //knob #7
+          break;
+        case 10:  //knob #8
+          break;
+        case 1:  // mod wheel
+          break;
+        case 20:  // repeat button
+          break;
+        case 21:  // rewind button
+          break;
+        case 22:  // fastforward buttton
+          break;
+        case 23:  // stop button
+          // MIDI.sendRealTime(midi::Stop);
+          break;
+        case 24:  // play button
+          // midi_step_num = 0;
+          // MIDI.sendRealTime(midi::Start);
+          break;
+        case 25:  // record button
+          midi_step_num = 0;
+          pattern_pointer = 0;
+          break;
+      }
       break;
   }
 }

@@ -17,21 +17,21 @@
 #include <mozzi_fixmath.h>
 #include <Mux.h>
 #include <MIDI.h>
-#include <SPI.h>
+// #include <SPI.h>
 #include <ADSR.h>
-#include <Sample.h>
+// #include <Sample.h>
+#include "MySample.h"
 #include <LinkedList.h>
 #include <Meap.h>
 #include "sample_includes.h"
 #include <ResonantFilter.h>
-#include <AudioDelayFeedback.h>
 #include <Portamento.h>
 #include "MyPortamento.h"
-// #include "SamplePattern.h"
+#include "SamplePattern.h"
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
 
-#define DEBUG 0      // 1 to enable serial prints, 0 to disable
+#define DEBUG 1      // 1 to enable serial prints, 0 to disable
 #define PROBEMIDI 1  // 1 to enable MIDI monitor prints, 0 to disable
 
 #if DEBUG == 1
@@ -54,7 +54,7 @@
 #define MAX_SAMPLE_LENGTH 300000
 #define MIDI_NOTE_CHANNEL 1
 #define MIDI_PAD_CHANNEL 10
-
+#define MIDI_OUT_CHANNEL 5 // out to cz101
 enum sequencerStates {
   PAUSED,
   PLAYING
@@ -63,6 +63,15 @@ enum sequencerStates {
 enum clockModes {
   CK_INTERNAL,
   CK_EXTERNAL
+};
+
+enum retrigModes {
+  RT_NONE,
+  RT_QUARTER,
+  RT_EIGHTH,
+  RT_SIXTEENTH,
+  RT_THIRTYSECOND,
+  RT_SIXTYFOURTH
 };
 
 
@@ -74,7 +83,8 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 Meap meap;
 
 // Sample voices
-Sample<MAX_SAMPLE_LENGTH, AUDIO_RATE> sample[POLYPHONY];  //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
+// Sample<MAX_SAMPLE_LENGTH, AUDIO_RATE> sample[POLYPHONY];  //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
+MySample<MAX_SAMPLE_LENGTH, AUDIO_RATE> sample[POLYPHONY];  //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
 float default_freq;
 float sample_freq[POLYPHONY];
 bool sample_active[POLYPHONY] = { false };
@@ -85,7 +95,7 @@ int curr_program = 0;
 ADSR<CONTROL_RATE, AUDIO_RATE, unsigned int> sample_env[POLYPHONY];
 int sample_gain[POLYPHONY];
 int attack_time = 1;
-int release_time = 2000;
+int release_time = 500;
 bool attack_flag = false;
 bool release_flag = false;
 
@@ -100,22 +110,30 @@ public:
   float frequency;
   bool port_done;
   uint32_t port_end_time;
-  float port_start;
-  float port_end;
-  float port_val;
+};
+
+class PatternNote {
+public:
+  uint8_t note_num;
+  uint16_t voice_num;
+  uint8_t channel_num;
+  uint32_t end_time;
 };
 
 LinkedList<MidiNoteVoice *> voiceQueue = LinkedList<MidiNoteVoice *>();
 
+LinkedList<PatternNote *> patternQueue = LinkedList<PatternNote *>();
+
+
 MultiResonantFilter<uint8_t> filter;
-int cutoff = 127;
+int cutoff = 255;
 int resonance = 127;
 bool cutoff_flag = false;
 bool resonance_flag = false;
 int rand_cutoff_range = 0;
 
 // retrigger pads
-bool retrigger_active[4] = { false, false, false, false };  // bar, half, quarter, eighth
+int retrigger_mode = 0;                                     // 0 = none, 1 =
 
 // MIDI clock timer
 uint32_t midi_timer = 0;
@@ -126,7 +144,7 @@ bool stop_flag = false;
 int midi_clock_mode = CK_INTERNAL;
 
 // pitchbend
-int pitchbend_semitones = 12;  // num of semitones the pitchbend wheel bends
+int pitchbend_semitones = 2;  // num of semitones the pitchbend wheel bends
 float bend_amount = 1;
 
 //portamento
@@ -136,6 +154,19 @@ Q16n16 last_port_note = 0;
 // guitar chord voice
 int chord_tonic = -1;
 int chord_qualities[12] = { 7, 9, 8, 10, 8, 7, 9, 7, 9, 8, 7, 9 };  // 7=maj 8=min 9=dim 10=aug
+
+
+SamplePattern my_first_pattern(4, 2, 3);  // 4 steps, 2 repeasts, glockenspiel
+uint8_t my_midi_notes[4] = { 60, 62, 64, 67 };
+uint16_t my_step_duration[4] = { 4, 4, 4, 4 };
+uint16_t my_note_sustain[4] = { 400, 400, 400, 400 };
+uint16_t my_amplitude[4] = { 127, 127, 127, 127 };
+
+SamplePattern dylan_blues_pattern(20, -1, 5);
+uint8_t dylan_blues_notes[20] = { 60, 63, 65, 70, 67, 67, 63, 63, 67, 65, 67, 65, 70, 72, 70, 67, 63, 63, 65, 65}; 
+uint16_t dylan_blues_step_duration[20] = {2, 2, 1, 3, 1, 1, 1, 6, 1, 2, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1};
+uint16_t dylan_blues_note_sustain[20] = {200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200, 200};
+uint16_t dylan_blues_amplitude[20] = {127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127 ,127, 127, 127, 127};
 
 
 
@@ -161,6 +192,14 @@ void setup() {
   filter.setResonance(resonance);
 
   midi_micros = meap.midiPulseMicros(120);
+
+  my_first_pattern.midi_notes = my_midi_notes;
+  my_first_pattern.step_duration = my_step_duration;
+  my_first_pattern.note_sustain = my_note_sustain;
+
+  dylan_blues_pattern.midi_notes = dylan_blues_notes;
+  dylan_blues_pattern.step_duration = dylan_blues_step_duration;
+  dylan_blues_pattern.note_sustain = dylan_blues_note_sustain;
 }
 
 
@@ -230,8 +269,26 @@ void updateControl() {
   handlePortamento();
 
   // read tempo from pot 0
-  midi_micros = meap.midiPulseMicros(map(meap.potVals[0], 0, 4095, 80, 160));
+  midi_micros = meap.midiPulseMicros((int)map(meap.potVals[0], 0, 4095, 80, 160));
   // debugln(midi_micros);
+
+  //handle patterns
+  my_first_pattern.cycle();
+  if (my_first_pattern.step_flag) {
+    debugln("step");
+    my_first_pattern.step_flag = false;
+    step(my_first_pattern);
+  }
+
+  //handle patterns
+  dylan_blues_pattern.cycle();
+  if (dylan_blues_pattern.step_flag) {
+    debugln("step");
+    dylan_blues_pattern.step_flag = false;
+    step(dylan_blues_pattern);
+  }
+
+  cleanPatternQueue();
 }
 
 
@@ -279,8 +336,7 @@ void Meap::updateDip(int number, bool up) {
     case 2:
       {
         if (up) {  // DIP 3 up
-
-        } else {  // DIP 3 down
+        } else {   // DIP 3 down
         }
       }
     case 3:
@@ -322,85 +378,74 @@ void Meap::updateDip(int number, bool up) {
 }
 
 void Meap::updateTouch(int number, bool pressed) {
-  if (pressed) {  // any pad pressed
-    // programChangeHandler(number);
-    // Serial.println(number);
-  } else {  // any pad released
-  }
-
   switch (number) {
     case 0:
-      {
-        if (pressed) {  // Pad 1 pressed
-
-        } else {  // Pad 1 released
-        }
+      if (pressed) {  // Pad 1 pressed
+        my_first_pattern.start();
+        debugln("start");
+      } else {  // Pad 1 released
       }
+      break;
     case 1:
-      {
-        if (pressed) {  // Pad 2 pressed
-
-        } else {  // Pad 2 released
-        }
+      if (pressed) {  // Pad 2 pressed
+        my_first_pattern.stop();
+        debugln("end");
+      } else {  // Pad 2 released
       }
+      break;
     case 2:
-      {
-        if (pressed) {  // Pad 3 pressed
-
-        } else {  // Pad 3 released
-        }
+      if (pressed) {  // Pad 3 pressed
+        dylan_blues_pattern.start();
+        debugln("db_start");
+      } else {  // Pad 3 released
       }
+      break;
     case 3:
-      {
-        if (pressed) {  // Pad 4 pressed
-
-        } else {  // Pad 4 released
-        }
+      if (pressed) {  // Pad 4 pressed
+        dylan_blues_pattern.stop();
+        debugln("db_stop");
+      } else {  // Pad 4 released
       }
+      break;
     case 4:
-      {
-        if (pressed) {  // Pad 5 pressed
+      if (pressed) {  // Pad 5 pressed
 
-        } else {  // Pad 5 released
-        }
+      } else {  // Pad 5 released
       }
+      break;
     case 5:
-      {
-        if (pressed) {  // Pad 6 pressed
+      if (pressed) {  // Pad 6 pressed
 
-        } else {  // Pad 6 released
-        }
+      } else {  // Pad 6 released
       }
+      break;
     case 6:
-      {
-        if (pressed) {  // Pad 7 pressed
+      if (pressed) {  // Pad 7 pressed
 
-        } else {  // Pad 7 released
-        }
+      } else {  // Pad 7 released
       }
+      break;
     case 7:
-      {
-        if (pressed) {  // Pad 8 pressed
+      if (pressed) {  // Pad 8 pressed
 
-        } else {  // Pad 8 released
-        }
+      } else {  // Pad 8 released
       }
+      break;
   }
 }
 
 //executes when a clock step is received
 void clockStep() {
-  midi_step_num = (midi_step_num + 1) % 24;
 
   if (midi_step_num % 24 == 0) {  // quarter note
-    if (retrigger_active[0]) {
+    if (retrigger_mode == RT_QUARTER) {
       retriggerNotes(true);
     }
   }
 
   if (midi_step_num % 12 == 0) {  // eighth note
     randomizeCutoff(rand_cutoff_range);
-    if (retrigger_active[1]) {
+    if (retrigger_mode == RT_EIGHTH) {
       retriggerNotes(true);
     }
   }
@@ -409,16 +454,22 @@ void clockStep() {
     if (meap.irand(0, 4) == 0) {
       randomizeCutoff(rand_cutoff_range);
     }
-    if (retrigger_active[2]) {
+    if (retrigger_mode == RT_SIXTEENTH) {
+      retriggerNotes(true);
+    }
+
+    //send triggers to patterns
+    my_first_pattern.incrementClock(midi_step_num);
+    dylan_blues_pattern.incrementClock(midi_step_num);
+  }
+
+  if (midi_step_num % 3 == 0) {  // thirtysecond note
+    if (retrigger_mode == RT_THIRTYSECOND) {
       retriggerNotes(true);
     }
   }
 
-  if (midi_step_num % 3 == 0) {  // thirtysecond note
-    if (retrigger_active[3]) {
-      retriggerNotes(true);
-    }
-  }
+  midi_step_num = (midi_step_num + 1) % 24;
 }
 
 /**
@@ -427,16 +478,18 @@ void clockStep() {
 * @param range is the range to randomize filter over in percentage
 */
 void randomizeCutoff(int range) {
-  debugln("cutoff rand");
-  range = range << 1;  // maps input range to 0-200
-  int rand_cutoff = cutoff + meap.irand(-range, range);
-  // clip to range 0-255
-  if (rand_cutoff > 255) {
-    rand_cutoff = 255;
-  } else if (rand_cutoff < 0) {
-    rand_cutoff = 0;
+  if (range > 0) {
+    debugln("cutoff rand");
+    range = range << 1;  // maps input range to 0-200
+    int rand_cutoff = cutoff + meap.irand(-range, range);
+    // clip to range 0-255
+    if (rand_cutoff > 255) {
+      rand_cutoff = 255;
+    } else if (rand_cutoff < 0) {
+      rand_cutoff = 0;
+    }
+    filter.setCutoffFreq(rand_cutoff);
   }
-  filter.setCutoffFreq(rand_cutoff);
 }
 
 
@@ -450,13 +503,13 @@ void randomizeCutoff(int range) {
 */
 void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
   // choose voice to play
-  int my_voice = curr_program;
+  int my_program = curr_program;
 
   if (pgm_override = !-1) {
-    my_voice = pgm_override;
+    my_program = pgm_override;
   }
-  if (my_voice >= 7 && my_voice <= 10) {  // guitar chord voice
-    if (chord_tonic == -1) {              // tonic hasn't been chosen yet, choose it now and don't play a note
+  if (my_program >= 7 && my_program <= 10) {  // guitar chord voice
+    if (chord_tonic == -1) {                  // tonic hasn't been chosen yet, choose it now and don't play a note
       chord_tonic = note % 12;
       return;
     } else {  // tonic has been chosen, choose correct chord
@@ -465,7 +518,7 @@ void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
         mod_note += 12;
       }
       int root_diff = mod_note - chord_tonic;  // how many semitones above tonic is the note
-      my_voice = chord_qualities[root_diff];
+      my_program = chord_qualities[root_diff];
     }
   }
 
@@ -479,10 +532,11 @@ void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
         break;
       }
     }
+    Serial.println(curr_voice);
 
     if (curr_voice != -1) {  // if any voice is free, play note
-      sample[curr_voice].setTable(samples_list[my_voice]);
-      sample[curr_voice].setEnd(samples_lengths[my_voice]);
+      sample[curr_voice].setTable(samples_list[my_program]);
+      sample[curr_voice].setEnd(samples_lengths[my_program]);
 
       // calculate frequency offset for sample
       float diff = note - 60;
@@ -518,16 +572,32 @@ void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
   } else if (channel == MIDI_PAD_CHANNEL) {
     switch (note) {
       case 50:
-        retrigger_active[0] = !retrigger_active[0];
+        if (retrigger_mode == RT_QUARTER) {
+          retrigger_mode = RT_NONE;
+        } else {
+          retrigger_mode = RT_QUARTER;
+        }
         break;
       case 45:
-        retrigger_active[1] = !retrigger_active[1];
+        if (retrigger_mode == RT_EIGHTH) {
+          retrigger_mode = RT_NONE;
+        } else {
+          retrigger_mode = RT_EIGHTH;
+        }
         break;
       case 51:
-        retrigger_active[2] = !retrigger_active[2];
+        if (retrigger_mode == RT_SIXTEENTH) {
+          retrigger_mode = RT_NONE;
+        } else {
+          retrigger_mode = RT_SIXTEENTH;
+        }
         break;
       case 49:
-        retrigger_active[3] = !retrigger_active[3];
+        if (retrigger_mode == RT_THIRTYSECOND) {
+          retrigger_mode = RT_NONE;
+        } else {
+          retrigger_mode = RT_THIRTYSECOND;
+        }
         break;
     }
   }
@@ -538,7 +608,7 @@ void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
 *
 * @param note is the MIDI note number to turn off
 * @param channel is the MIDI channel of the note to turn off
-*/ 
+*/
 void noteOffHandler(int note, int channel) {
   if (channel == MIDI_NOTE_CHANNEL) {
     int queue_size = voiceQueue.size();
@@ -623,7 +693,7 @@ void midiEventHandler() {
   int data2 = -1;
   switch (MIDI.getType())  // Get the type of the message we caught
   {
-    case midi::NoteOn:  // ---------- MIDI NOTE ON RECEIVED ----------
+    case 1:  // ---------- MIDI NOTE ON RECEIVED ----------
       {
         channel = MIDI.getChannel();
         data1 = MIDI.getData1();  // note
@@ -691,7 +761,6 @@ void midiEventHandler() {
         case 10:  //knob #8
           break;
         case 1:  // mod wheel
-
           break;
         case 20:  // repeat button
           break;
@@ -703,11 +772,11 @@ void midiEventHandler() {
           MIDI.sendRealTime(midi::Stop);
           break;
         case 24:  // play button
-          midi_step_num = -1;
+          midi_step_num = 0;
           MIDI.sendRealTime(midi::Start);
           break;
         case 25:  // record button
-          MIDI.sendRealTime(midi::Continue);
+          midi_step_num = 0;
           break;
       }
       break;
@@ -775,4 +844,85 @@ void handlePortamento() {
       }
     }
   }
+}
+
+/**
+* @brief Checks if any currently playing patten notes need to end then ends and deletes them
+*/
+void cleanPatternQueue() {
+  //freeing finished midi notes
+  int my_queue_size = patternQueue.size();
+  if (my_queue_size > 0) {
+    bool entries_to_delete[my_queue_size];  // array to keep track of which entries need to be removed
+
+    PatternNote *my_pattern_note;
+    uint32_t my_time = millis();
+    // end notes and tag them to be deleted
+    for (int i = 0; i < my_queue_size; i++) {
+      my_pattern_note = patternQueue.get(i);
+      if (my_time > my_pattern_note->end_time) {
+        // END THE NOTE HERE
+        sample_env[my_pattern_note->voice_num].noteOff();  // turn off note
+        entries_to_delete[i] = true;
+      } else {
+        entries_to_delete[i] = false;
+      }
+    }
+
+    // delete tagged notes starting at end of array
+    for (int i = my_queue_size - 1; i >= 0; i--) {
+      if (entries_to_delete[i]) {
+        delete (patternQueue.get(i));
+        patternQueue.remove(i);
+      }
+    }
+  }
+}
+
+/**
+   * @brief Plays next step of a pattern
+   */
+void step(SamplePattern &my_pattern) {
+  // find note that needs to be played
+  uint32_t curr_time = millis();
+  uint8_t note = my_pattern.midi_notes[my_pattern.curr_step];
+  uint32_t my_end_time = curr_time + my_pattern.note_sustain[my_pattern.curr_step];
+  // my_pattern.next_step_time = curr_time + my_pattern.step_duration[my_pattern.curr_step];
+  my_pattern.sclock = 0;
+  my_pattern.next_step_time = my_pattern.step_duration[my_pattern.curr_step];
+
+
+  //find a free voice
+  int my_voice = -1;
+  for (int i = 0; i < POLYPHONY; i++) {
+    if (!sample_env[i].playing()) {
+      sample_active[i] = true;
+      my_voice = i;
+      break;
+    }
+  }
+
+  if (my_voice != -1) {  // if any voice is free, play note
+    sample[my_voice].setTable(samples_list[my_pattern.sample_num]);
+    sample[my_voice].setEnd(samples_lengths[my_pattern.sample_num]);
+
+    // calculate frequency offset for sample
+    float diff = note - 60;
+    sample_freq[my_voice] = default_freq * pow(2, diff / 12.f);  // calc freq of sample
+
+    // start the note
+    sample[my_voice].setFreq(sample_freq[my_voice]);  // set frequency of sample
+    sample_env[my_voice].noteOn();
+    sample[my_voice].start();
+
+
+    PatternNote *my_pattern_note = new PatternNote();
+    my_pattern_note->note_num = note;
+    my_pattern_note->voice_num = my_voice;
+    my_pattern_note->channel_num = my_pattern.channel_num;
+    my_pattern_note->end_time = my_end_time;
+
+    patternQueue.add(my_pattern_note);
+  }
+  my_pattern.incrementStep();
 }
