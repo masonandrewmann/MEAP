@@ -2,4 +2,5 @@
 Audio prototyping board for Mason Mann's Advanced Computer Music Composition class at NYU
 
 [MEAP Rev3 Documentation](https://masonmann.online/electronics/meap/)
+
 [Legacy documentation on wiki](https://github.com/masonandrewmann/M.E.A.P./wiki)
