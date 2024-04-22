@@ -1,9 +1,12 @@
 /*
-  Basic template for working with a stock MEAP board.
+  Extension of basic template to include a framework for handling midi messages.
+  Implements a basic 24 Pulse-Per-Quarter note clock (the MIDI standard that most 
+  devices use for synchronization) which can be generated internally or received 
+  from an external MIDI clock source.
 
  */
 
-#include <Meap.h> // MEAP library, includes all dependent libraries, including all Mozzi modules
+#include <Meap.h>  // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 #define CONTROL_RATE 64   // Hz, powers of 2 are most reliable
 #define AUDIO_RATE 32768  // Hz, powers of 2 are most reliable
@@ -12,16 +15,46 @@ Meap meap;  // creates MEAP object to handle inputs and other MEAP library funct
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
+enum ClockModes {
+  kINTERNAL,
+  kEXTERNAL
+} clock_mode;
+
+// MIDI clock timer
+uint32_t clock_timer = 0;
+uint32_t clock_period_micros = 10000;
+int clock_pulse_num = 0;
+float clock_bpm = 120;
+
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
   Serial1.begin(31250, SERIAL_8N1, 43, 44);  // sets up MIDI: baud rate, serial mode, rx pin, tx pin
   startMozzi(CONTROL_RATE);                  // starts Mozzi engine with control rate defined above
   meap.begin();                              // sets up MEAP object
+
+  clock_mode = kINTERNAL;
+  clock_period_micros = meap.midiPulseMicros(clock_bpm);
 }
 
 
 void loop() {
   audioHook();  // handles Mozzi audio generation behind the scenes
+
+  if (MIDI.read())  // Is there a MIDI message incoming ?
+  {
+    midiEventHandler();  // function that parses midi messages, be careful about doing too much processing
+                         // in here because it could disrupt audio generation
+  }
+
+  // handle generating midi clock if internal clock mode is selected
+  if (clock_mode == kINTERNAL) {
+    uint32_t t = micros();
+    if (t > clock_timer) {
+      clock_timer = t + clock_period_micros;
+      MIDI.sendRealTime(midi::Clock);
+      clockStep();
+    }
+  }
 }
 
 
@@ -144,4 +177,60 @@ void Meap::updateDip(int number, bool up) {
       }
       break;
   }
+}
+
+
+/**
+* @brief To be called whenever a midi event is recieved.
+*/
+void midiEventHandler() {
+  int channel = MIDI.getChannel();
+  int data1 = MIDI.getData1(); // first midi data byte: usage depends on message type. For example this will be note number for a NoteOn message
+  int data2 = MIDI.getData2(); // second midi data byte: usage depends on message type. For example this will be velocity for a NoteOn message
+  switch (MIDI.getType())  // Get the type of the message we recieved, this is not an exhaustive list, just some of the most common message types
+  {
+    case midi::NoteOn:  // ---------- MIDI NOTE ON RECEIVED ----------
+      break;
+    case midi::NoteOff:  // ---------- MIDI NOTE OFF RECEIVED ----------
+      break;
+    case midi::ProgramChange:  // ---------- MIDI PROGRAM CHANGE RECEIVED ----------
+      break;
+    case midi::ControlChange:  // ---------- MIDI CONTROL CHANGE RECEIVED ----------
+      break;
+    case midi::PitchBend:  // ---------- MIDI PITCH BEND RECEIVED ----------
+      break;
+    case midi::Clock:  // ---------- MIDI CLOCK PULSE RECEIVED ----------
+      if (clock_mode == kEXTERNAL) {
+        clockStep();
+      }
+      break;
+    case midi::Start:  // ---------- MIDI START MESSAGE RECEIVED ----------
+      break;
+    case midi::Stop:  // ---------- MIDI STOP MESSAGE RECEIVED ----------
+      break;
+    case midi::Continue:  // ---------- MIDI CONTINUE MESSAGE RECEIVED ----------
+      break;
+  }
+}
+
+
+// Executes when a clock step is received. Each "if" statement represents a musical division of a quarter note.
+// For example, if you want an event to occur every eigth note, place the code for this event within the 
+// second if statement. If you want events to happen at different subdivisions of a quarter note add more if 
+// statements checking the value of clock_pulse_num. 
+void clockStep() {
+
+  if (clock_pulse_num % 24 == 0) {  // quarter note
+  }
+
+  if (clock_pulse_num % 12 == 0) {  // eighth note
+  }
+
+  if (clock_pulse_num % 6 == 0) {  // sixteenth note
+  }
+
+  if (clock_pulse_num % 3 == 0) {  // thirtysecond notex
+  }
+
+  clock_pulse_num = (clock_pulse_num + 1) % 24;
 }
