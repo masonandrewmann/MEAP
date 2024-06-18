@@ -17,7 +17,7 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out por
 
 
 // variables for sample
-Sample<harp_c3_NUM_CELLS, AUDIO_RATE> sample(harp_c3_DATA);
+Sample<harp_c3_NUM_CELLS, AUDIO_RATE> my_sample(harp_c3_DATA);
 float sample_freq;
 
 
@@ -28,8 +28,8 @@ void setup() {
   meap.begin();                              // sets up MEAP object
 
   sample_freq = (float)harp_c3_SAMPLERATE / (float)harp_c3_NUM_CELLS;
-  sample.setFreq(sample_freq);  // play at the speed it was recorded
-  sample.rangeWholeSample();
+  my_sample.setFreq(sample_freq);  // play at the speed it was recorded
+  my_sample.rangeWholeSample();
 }
 
 
@@ -46,136 +46,67 @@ void updateControl() {
 
 
 AudioOutput_t updateAudio() {
-  int sample = sample.next();
+  int sample = my_sample.next();
   return StereoOutput::fromAlmostNBit(8, sample, sample);
 }
 
 
-void readTouch() {
-  int pinVal = 0;
-  for (int i = 0; i < 8; i++) {
-    pinVal = touchRead(touchPins[i]);
-    touchAvgs[i] = 0.6 * touchAvgs[i] + 0.4 * pinVal;
-    if (touchAvgs[i] < touchThreshold) {
-      touchVals[i] = 1;
-    } else {
-      touchVals[i] = 0;
-    }
-    if (touchVals[i] != prevTouchVals[i]) {
-      switch (i) {
-        case 0:
-          if (touchVals[i]) {  // pad 0 pressed
-            sample.setFreq((float)sample_freq);
-            sample.start();
-          } else {  // pad 0 released
-          }
-          break;
-        case 1:
-          if (touchVals[i]) {  // pad 1 pressed
-            sample.setFreq((float)(sample_freq * pow(2, 2.0 / 12.0)));
-            sample.start();
-          } else {  // pad 1 released
-          }
-          break;
-        case 2:
-          if (touchVals[i]) {  // pad 2 pressed
-            sample.setFreq((float)(sample_freq * pow(2, 4.0 / 12.0)));
-            sample.start();
-          } else {  // pad 2 released
-          }
-          break;
-        case 3:
-          if (touchVals[i]) {  // pad 3 pressed
-            sample.setFreq((float)(sample_freq * pow(2, 2.0 / 12.0)));
-            sample.start();
-          } else {  // pad 3 released
-          }
-          break;
-        case 4:
-          if (touchVals[i]) {  // pad 4 pressed
-            sample.setFreq((float)(sample_freq * pow(2, 7.0 / 12.0)));
-            sample.start();
-          } else {  // pad 4 released
-          }
-          break;
-        case 5:
-          if (touchVals[i]) {  // pad 5 pressed
-            Serial.println(sample_freq);
-            Serial.println((float)(sample_freq * pow(2, 9.0 / 12.0)));
-            sample.setFreq((float)(sample_freq * pow(2, 9.0 / 12.0)));
-            sample.start();
-          } else {  // pad 5 released
-          }
-          break;
-        case 6:
-          if (touchVals[i]) {  // pad 6 pressed
-            sample.setFreq((float)(sample_freq * pow(2, 11.0 / 12.0)));
-            sample.start();
-          } else {  // pad 6 released
-          }
-          break;
-        case 7:
-          if (touchVals[i]) {  // pad 7 pressed
-            sample.setFreq((float)(sample_freq * pow(2, 12.0 / 12.0)));
-            sample.start();
-          } else {  // pad 7 released
-          }
-          break;
-      }
-    }
-    prevTouchVals[i] = touchVals[i];
-  }
-}
-
-
-/** User defined function called whenever a touch pad is pressed or released
-  @param number is the number of the pad that was pressed or released: 0-7
-  @param pressed is true if the pad was pressed and false if the pad was released
-	*/
 void Meap::updateTouch(int number, bool pressed) {
-  if (pressed) {  // Any pad pressed
-
-  } else {  // Any pad released
-  }
   switch (number) {
     case 0:
-      if (pressed) {  // Pad 1 pressed
-      } else {        // Pad 1 released
+      if (pressed) {  // pad 0 pressed
+        my_sample.setFreq((float)sample_freq);
+        my_sample.start();
+      } else {  // pad 0 released
       }
       break;
     case 1:
-      if (pressed) {  // Pad 2 pressed
-      } else {        // Pad 2 released
+      if (pressed) {  // pad 1 pressed
+        my_sample.setFreq((float)(sample_freq * pow(2, 2.0 / 12.0)));
+        my_sample.start();
+      } else {  // pad 1 released
       }
       break;
     case 2:
-      if (pressed) {  // Pad 3 pressed
-      } else {        // Pad 3 released
+      if (pressed) {  // pad 2 pressed
+        my_sample.setFreq((float)(sample_freq * pow(2, 4.0 / 12.0)));
+        my_sample.start();
+      } else {  // pad 2 released
       }
       break;
     case 3:
-      if (pressed) {  // Pad 4 pressed
-      } else {        // Pad 4 released
+      if (pressed) {  // pad 3 pressed
+        my_sample.setFreq((float)(sample_freq * pow(2, 5.0 / 12.0)));
+        my_sample.start();
+      } else {  // pad 3 released
       }
       break;
     case 4:
-      if (pressed) {  // Pad 5 pressed
-      } else {        // Pad 5 released
+      if (pressed) {  // pad 4 pressed
+        my_sample.setFreq((float)(sample_freq * pow(2, 7.0 / 12.0)));
+        my_sample.start();
+      } else {  // pad 4 released
       }
       break;
     case 5:
-      if (pressed) {  // Pad 6 pressed
-      } else {        // Pad 6 released
+      if (pressed) {  // pad 5 pressed
+        my_sample.setFreq((float)(sample_freq * pow(2, 9.0 / 12.0)));
+        my_sample.start();
+      } else {  // pad 5 released
       }
       break;
     case 6:
-      if (pressed) {  // Pad 7 pressed
-      } else {        // Pad 7 released
+      if (pressed) {  // pad 6 pressed
+        my_sample.setFreq((float)(sample_freq * pow(2, 11.0 / 12.0)));
+        my_sample.start();
+      } else {  // pad 6 released
       }
       break;
     case 7:
-      if (pressed) {  // Pad 8 pressed
-      } else {        // Pad 8 released
+      if (pressed) {  // pad 7 pressed
+        my_sample.setFreq((float)(sample_freq * pow(2, 12.0 / 12.0)));
+        my_sample.start();
+      } else {  // pad 7 released
       }
       break;
   }
@@ -233,4 +164,3 @@ void Meap::updateDip(int number, bool up) {
       break;
   }
 }
-
