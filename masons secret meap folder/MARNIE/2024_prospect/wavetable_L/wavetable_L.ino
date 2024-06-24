@@ -1,12 +1,15 @@
 /*
-  Basic template for a MARNIE R program with clock and midi
+  Basic template for a MARNIE L program with clock and midi
  */
 
 #include <MozziGuts.h>
 #include <Oscil.h>
 #include <mozzi_midi.h>
 #include <Meap.h>
-#include <samples/raven_arh_int8.h>
+#include "MEAP_Wavetable.h"
+#include <LinkedList.h>
+#include "ActiveMidiNote.h"
+#include "wavetable_includes.h"
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
 
@@ -20,14 +23,17 @@
 #define debugln(x)
 #endif
 
+#define POLYPHONY 8
+#define MIDI_NOTE_CHANNEL 1  // Channel to listen for MIDI note messages
+
 enum ClockModes {
   kINTERNAL,
   kEXTERNAL
 } clock_mode;
 
 int button_pins[6] = { 15, 16, 12, 13, 18, 35 };
-int button_vals[6] = { 0, 0, 0, 0, 0, 0 };
-int last_button_vals[6] = { 0, 0, 0, 0, 0, 0 };
+int button_vals[7] = { 0, 0, 0, 0, 0, 0, 0 };
+int last_button_vals[7] = { 0, 0, 0, 0, 0, 0, 0 };
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI); /**< MEAP hardware serial port*/
 
@@ -37,19 +43,30 @@ uint32_t clock_period_micros = 10000;
 int clock_pulse_num = 0;
 float clock_bpm = 120;
 
-#define FUNDAMENTAL_PIN 0
-#define BANDWIDTH_PIN 1
-#define CENTREFREQ_PIN 2
-
-// for smoothing the control signals
-// use: RollingAverage <number_type, how_many_to_average> myThing
-RollingAverage<int, 32> kAverageF;
-RollingAverage<int, 32> kAverageBw;
-RollingAverage<int, 32> kAverageCf;
-
-WavePacketSample<DOUBLE> wavey;  // DOUBLE selects 2 overlapping streams
-
 Meap meap;
+
+int curr_program = 0;
+
+LinkedList<int16_t> voice_queue;
+LinkedList<ActiveMidiNote *> humanNoteQueue = LinkedList<ActiveMidiNote *>();
+
+mWavetable<acytol_FRAME_SIZE, acytol_NUM_FRAMES, AUDIO_RATE, acytol_FRAME_SIZE> osc[POLYPHONY];
+
+MultiResonantFilter<uint16_t> filter; /**< Filter for left channel */
+
+ADSR<CONTROL_RATE, AUDIO_RATE, unsigned int> osc_env[POLYPHONY]; /**< ADSR envelopes for all sample voices */
+int osc_gain[POLYPHONY];
+float osc_freq[POLYPHONY];
+int attack_time = 1;
+int release_time = 500;
+
+uint32_t freq_val = 440;
+uint16_t frame_val = 0;
+float alpha = 0.91;
+
+
+// template<uint64_t NUM_TABLE_CELLS, uint32_t UPDATE_RATE, uint64_t FRAME_SIZE, uint64_t NUM_FRAMES, uint16_t INTERP = kINTERP_NONE>
+// mWavetable <524288, 32768, 2048, 256> my_wt(analog_table_DATA);
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -57,13 +74,23 @@ void setup() {
   startMozzi(CONTROL_RATE);                  // starts Mozzi engine with control rate defined above
   meap.begin();
 
-  wavey.setTable(RAVEN_ARH_DATA);
-
   clock_mode = kINTERNAL;
   clock_period_micros = meap.midiPulseMicros(clock_bpm);
 
   for (int i = 0; i < 6; i++) {
     pinMode(button_pins[i], INPUT_PULLUP);
+  }
+
+  for (int i = 0; i < POLYPHONY; i++) {
+    osc[i].setTable(analog_table_DATA);
+    osc_freq[i] = 440;
+    osc[i].setFreq(osc_freq[i]);
+    osc_gain[i] = 0;
+    osc_env[i].setAttackTime(attack_time);
+    osc_env[i].setSustainTime(4294967295);  // max value of unsigned 32 bit int,, notes can sustain for arbitrary time limit
+    osc_env[i].setReleaseTime(release_time);
+    osc_env[i].setADLevels(255, 255);
+    voice_queue.unshift(i);  // add all voices to voice queue
   }
 }
 
@@ -89,21 +116,42 @@ void loop() {
 
 void updateControl() {
   meap.readPots();
-  meap.readTouch();
-  meap.readDip();
+  // meap.readTouch();
+  // meap.readDip();
   meap.readAuxMux();
   updateButtons();
 
-  int f = kAverageF.next(meap.pot_vals[0] >> 2) + 1;
-  int b = kAverageBw.next(meap.pot_vals[1] >> 2);
-  int cf = kAverageCf.next(meap.aux_mux_vals[0] >> 1);
-  wavey.set(f, b, cf);
+
+  filter.setCutoffFreq(meap.aux_mux_vals[4] << 4);
+  filter.setResonance(meap.aux_mux_vals[3] << 4);
+
+  attack_time = meap.aux_mux_vals[6] << 2;
+  release_time = meap.aux_mux_vals[5] << 2;
+
+  // update amplitude envelopes
+  for (int i = 0; i < POLYPHONY; i++) {
+    osc_env[i].update();
+  }
+
+  frame_val = (alpha)*frame_val + (1.0 - alpha) * (meap.pot_vals[1] >> 4);
+  for (int i = 0; i < POLYPHONY; i++) {
+    osc[i].setFrame(frame_val);
+  }
 }
 
 
 AudioOutput_t updateAudio() {
-  int32_t sample = wavey.next();
-  return StereoOutput::from16Bit(sample, sample);
+  uint64_t immediate_sample = 0;
+
+  for (int i = 0; i < POLYPHONY; i++) {
+    osc_gain[i] = osc_env[i].next();
+    immediate_sample += osc[i].next() * osc_gain[i];
+  }
+
+  filter.next(immediate_sample);
+  immediate_sample = filter.low();
+
+  return StereoOutput::fromAlmostNBit(26, immediate_sample, immediate_sample);
 }
 
 void Meap::updateTouch(int number, bool pressed) {
@@ -197,10 +245,17 @@ void Meap::updateDip(int number, bool up) {
 }
 
 void updateButtons() {
-
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < 7; i++) {
     // Read the buttons
-    button_vals[i] = digitalRead(button_pins[i]);
+    if (i == 0) {
+      if (meap.aux_mux_vals[7] < 1000) {
+        button_vals[0] = 0;
+      } else {
+        button_vals[0] = 1;
+      }
+    } else {
+      button_vals[i] = digitalRead(button_pins[i - 1]);
+    }
     // Check if state has changed
     if (button_vals[i] != last_button_vals[i]) {
       switch (i) {
@@ -234,6 +289,11 @@ void updateButtons() {
           } else {               // button 5 up
           }
           break;
+        case 6:
+          if (button_vals[i]) {  // button 6 down
+          } else {               // button 6 up
+          }
+          break;
       }
     }
     last_button_vals[i] = button_vals[i];
@@ -251,10 +311,15 @@ void midiEventHandler() {
   switch (MIDI.getType())  // Get the type of the message we caught
   {
     case midi::NoteOn:  // ---------- MIDI NOTE ON RECEIVED ----------
+      noteOnHandler(data1, data2, channel, -1);
       break;
     case midi::NoteOff:  // ---------- MIDI NOTE OFF RECEIVED ----------
+      noteOffHandler(data1, channel);
       break;
     case midi::ProgramChange:  // ---------- MIDI PROGRAM CHANGE RECEIVED ----------
+      if (data1 >= 0 && data1 < NUM_WAVETABLES) {
+        curr_program = data1;
+      }
       break;
     case midi::ControlChange:  // ---------- MIDI CONTROL CHANGE RECEIVED ----------
       break;
@@ -291,4 +356,73 @@ void clockStep() {
   }
 
   clock_pulse_num = (clock_pulse_num + 1) % 24;
+}
+
+
+
+/**
+* @brief Handles turning on sample notes.
+*
+* @param note is the MIDI note number to turn on
+* @param velocity is the velocity of the MIDI note to turn on (NOT CURRENTLY USED)
+* @param channel is the velocity of the MIDI note to turn on (NOT CURRENTLY USED)
+* @param pgm_override overrides the current program to play note on specified program 
+*/
+void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
+  if (channel == MIDI_NOTE_CHANNEL) {  // check on which channel we received the MIDI noteOn
+    // choose voice to play
+    int my_program = curr_program;
+    if (pgm_override != -1) {
+      my_program = pgm_override;
+    }
+
+    // find a free voice
+    int curr_voice = -1;
+    if (voice_queue.size() > 0) {
+      curr_voice = voice_queue.shift();  // remove head element and return it!
+    } else {
+      return;  // no free voices, move along...
+    }
+
+    osc_freq[curr_voice] = mtof(note);
+    osc[curr_voice].setFreq(osc_freq[curr_voice]);  // set frequency of sample
+    osc[curr_voice].setTable(wavetables_list[my_program]);
+
+    // update the envelope
+    osc_env[curr_voice].setAttackTime(attack_time >> 1 + 1);
+    osc_env[curr_voice].setReleaseTime(release_time >> 1 + 1);
+    osc_env[curr_voice].noteOn();
+
+    // keep track of note in active notes queue
+    ActiveMidiNote *myNote = new ActiveMidiNote();  // create object to keep track of note num, voice num and freq
+    myNote->newNote(note, velocity, channel, osc_freq[curr_voice], curr_voice);
+
+    humanNoteQueue.add(myNote);  // add to active notes queue
+  }
+}
+
+
+
+/**
+* @brief Handles turning off sample notes.
+*
+* @param note is the MIDI note number to turn off
+* @param channel is the MIDI channel of the note to turn off
+*/
+void noteOffHandler(int note, int channel) {
+  if (channel == MIDI_NOTE_CHANNEL) {
+    int num_active_notes = humanNoteQueue.size();
+    ActiveMidiNote *myNote;
+    // loop through voice queue searching for note
+    for (int i = 0; i < num_active_notes; i++) {
+      myNote = humanNoteQueue.get(i);
+      if (note == myNote->note_num && channel == myNote->channel) {
+        osc_env[myNote->voice_num].noteOff();  // turn off note
+        voice_queue.add(myNote->voice_num);
+        delete (myNote);
+        humanNoteQueue.remove(i);
+        return;
+      }
+    }
+  }
 }

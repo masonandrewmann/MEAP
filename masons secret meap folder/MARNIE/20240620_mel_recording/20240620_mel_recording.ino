@@ -75,7 +75,7 @@
 #endif
 
 #define CONTROL_RATE 64           // Hz, powers of 2 are most reliable
-#define POLYPHONY 24              // How many voices
+#define POLYPHONY 10              // How many voices
 #define MAX_SAMPLE_LENGTH 300000  // Max length of a sample
 #define MIDI_NOTE_CHANNEL 1       // Channel to listen for MIDI note messages
 #define MIDI_PAD_CHANNEL 10       // Channel that M-audio interface sends pad messages on
@@ -223,7 +223,7 @@ Q16n16 last_port_note = 0;
 int chord_tonic = -1;
 int chord_qualities[12] = { 7, 9, 8, 10, 8, 7, 9, 7, 9, 8, 7, 9 };  // 7=maj 8=min 9=dim 10=aug, chords present in a major scale (with chormatic stuff filled in for accidentals)
 
-int output_bits = 21;
+int output_bits = 26;
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -315,8 +315,8 @@ void updateControl() {
   resonance = meap.aux_mux_vals[6] << 4;  // 4095 -> 65535
   filter.setResonance(resonance);
 
-  attack_time = meap.aux_mux_vals[5];
-  release_time = meap.aux_mux_vals[7];
+  attack_time = meap.aux_mux_vals[5]<<2;
+  release_time = meap.aux_mux_vals[7]<<2;
 
   // chorus
   float c_depth = ((float)meap.aux_mux_vals[0]) / 4095.f;
@@ -356,7 +356,7 @@ AudioOutput_t updateAudio() {
   l_sample = chorus_l.next(immediate_sample, 0);
   r_sample = r_sample = chorus_l.lastOut(1);
 
-  return StereoOutput::fromNBit(output_bits + 6, l_sample, r_sample);
+  return StereoOutput::fromNBit(output_bits, l_sample, r_sample);
 }
 
 
@@ -475,10 +475,10 @@ void updateButtons() {
         case 1:
           if (button_vals[i]) {  // button 1 pressed
             debugln("B1 pressed");
-            output_bits = 20;
+            output_bits = 25;
           } else {  // button 1 released
             debugln("B1 released");
-            output_bits = 21;
+            output_bits = 26;
           }
           break;
         case 2:                  // glockenspiel enable
