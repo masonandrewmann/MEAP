@@ -1,19 +1,29 @@
 /*
-  Basic template for a MARNIE L program with clock and midi
+  hiii... Basic template for a MARNIE L program with clock and midi
  */
 
-// #include <MozziGuts.h>
-// #include <Oscil.h>
-// #include <mozzi_midi.h>
 #include <Meap.h>
 #include "sample_includes.h"
-#include "midi/summer_song.h"
-#include "midi/summer_song_arp.h"
-#include "midi/bass.h"
+#include "midi/summer/summer_song.h"
+#include "midi/summer/summer_song_arp.h"
+// #include "midi/bass.h"
+#include "midi/indie/indie_melody.h"
+#include "midi/indie/indie_arp.h"
+#include "midi/indie/indie_chorus.h"
+
+#include <tables/BandLimited_SAW/2048/saw_max_136_at_16384_2048_int8.h>
+#include <tables/triangle2048_int8.h>
+
+#include "midi/collar/collar_delay_drums.h"
+#include "midi/collar/collar_aux_drums.h"
+#include "midi/collar/collar_arp.h"
+#include "midi/collar/collar_sample.h"
+
+#include "midi/sealed/sealed_samples.h"
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
 
-#define DEBUG 1
+#define DEBUG 0
 
 #if DEBUG == 1
 #define debug(x) Serial.print(x)
@@ -27,6 +37,13 @@ enum ClockModes {
   kINTERNAL,
   kEXTERNAL
 } clock_mode;
+
+enum Songs {
+  kSUMMER,
+  kINDIE,
+  kCOLLAR,
+  kSEALED
+} current_song = kSUMMER;
 
 int button_pins[6] = { 15, 16, 12, 13, 18, 35 };
 int button_vals[7] = { 0, 0, 0, 0, 0, 0, 0 };
@@ -44,18 +61,37 @@ float default_freq;
 
 Meap meap;
 
-mDrumRack<300000, SUMMER_NUM, AUDIO_RATE> summer_song(summer_list, summer_lengths, summer_song_data);
+// for summer song
+mDrumRack<300000, SUMMER_NUM_SAMPLES, AUDIO_RATE> summer_song(summer_list, summer_lengths, summer_song_data);
+// mSamplerVoice<300000, AUDIO_RATE> bass(upright_bass_DATA, upright_bass_NUM_CELLS, bass_data);
+mBasicFM<SAW_MAX_136_AT_16384_2048_NUM_CELLS, AUDIO_RATE> summer_fm(SAW_MAX_136_AT_16384_2048_DATA, summer_song_arp_data);
 
-// mSubSynth<AUDIO_RATE> summer_song_arp(summer_song_arp_data);
+// for indie melody
+mDrumRack<300000, INDIE_NUM_SAMPLES, AUDIO_RATE> indie_melody(indie_list, indie_lengths, indie_melody_data);
+mBasicFM<TRIANGLE2048_NUM_CELLS, AUDIO_RATE> indie_fm(TRIANGLE2048_DATA, indie_arp_data);
+mSamplerVoice<300000, AUDIO_RATE, int16_t> indie_chorus(round_DATA, round_NUM_CELLS, indie_chorus_data);
+mBasicFM<SAW_MAX_136_AT_16384_2048_NUM_CELLS, AUDIO_RATE> indie_chorus_layer(SAW_MAX_136_AT_16384_2048_DATA, indie_chorus_data);
 
-mSamplerVoice<300000, AUDIO_RATE> bass(upright_bass_DATA, upright_bass_NUM_CELLS, bass_data);
+//for collar button
+mDrumRack<300000, COLLAR_DELAY_NUM_SAMPLES, AUDIO_RATE> collar_main(collar_delay_list, collar_delay_lengths, collar_delay_drums_data);
+mDrumRack<300000, COLLAR_AUX_NUM_SAMPLES, AUDIO_RATE> collar_aux(collar_aux_list, collar_aux_lengths, collar_aux_drums_data);
+// mBasicFM<TRIANGLE2048_NUM_CELLS, AUDIO_RATE> collar_fm(TRIANGLE2048_DATA, collar_arp_data);
+mBasicFMPOLY<TRIANGLE2048_NUM_CELLS, AUDIO_RATE, 2> collar_fm(TRIANGLE2048_DATA, collar_arp_data);
 
-mBasicFM<AUDIO_RATE> summer_fm(summer_song_arp_data);
+mDrumRack<300000, COLLAR_SPEECH_SAMPLES, AUDIO_RATE> collar_speech(collar_speech_list, collar_speech_lengths, collar_sample_data);
+// MEAP_Delay_Allpass<int32_t> collar_delay(8192, 32768);  // 8191
+// uint32_t collar_delay_sample = 0;
+// float collar_delay_volume = 0.5;
+// AudioDelayFeedback<9000>
 
-mSampler<300000, AUDIO_RATE> my_sample;
+// for sealed
+mDrumRack<300000, SEALED_NUM_SAMPLES, AUDIO_RATE> sealed_main(sealed_samples_list, sealed_samples_length, sealed_samples_data);
+
 
 void setup() {
-  Serial.begin(115200);                      // begins Serial communication with computer
+// #if DEBUG == 1
+  Serial.begin(115200);  // begins Serial communication with computer
+// #endif
   Serial1.begin(31250, SERIAL_8N1, 43, 44);  // sets up MIDI: baud rate, serial mode, rx pin, tx pin
   startMozzi(CONTROL_RATE);                  // starts Mozzi engine with control rate defined above
   meap.begin();
@@ -63,15 +99,32 @@ void setup() {
   clock_mode = kINTERNAL;
   clock_period_micros = meap.midiPulseMicros(clock_bpm);
 
-  my_sample.setTable(D1_uke_DATA, D1_uke_NUM_CELLS);
-
   for (int i = 0; i < 6; i++) {
     pinMode(button_pins[i], INPUT_PULLUP);
   }
 
   default_freq = 32768.0 / 300000.0;
 
-  bass.setTranspose(12);
+  summer_song.init(summer_list, summer_lengths, summer_song_data);
+
+  indie_melody.init(indie_list, indie_lengths, indie_melody_data);
+
+  collar_main.init(collar_delay_list, collar_delay_lengths, collar_delay_drums_data);
+  collar_aux.init(collar_aux_list, collar_aux_lengths, collar_aux_drums_data);
+  collar_speech.init(collar_speech_list, collar_speech_lengths, collar_sample_data);
+  // collar_delay.setDelay(8192);
+  // collar_delay.clear();
+  collar_main.setSampleVolume(0, 204);
+  collar_main.setSampleVolume(1, 102);
+  collar_main.setSampleVolume(3, 382);
+
+
+
+
+  indie_chorus.setDecay(1000);
+
+  sealed_main.init(sealed_samples_list, sealed_samples_length, sealed_samples_data);
+  sealed_main.setSampleVolume(2, 0);
 }
 
 
@@ -95,34 +148,69 @@ void loop() {
 
 
 void updateControl() {
-  meap.readPots();
-  meap.readTouch();
-  meap.readDip();
-  meap.readAuxMux();
+  // meap.readPots();
+  // meap.readTouch();
+  // meap.readDip();
+  // meap.readAuxMux();
+  meap.readInputs();
   updateButtons();
 
+  switch (current_song) {
+    case kSUMMER:
+      // for summer song
+      summer_fm.setDecayTime(0, meap.pot_vals[0] >> 2);
+      summer_fm.setDecayTime(1, meap.pot_vals[1] >> 2);
+      summer_fm.setBDepth(meap.aux_mux_vals[6] >> 5);
+      summer_fm.setCDepth(meap.aux_mux_vals[5] >> 5);
+      break;
+    case kINDIE:
+      // for indie song
+      indie_fm.setDecayTime(0, meap.pot_vals[0] >> 2);
+      indie_fm.setDecayTime(1, meap.pot_vals[1] >> 2);
+      indie_fm.setBDepth(meap.aux_mux_vals[6] >> 5);
+      indie_fm.setCDepth(meap.aux_mux_vals[5] >> 5);
 
-  // summer_song_arp.setDecayTime(meap.pot_vals[0] >> 2);
-
-  summer_fm.setDecayTime(0, meap.pot_vals[0] >> 2);
-  summer_fm.setDecayTime(1, meap.pot_vals[1] >> 2);
-
-  // summer_fm.setModDepth(meap.aux_mux_vals[5]>>5);
-  summer_fm.setBDepth(meap.aux_mux_vals[6] >> 5);
-  summer_fm.setCDepth(meap.aux_mux_vals[5] >> 5);
+      // for indie song
+      indie_chorus_layer.setDecayTime(0, meap.pot_vals[0] >> 2);
+      indie_chorus_layer.setDecayTime(1, meap.pot_vals[1] >> 2);
+      indie_chorus_layer.setBDepth(meap.aux_mux_vals[6] >> 5);
+      indie_chorus_layer.setCDepth(meap.aux_mux_vals[5] >> 5);
+      break;
+    case kCOLLAR:
+      //for collar buttons
+      collar_fm.setDecayTime(0, meap.pot_vals[0] >> 2);
+      collar_fm.setDecayTime(1, meap.pot_vals[1] >> 2);
+      collar_fm.setBDepth(meap.aux_mux_vals[6] >> 5);
+      collar_fm.setCDepth(meap.aux_mux_vals[5] >> 5);
+      break;      
+  }
 }
 
 
 AudioOutput_t updateAudio() {
   int32_t out_sample = 0;
-  out_sample = my_sample.next();
 
-  out_sample += summer_song.next();
-
-  out_sample += summer_fm.next() >> 1;
-
-  out_sample += bass.next() >> 1;
-
+  switch (current_song) {
+    case kSUMMER:
+      out_sample += summer_song.next();
+      out_sample += summer_fm.next();
+      break;
+    case kINDIE:
+      out_sample += indie_melody.next();
+      out_sample += indie_fm.next();
+      out_sample += indie_chorus.next();
+      out_sample += indie_chorus_layer.next() >> 1;
+      break;
+    case kCOLLAR:
+      out_sample += collar_main.next();
+      out_sample += collar_aux.next();
+      out_sample += collar_fm.next(); 
+      out_sample += collar_speech.next();
+      break;
+    case kSEALED:
+      out_sample += sealed_main.next();
+      break;
+  }
 
   return StereoOutput::fromNBit(18, out_sample, out_sample);
 }
@@ -133,65 +221,70 @@ void Meap::updateTouch(int number, bool pressed) {
       if (pressed) {  // Pad 1 pressed
         if (summer_song.isPlaying()) {
           summer_song.stop();
-        } else {
-          summer_song.begin();
-        }
-        if (summer_fm.isPlaying()) {
           summer_fm.stop();
         } else {
+          clock_bpm = 121;
+          clock_period_micros = meap.midiPulseMicros(clock_bpm);
+          current_song = kSUMMER;
+          summer_song.begin();
           summer_fm.begin();
-        }
-        if (bass.isPlaying()) {
-          bass.stop();
-        } else {
-          if (button_vals[0]) {
-            bass.begin();
-          }
         }
       } else {  // Pad 1 released
       }
       break;
     case 1:
-      if (pressed) {  // Pad 2 pressed
-        summer_song.trig(0);
-      } else {  // Pad 2 released
-        summer_song.untrig(0);
+      if (pressed) {
+        if (indie_melody.isPlaying()) {
+          indie_melody.stop();
+          indie_fm.stop();
+          indie_chorus.stop();
+          indie_chorus_layer.stop();
+        } else {
+          clock_bpm = 121;
+          clock_period_micros = meap.midiPulseMicros(clock_bpm);
+          current_song = kINDIE;
+          indie_melody.begin();
+          indie_fm.begin();
+          indie_chorus.begin();
+          indie_chorus_layer.begin();
+        }
       }
       break;
     case 2:
-      if (pressed) {  // Pad 3 pressed
-        summer_song.trig(1);
-      } else {  // Pad 3 released
-        summer_song.untrig(1);
+      if (pressed) {
+        if (collar_main.isPlaying()) {
+          collar_main.stop();
+          collar_aux.stop();
+          collar_fm.stop();
+          collar_speech.stop();
+        } else {
+          clock_bpm = 128;
+          clock_period_micros = meap.midiPulseMicros(clock_bpm);
+          collar_main.begin();
+          collar_aux.begin();
+          collar_fm.begin();
+          collar_speech.begin();
+          current_song = kCOLLAR;
+        }
       }
       break;
     case 3:
-      if (pressed) {  // Pad 4 pressed
-        summer_song.trig(2);
-      } else {  // Pad 4 released
-        summer_song.untrig(2);
+      if (pressed) {
+        if (sealed_main.isPlaying()) {
+          sealed_main.stop();
+        } else {
+          clock_bpm = 143;
+          clock_period_micros = meap.midiPulseMicros(clock_bpm);
+          sealed_main.begin();
+          current_song = kSEALED;
+        }
       }
       break;
     case 4:
-      if (pressed) {  // Pad 5 pressed
-        summer_song.trig(3);
-      } else {  // Pad 5 released
-        summer_song.untrig(3);
-      }
       break;
     case 5:
-      if (pressed) {  // Pad 6 pressed
-        summer_song.trig(4);
-      } else {  // Pad 6 released
-        summer_song.untrig(4);
-      }
       break;
     case 6:
-      if (pressed) {  // Pad 7 pressed
-        summer_song.trig(5);
-      } else {  // Pad 7 released
-        summer_song.untrig(5);
-      }
       break;
     case 7:
       if (pressed) {  // Pad 8 pressed
@@ -203,48 +296,6 @@ void Meap::updateTouch(int number, bool pressed) {
 }
 
 void Meap::updateDip(int number, bool up) {
-  switch (number) {
-    case 0:
-      if (up) {  // DIP 1 up
-      } else {   // DIP 1 down
-      }
-      break;
-    case 1:
-      if (up) {  // DIP 2 up
-      } else {   // DIP 2 down
-      }
-      break;
-    case 2:
-      if (up) {  // DIP 3 up
-      } else {   // DIP 3 down
-      }
-      break;
-    case 3:
-      if (up) {  // DIP 4 up
-      } else {   // DIP 4 down
-      }
-      break;
-    case 4:
-      if (up) {  // DIP 5 up
-      } else {   // DIP 5 down
-      }
-      break;
-    case 5:
-      if (up) {  // DIP 6 up
-      } else {   // DIP 6 down
-      }
-      break;
-    case 6:
-      if (up) {  // DIP 7 up
-      } else {   // DIP 7 down
-      }
-      break;
-    case 7:
-      if (up) {  // DIP 8 up
-      } else {   // DIP 8 down
-      }
-      break;
-  }
 }
 
 void updateButtons() {
@@ -354,7 +405,28 @@ void clockStep() {
   }
 
   clock_pulse_num = (clock_pulse_num + 1) % 24;
-  summer_song.updateMidi();
-  summer_fm.updateMidi();
-  bass.updateMidi();
+  switch (current_song) {
+    case kSUMMER:
+      //for summer song
+      summer_song.updateMidi();
+      summer_fm.updateMidi();
+      break;
+    case kINDIE:
+      //for indie melody
+      indie_melody.updateMidi();
+      indie_fm.updateMidi();
+      indie_chorus.updateMidi();
+      indie_chorus_layer.updateMidi();
+      break;
+    case kCOLLAR:
+      // for collar buttons
+      collar_main.updateMidi();
+      collar_aux.updateMidi();
+      collar_fm.updateMidi();
+      collar_speech.updateMidi();
+      break;
+    case kSEALED:
+      sealed_main.updateMidi();
+      break;
+  }
 }

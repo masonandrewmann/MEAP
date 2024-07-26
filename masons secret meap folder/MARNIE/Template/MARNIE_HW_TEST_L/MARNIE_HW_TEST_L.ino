@@ -75,6 +75,7 @@ void loop() {
 void updateControl() {
   // meap.readPots();
   meap.readTouch();
+  // meap.mHandleTouch();
   meap.readInputs();
   // meap.readDip();
   // meap.readAuxMux();
@@ -83,6 +84,11 @@ void updateControl() {
   // Serial.print(" ");
   // Serial.println(meap.pot_vals[1]);
 
+  // for (uint8_t i = 0; i < 7; i++) {
+  //   Serial.print(meap.aux_mux_vals[i]);
+  //     Serial.print(" ");
+  // }
+  // Serial.println(" ");
 }
 
 

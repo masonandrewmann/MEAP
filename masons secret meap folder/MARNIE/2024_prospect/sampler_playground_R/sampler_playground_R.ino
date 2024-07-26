@@ -52,10 +52,12 @@
 // #include "MySample.h"
 #include <LinkedList.h>
 #include "sample_includes.h"
-#include "MyPortamento.h"
 #include "extras/sample_frequencies.h"  // NEED TO RECALCULATE THESE VALUES IF DIFF SAMPLE SR OR MAX LENGTH IS USED
 
-#define DEBUG 1
+#include <tables/waveshape_chebyshev_3rd_256_int8.h>
+#include <tables/waveshape_chebyshev_6th_256_int8.h>
+
+#define DEBUG 0
 #define PROBEMIDI 0
 
 #if DEBUG == 1
@@ -75,7 +77,7 @@
 #endif
 
 #define CONTROL_RATE 64           // Hz, powers of 2 are most reliable
-#define POLYPHONY 24              // How many voices
+#define POLYPHONY 14              // How many voices
 #define MAX_SAMPLE_LENGTH 300000  // Max length of a sample
 #define MIDI_NOTE_CHANNEL 1       // Channel to listen for MIDI note messages
 #define MIDI_PAD_CHANNEL 10       // Channel that M-audio interface sends pad messages on
@@ -100,6 +102,11 @@ enum LooperModulations {
   kVariable
 } looper_modulation;
 
+enum EffectModes {
+  kINACTIVE,
+  kBASIC
+} chopper_mode;
+
 /**
 * Reading the extra organ switch inputs
 */
@@ -112,7 +119,10 @@ Meap meap; /**< object containing all meap functions*/
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI); /**< MEAP hardware serial port*/
 
 // Sample voices
-mSample16<MAX_SAMPLE_LENGTH, AUDIO_RATE> sample[POLYPHONY];  //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
+// mSample16<MAX_SAMPLE_LENGTH, AUDIO_RATE> sample[POLYPHONY];  //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
+
+mSampleAmbi<MAX_SAMPLE_LENGTH, AUDIO_RATE, int16_t> sample[POLYPHONY];  //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
+
 
 float default_freq;           //default freq of a sample, calculated using length of sample and sample rate
 float sample_freq[POLYPHONY]; /**< stores current frequency of each sample voice */
@@ -125,22 +135,21 @@ int sample_gain[POLYPHONY];
 int attack_time = 1;
 int release_time = 500;
 
-// MyPortamento<CONTROL_RATE> portamento[POLYPHONY];
-
 MEAP_Chorus<int32_t> chorus_l(300);
+bool chorus_enable = false;
 
 // think ill have a problem if i play the same note on
 // multiple programs, they will turn each other off :~(
 class LooperNote {
 public:
-  uint8_t message_type;  // 0 for note off, 1 for note on
-  uint8_t pitch;         // midi note number
-  uint8_t program;       //
-  uint64_t time_offset;  // offset from start of loop in ms
-  bool triggered;        // was this note already triggered this time through the loop?
+  uint16_t message_type;  // 0 for note off, 1 for note on
+  uint16_t pitch;         // midi note number
+  uint16_t program;       //
+  uint64_t time_offset;   // offset from start of loop in ms
+  bool triggered;         // was this note already triggered this time through the loop?
   //
 
-  LooperNote(uint8_t _message_type, uint8_t _pitch, uint8_t _program, uint64_t _time_offset, bool _triggered) {
+  LooperNote(uint16_t _message_type, uint16_t _pitch, uint16_t _program, uint64_t _time_offset, bool _triggered) {
     message_type = _message_type;
     pitch = _pitch;
     program = _program;
@@ -153,39 +162,30 @@ uint64_t loop_start_time = 0;
 uint64_t loop_end_offset = 1000;
 uint64_t loop_end_time = 1000;
 uint64_t pause_time = 0;
-uint8_t looper_random_chance = 127;
+uint16_t looper_random_chance = 127;
 
 /**
 * Keeps track of a single note turned on by a midi message
 */
 class ActiveMidiNote {
 public:
-  uint8_t note_num; /**< MIDI note number */
-  uint8_t velocity; /**< MIDI note velocity*/
-  uint8_t channel;  /**< MIDI note channel */
-  uint8_t program;
+  uint16_t note_num; /**< MIDI note number */
+  uint16_t velocity; /**< MIDI note velocity*/
+  uint16_t channel;  /**< MIDI note channel */
+  uint16_t program;
   uint16_t voice_num;     /**< Voice allocated to play this note */
-  float frequency;        /**< Frequency of note, used for portamento */
-  bool port_done;         /**< True when portamento is done, False while portamento is sliding to new note */
-  uint32_t port_end_time; /**< End time of portamento slide */
   uint32_t note_end_time; /**< Time to automatically end note (mostly used for computer triggered notes)*/
 
-  void newNote(uint8_t _note_num, uint8_t _velocity, uint8_t _channel, float _frequency, uint16_t _voice_num) {
+  void newNote(uint16_t _note_num, uint16_t _velocity, uint16_t _channel, uint16_t _voice_num) {
     note_num = _note_num;
     velocity = _velocity;
     channel = _channel;
-    frequency = _frequency;
     voice_num = _voice_num;
     note_end_time = 0;
   };
 
   void setEndTime(uint32_t _note_end_time) {
     note_end_time = _note_end_time;
-  }
-
-  void portSet(bool _port_done, uint32_t _port_end_time) {
-    port_done = _port_done;
-    port_end_time = _port_end_time;
   }
 
   bool finished() {
@@ -205,25 +205,33 @@ LinkedList<LooperNote *> looperNoteQueue = LinkedList<LooperNote *>();
 LinkedList<int16_t> voice_queue;
 
 MultiResonantFilter<uint16_t> filter;  /**< Filter for left channel */
-MultiResonantFilter<uint16_t> filter2; /**< Filter for right channel */
+// MultiResonantFilter<uint16_t> filter2; /**< Filter for right channel */
 int cutoff = 255;
 int resonance = 127;
 int rand_cutoff_range = 0;
 
 // MIDI clock timer
-uint32_t midi_timer = 0;
-uint32_t midi_micros = 10000;
-int midi_step_num = 0;
-
-//portamento
-uint16_t port_length = 0;  // length of portamento in milliseconds
-Q16n16 last_port_note = 0;
+uint64_t midi_timer = 0;
+uint64_t midi_micros = 10000;
+int8_t midi_step_num = 0;
 
 // guitar chord voice
 int chord_tonic = -1;
 int chord_qualities[12] = { 7, 9, 8, 10, 8, 7, 9, 7, 9, 8, 7, 9 };  // 7=maj 8=min 9=dim 10=aug, chords present in a major scale (with chormatic stuff filled in for accidentals)
 
-int output_bits = 21;
+
+int output_bits = 18;
+
+mChopper<MOZZI_AUDIO_RATE> chopper;
+
+
+bool midi_thru = false;
+
+WaveShaper<char> aCheby3rd(CHEBYSHEV_3RD_256_DATA);  // 5th harmonic
+WaveShaper<char> aCheby6th(CHEBYSHEV_6TH_256_DATA);  // 8th harmonic
+
+bool distortion_enable = false;
+
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -250,8 +258,8 @@ void setup() {
   // initialize filter
   filter.setCutoffFreq(cutoff);
   filter.setResonance(resonance);
-  filter2.setCutoffFreq(cutoff);
-  filter2.setResonance(resonance);
+  // filter2.setCutoffFreq(cutoff);
+  // filter2.setResonance(resonance);
 
 
 
@@ -263,9 +271,19 @@ void setup() {
     pinMode(button_pins[i], INPUT_PULLUP);
   }
 
+  midi_clock_mode = kINTERNAL;
   // looper
   looper_mode = kOff;
   looper_modulation = kNormal;
+
+  // chopper
+  chopper_mode = kINACTIVE;
+
+  chorus_l.setEffectMix(1.0);
+  // float c_mod_freq = ((float)meap.aux_mux_vals[1]) / 4095.f * 10 + 0.02;
+  chorus_l.setModFrequency(1.0);
+
+  meap.turnLedDOff();
 }
 
 
@@ -281,7 +299,7 @@ void loop() {
     uint32_t t = micros();
     if (t > midi_timer) {
       midi_timer = t + midi_micros;
-      MIDI.sendRealTime(midi::Clock);
+      // MIDI.sendRealTime(midi::Clock);
       clockStep();
     }
   }
@@ -294,7 +312,7 @@ void updateControl() {
   // meap.readDip();
   meap.readAuxMux();
   updateButtons();
-  updateLoop();
+  updateLooper();
   // updateComputerNotes();  // check if any computer triggered notes need to end
 
   // MARNIE Pot Controls
@@ -316,17 +334,12 @@ void updateControl() {
   filter.setResonance(resonance);
 
   attack_time = meap.aux_mux_vals[5];
-  release_time = meap.aux_mux_vals[7];
+  release_time = meap.aux_mux_vals[7] << 2;
 
   // chorus
-  float c_depth = ((float)meap.aux_mux_vals[0]) / 4095.f;
-  float c_mod_freq = ((float)meap.aux_mux_vals[1]) / 4095.f * 10 + 0.02;
+  // float c_depth = ((float)meap.aux_mux_vals[0]) / 4095.f;0.0002442002442
+  float c_depth = ((float)meap.aux_mux_vals[0]) * 0.0002442;  // 1/4095
   chorus_l.setModDepth(c_depth);
-  chorus_l.setModFrequency(c_mod_freq);
-
-  // update portamento
-  // port_length = meap.aux_mux_vals[2] >> 2;  // 4095 -> 1023
-  // handlePortamento();
 
   // update rand cutoff range
   rand_cutoff_range = meap.aux_mux_vals[3] << 3;  // 4095 -> 32768
@@ -334,6 +347,17 @@ void updateControl() {
   // update amplitude envelopes
   for (int i = 0; i < POLYPHONY; i++) {
     sample_env[i].update();
+  }
+
+  //update tempo
+  midi_micros = meap.midiPulseMicros(map(meap.pot_vals[0], 0, 4095, 80, 200));
+
+  if(meap.aux_mux_vals[0] > 2000){
+    distortion_enable = true;
+    output_bits = 19;
+  } else {
+    distortion_enable = false;
+    output_bits = 18;
   }
 }
 
@@ -344,19 +368,42 @@ AudioOutput_t updateAudio() {
 
   int64_t immediate_sample = 0;
 
-  for (int i = 0; i < POLYPHONY; i++) {
-    sample_gain[i] = sample_env[i].next();
-    immediate_sample += sample[i].next() * sample_gain[i];
+  if (distortion_enable) {
+    for (int i = 0; i < POLYPHONY; i++) {
+      sample_gain[i] = sample_env[i].next();
+      int eee = sample[i].next() >> 8;
+      eee = aCheby3rd.next(eee);
+      eee = aCheby6th.next(eee);
+      immediate_sample += eee * sample_gain[i];
+    }
+  } else {
+    for (int i = 0; i < POLYPHONY; i++) {
+      sample_gain[i] = sample_env[i].next();
+      immediate_sample += sample[i].next() * sample_gain[i];
+    }
+    immediate_sample = immediate_sample >> 8;  // at 16bits + a little now
   }
 
   // send output through filter
   filter.next(immediate_sample);
   immediate_sample = filter.low();
 
-  l_sample = chorus_l.next(immediate_sample, 0);
-  r_sample = r_sample = chorus_l.lastOut(1);
+  immediate_sample = chopper.next(immediate_sample);
 
-  return StereoOutput::fromNBit(output_bits + 6, l_sample, r_sample);
+  l_sample = chopper.getChannel(0);
+  r_sample = chopper.getChannel(1);
+
+  if (chorus_enable) {
+    int64_t chorus_out_l, chorus_out_r;
+
+    chorus_out_l = chorus_l.next(immediate_sample, 0);
+    chorus_out_r = chorus_l.lastOut(1);
+
+    l_sample = (l_sample >> 1) + (chorus_out_l >> 1);
+    r_sample = (r_sample >> 1) + (chorus_out_r >> 1);
+  }
+
+  return StereoOutput::fromNBit(output_bits, l_sample, r_sample);
 }
 
 
@@ -409,9 +456,9 @@ void Meap::updateDip(int number, bool up) {
   switch (number) {
     case 0:
       if (up) {  // DIP 1 up
-        midi_clock_mode = kEXTERNAL;
+        // midi_clock_mode = kEXTERNAL;
       } else {  // DIP 1 down
-        midi_clock_mode = kINTERNAL;
+        // midi_clock_mode = kINTERNAL;
       }
       break;
     case 1:
@@ -466,28 +513,37 @@ void updateButtons() {
     if (button_vals[i] != last_button_vals[i]) {
       switch (i) {
         case 0:
-          if (button_vals[i]) {  // button 0 pressed
-            debugln("B0 pressed");
+          if (button_vals[i]) {     // button 0 pressed
+            debugln("B0 pressed");  // activates rhythmic chopper mode
+            chopper_mode = kBASIC;
+            chopper.enable();
+
           } else {  // button 0 released
             debugln("B0 released");
+            chopper_mode = kINACTIVE;
+            chopper.disable();
           }
           break;
         case 1:
           if (button_vals[i]) {  // button 1 pressed
             debugln("B1 pressed");
-            output_bits = 20;
+            // output_bits = 18;
+            chorus_enable = true;
           } else {  // button 1 released
             debugln("B1 released");
-            output_bits = 21;
+            // output_bits = 19;
+            chorus_enable = false;
           }
           break;
         case 2:                  // glockenspiel enable
           if (button_vals[i]) {  // button 2 pressed
             debugln("B2 pressed");
             MIDI.turnThruOn();
+            midi_thru = true;
           } else {  // button 2 released
             debugln("B2 released");
             MIDI.turnThruOff();
+            midi_thru = false;
           }
           break;
         case 3:                  // SAMPLE LOOPING MODE
@@ -504,17 +560,25 @@ void updateButtons() {
           }
           break;
         case 4:
-          if (button_vals[i]) {  // button 4 pressed
-            debugln("B4 pressed");
-          } else {  // button 4 released
+          if (button_vals[i]) {     // button 4 pressed
+            debugln("B4 pressed");  // toggles sample looping on marnie L
+            // MIDI.sendControlChange(100, 1, 1);  // turn looping on
+            MIDI.sendNoteOn(100, 1, 15);  // turn looping on
+          } else {                        // button 4 released
             debugln("B4 released");
+            // MIDI.sendControlChange(100, 0, 1);  // turn looping off
+            MIDI.sendNoteOn(100, 0, 15);  // turn looping off
           }
           break;
         case 5:
           if (button_vals[i]) {  // button 5 pressed
             debugln("B5 pressed");
-          } else {  // button 5 released
+            // MIDI.sendControlChange(101, 1, 1);  // switch L to aux mode
+            MIDI.sendNoteOn(101, 1, 15);  // switch L to aux mode
+          } else {                        // button 5 released
             debugln("B5 released");
+            // MIDI.sendControlChange(101, 0, 1);  // switch L to main mode
+            MIDI.sendNoteOn(101, 0, 15);  // switch L to main mode
           }
           break;
       }
@@ -532,6 +596,9 @@ void clockStep() {
 
   if (midi_step_num % 12 == 0) {  // eighth note
     randomizeCutoff16(rand_cutoff_range);
+    if (chopper_mode == kBASIC) {
+      chopper.trigger();
+    }
   }
 
   if (midi_step_num % 6 == 0) {  // sixteenth note
@@ -562,7 +629,7 @@ void randomizeCutoff(int range) {
       rand_cutoff = 0;
     }
     filter.setCutoffFreq(rand_cutoff);
-    filter2.setCutoffFreq(rand_cutoff);
+    // filter2.setCutoffFreq(rand_cutoff);
   }
 }
 
@@ -572,7 +639,7 @@ void randomizeCutoff(int range) {
 * @param range is the range to randomize filter over in "percentage"
 */
 void randomizeCutoff16(int range) {
-  if (range > 300) {  // add a slight deadzone at the bottom of the pot
+  // if (range > 300) {  // add a slight deadzone at the bottom of the pot
     // range = range << 1;  // maps input range to 0-200
     int rand_cutoff = cutoff + meap.irand(0, range);
     // clip to range 0-255
@@ -582,8 +649,8 @@ void randomizeCutoff16(int range) {
       rand_cutoff = 0;
     }
     filter.setCutoffFreq(rand_cutoff);
-    filter2.setCutoffFreq(rand_cutoff);
-  }
+    // filter2.setCutoffFreq(rand_cutoff);
+  // }
 }
 
 
@@ -637,22 +704,7 @@ void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
 
     // keep track of note in active notes queue
     ActiveMidiNote *myNote = new ActiveMidiNote();  // create object to keep track of note num, voice num and freq
-    myNote->newNote(note, velocity, channel, sample_freq[curr_voice], curr_voice);
-
-
-    // if (port_length == 0 || humanNoteQueue.size() == 0) {  // don't apply portamento if port time is zero or if no notes are active
-    myNote->portSet(true, 0);
-    // } else {
-    //   myNote->portSet(false, millis() + port_length);
-    //   portamento[curr_voice].setTime(0);
-    //   portamento[curr_voice].start(last_port_note);
-    //   portamento[curr_voice].next();  // jump this voice to the prev note pitch, this is really hacky
-    //   portamento[curr_voice].next();
-    //   portamento[curr_voice].setTime(port_length);
-    //   portamento[curr_voice].start(float_to_Q16n16(sample_freq[curr_voice]));
-    // }
-    // last_port_note = float_to_Q16n16(sample_freq[curr_voice]);  // set this as last note played for portamento
-
+    myNote->newNote(note, velocity, channel, curr_voice);
     humanNoteQueue.add(myNote);  // add to active notes queue
   }
 }
@@ -673,8 +725,6 @@ void noteOffHandler(int note, int channel) {
       uint64_t my_time_offset = millis() - loop_start_time;
       LooperNote *my_note = new LooperNote(0, note, curr_program, my_time_offset, true);  // create object to keep track of note num, voice num and freq
       looperNoteQueue.add(my_note);                                                       // add to looper notes queue
-      debug("add note off ");
-      debugln(my_time_offset);
     }
 
     int num_active_notes = humanNoteQueue.size();
@@ -709,135 +759,150 @@ void programChangeHandler(int program_num) {
 * @brief To be called whenever a midi event is recieved.
 */
 void midiEventHandler() {
-  int channel = -1;
-  int data1 = -1;
-  int data2 = -1;
-  switch (MIDI.getType())  // Get the type of the message we caught
-  {
-    case midi::NoteOn:  // ---------- MIDI NOTE ON RECEIVED ----------
-      channel = MIDI.getChannel();
-      data1 = MIDI.getData1();  // note
-      data2 = MIDI.getData2();  // velocity
-      probemidi("ch: ");
-      probemidi(channel);
-      probemidi(" noteOn: ");
-      probemidi(data1);
-      probemidi(" velocity: ");
-      probemidiln(data2);
-      noteOnHandler(data1, data2, channel, -1);
-      break;
-    case midi::NoteOff:  // ---------- MIDI NOTE OFF RECEIVED ----------
-      channel = MIDI.getChannel();
-      data1 = MIDI.getData1();  // note
-      probemidi("Note Off: ");
-      probemidi("note: ");
-      probemidiln(data1);
-      noteOffHandler(data1, channel);
-      break;
-    case midi::ProgramChange:   // ---------- MIDI PROGRAM CHANGE RECEIVED ----------
-      data1 = MIDI.getData1();  // program number
-      probemidi("Pgm: ");
-      probemidiln(data1);
-      programChangeHandler(data1);
-      break;
+  if (!midi_thru) {
+    int channel = -1;
+    int data1 = -1;
+    int data2 = -1;
+    switch (MIDI.getType())  // Get the type of the message we caught
+    {
+      case midi::NoteOn:  // ---------- MIDI NOTE ON RECEIVED ----------
+        channel = MIDI.getChannel();
+        data1 = MIDI.getData1();  // note
+        data2 = MIDI.getData2();  // velocity
+        probemidi("ch: ");
+        probemidi(channel);
+        probemidi(" noteOn: ");
+        probemidi(data1);
+        probemidi(" velocity: ");
+        probemidiln(data2);
+        noteOnHandler(data1, data2, channel, -1);
+        break;
+      case midi::NoteOff:  // ---------- MIDI NOTE OFF RECEIVED ----------
+        channel = MIDI.getChannel();
+        data1 = MIDI.getData1();  // note
+        probemidi("Note Off: ");
+        probemidi("note: ");
+        probemidiln(data1);
+        noteOffHandler(data1, channel);
+        break;
+      case midi::ProgramChange:   // ---------- MIDI PROGRAM CHANGE RECEIVED ----------
+        data1 = MIDI.getData1();  // program number
+        probemidi("Pgm: ");
+        probemidiln(data1);
+        programChangeHandler(data1);
+        break;
 
-    case midi::ControlChange:  // ---------- MIDI CONTROL CHANGE RECEIVED ----------
-      data1 = MIDI.getData1();
-      data2 = MIDI.getData2();
-      probemidi("cc: ");
-      probemidi(data1);
-      probemidi(" data: ");
-      probemidiln(data2);
-      switch (data1) {
-        case 1:  // bottom pot -- loop speed
-          break;
-        case 12:  // top pot -- loop density
-          looper_random_chance = data2;
-          break;
-        case 20:  // big button
-          if (data2 == 127) {
-            switch (looper_mode) {
-              case kOff:
-                looper_mode = kRecording;
-                loop_start_time = millis();
-                debugln("looper recording");
-                break;
-              case kRecording:
-                loop_end_time = millis();
-                loop_end_offset = loop_end_time - loop_start_time;
-                looper_mode = kPlaying;
-                debugln("looper playing");
-                break;
-              case kPlaying:
-                looper_mode = kOverdubbing;
-                debugln("looper overdubbing");
-                break;
-              case kOverdubbing:
-                looper_mode = kPlaying;
-                debugln("looper playing");
-                break;
+      case midi::ControlChange:  // ---------- MIDI CONTROL CHANGE RECEIVED ----------
+        data1 = MIDI.getData1();
+        data2 = MIDI.getData2();
+        probemidi("cc: ");
+        probemidi(data1);
+        probemidi(" data: ");
+        probemidiln(data2);
+        switch (data1) {
+          case 1:  // bottom pot -- loop speed
+            break;
+          case 12:  // top pot -- loop density
+            looper_random_chance = data2;
+            break;
+          case 20:  // big button
+            if (data2 == 127) {
+              switch (looper_mode) {
+                case kOff:
+                  looper_mode = kRecording;
+                  loop_start_time = millis();
+                  meap.turnLedDOn();
+                  debugln("looper recording");
+                  break;
+                case kRecording:
+                  loop_end_time = millis();
+                  loop_end_offset = loop_end_time - loop_start_time;
+                  looper_mode = kPlaying;
+                  meap.turnLedDOff();
+                  debugln("looper playing");
+                  break;
+                case kPlaying:
+                  looper_mode = kOverdubbing;
+                  meap.turnLedDOn();
+                  debugln("looper overdubbing");
+                  break;
+                case kOverdubbing:
+                  looper_mode = kPlaying;
+                  meap.turnLedDOff();
+                  debugln("looper playing");
+                  break;
+              }
             }
-          }
-          break;
-        case 15:  // top green button
-          if (data2 == 127) {
-            if (looper_mode == kPaused) {
-              looper_mode = kPlaying;
-              loop_start_time = millis() - pause_time;
-              loop_end_time = loop_start_time + loop_end_offset;
-              debugln("looper playing");
+            break;
+          case 15:  // top green button
+            if (data2 == 127) {
+              if (looper_mode == kPaused) {
+                looper_mode = kPlaying;
+                loop_start_time = millis() - pause_time;
+                loop_end_time = loop_start_time + loop_end_offset;
+                debugln("looper playing");
+              } else {
+                looper_mode = kPaused;
+                pause_time = millis() - loop_start_time;
+                debugln("looper paused");
+
+                //turn off active notes
+                uint16_t num_active_notes = computerNoteQueue.size();
+                // delete tagged notes starting at end of array
+                for (int i = num_active_notes - 1; i >= 0; i--) {
+                  sample_env[computerNoteQueue.get(i)->voice_num].noteOff();  // turn off note
+                  delete (computerNoteQueue.get(i));
+                  computerNoteQueue.remove(i);
+                }
+              }
+            }
+            break;
+          case 14:  // bottom green button
+
+            if (data2 == 127) {
+              looper_mode = kOff;
+              for (int16_t i = looperNoteQueue.size() - 1; i >= 0; i--) {
+                delete (looperNoteQueue.get(i));
+                looperNoteQueue.remove(i);
+              }
+              uint16_t num_active_notes = computerNoteQueue.size();
+              // delete tagged notes starting at end of array
+              for (int i = num_active_notes - 1; i >= 0; i--) {
+                sample_env[computerNoteQueue.get(i)->voice_num].noteOff();  // turn off note
+                delete (computerNoteQueue.get(i));
+                computerNoteQueue.remove(i);
+              }
+
+              //clear cpu note,, send notse off
+              debugln("looper off");
+            }
+
+            break;
+          case 21:  // switch
+            if (data2 == 127) {
+              looper_modulation = kVariable;
+              debugln("looper mod enabled");
             } else {
-              looper_mode = kPaused;
-              pause_time = millis() - loop_start_time;
-              debugln("looper paused");
+              looper_modulation = kNormal;
+              debugln("looper mod disabled");
             }
-          }
-          break;
-        case 14:  // bottom green button
+            break;
+        }
+        break;
+      case midi::PitchBend:
+        break;
 
-          if (data2 == 127) {
-            looper_mode = kOff;
-            for (int16_t i = looperNoteQueue.size() - 1; i >= 0; i--) {
-              delete (looperNoteQueue.get(i));
-              looperNoteQueue.remove(i);
-            }
-            uint16_t num_active_notes = computerNoteQueue.size();
-            // delete tagged notes starting at end of array
-            for (int i = num_active_notes - 1; i >= 0; i--) {
-              sample_env[computerNoteQueue.get(i)->voice_num].noteOff();  // turn off note
-              delete (computerNoteQueue.get(i));
-              computerNoteQueue.remove(i);
-            }
-
-            //clear cpu note,, send notse off
-            debugln("looper off");
-          }
-
-          break;
-        case 21:  // switch
-          if (data2 == 127) {
-            looper_modulation = kVariable;
-            debugln("looper mod enabled");
-          } else {
-            looper_modulation = kNormal;
-            debugln("looper mod disabled");
-          }
-          break;
-      }
-      break;
-    case midi::PitchBend:
-      break;
-
-    case midi::Clock:  // ---------- MIDI CLOCK PULSE RECEIVED ----------
-      probemidi("clock: ");
-      probemidiln(midi_step_num);
-      if (midi_clock_mode == kEXTERNAL) {
-        clockStep();
-      }
-      break;
-    case midi::Start:  // ---------- MIDI START MESSAGE RECEIVED ----------
-      midi_step_num = 0;
-      break;
+      case midi::Clock:  // ---------- MIDI CLOCK PULSE RECEIVED ----------
+        probemidi("clock: ");
+        probemidiln(midi_step_num);
+        if (midi_clock_mode == kEXTERNAL) {
+          clockStep();
+        }
+        break;
+      case midi::Start:  // ---------- MIDI START MESSAGE RECEIVED ----------
+        midi_step_num = 0;
+        break;
+    }
   }
 }
 
@@ -936,27 +1001,9 @@ void computerNoteOn(int note, int velocity, int channel, int pgm_override, uint3
 
       // keep track of note in active notes queue
       ActiveMidiNote *myNote = new ActiveMidiNote();  // create object to keep track of note num, voice num and freq
-      myNote->newNote(note, velocity, channel, sample_freq[curr_voice], curr_voice);
+      myNote->newNote(note, velocity, channel, curr_voice);
       myNote->setEndTime(millis() + note_length);
       myNote->program = my_program;
-
-
-      // ATM computer notes do note factor into portamento in any way
-      myNote->portSet(true, 0);
-      // if (port_length == 0 || computerNoteQueue.size() == 0) {  // don't apply portamento if port time is zero or if no notes are active
-      //   myNote->portSet(true, 0);
-      // } else {
-      //   myNote->portSet(false, millis() + port_length);
-      //   portamento[curr_voice].setTime(0);
-      //   portamento[curr_voice].start(last_port_note);
-      //   portamento[curr_voice].next();  // jump this voice to the prev note pitch, this is really hacky
-      //   portamento[curr_voice].next();
-      //   portamento[curr_voice].setTime(port_length);
-      //   portamento[curr_voice].start(float_to_Q16n16(sample_freq[curr_voice]));
-      // }
-
-      // last_port_note = float_to_Q16n16(sample_freq[curr_voice]);  // set this as last note played for portamento
-
       computerNoteQueue.add(myNote);  // add to active notes queue
     }
   }
@@ -1018,7 +1065,7 @@ void updateComputerNotes() {
   }
 }
 
-void updateLoop() {
+void updateLooper() {
   if (looper_mode == kPlaying || looper_mode == kOverdubbing) {
     uint64_t curr_time = millis();
     // reached end of loop, reset to beginning

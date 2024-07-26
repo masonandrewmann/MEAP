@@ -1,4 +1,4 @@
-#include "samples/piano/cass_piano.h"
+// #include "samples/piano/cass_piano.h"
 #include "samples/piano/e_piano.h"
 #include "samples/piano/Glass_Piano_C.h"
 // #include "samples/piano/piano_4C.h"
@@ -73,79 +73,114 @@
 #include "samples/Percussion/donn_ring.h"
 #include "samples/Percussion/womp.h"
 
+#include "samples/mel/clip1.h"
+#include "samples/mel/clip2.h"
+#include "samples/mel/clip3.h"
+#include "samples/mel/clip4.h"
+#include "samples/mel/clip5.h"
+#include "samples/mel/clip6.h"
+#include "samples/mel/clip7rev.h"
+#include "samples/mel/clip8rev.h"
+
+#include "samples/drones/cb_synth16.h"
+#include "samples/drones/cello.h"
+#include "samples/drones/clari.h"
+#include "samples/drones/pad_hi.h"
+#include "samples/drones/pad_lo.h"
+#include "samples/drones/violin.h"
+
+#include "samples/drums/balloon.h"
+#include "samples/drums/chair.h"
+#include "samples/drums/drop.h"
+#include "samples/drums/match_light.h"
+#include "samples/drums/pillow.h"
+#include "samples/drums/ping.h"
+#include "samples/drums/root.h"
+#include "samples/drums/seeds.h"
+#include "samples/drums/soap.h"
+#include "samples/drums/suction.h"
+#include "samples/drums/who.h"
 
 
-#define NUM_SAMPLES 33
 
-const int16_t *samples_list[NUM_SAMPLES] = { 
-cass_piano_DATA, // 0
-e_piano_DATA, // 1
-Glass_Piano_C_DATA, // 2
-toy_piano_c_DATA, // 4
-// bell_tree_DATA, // 5
-glock_hi_c_DATA, // 8
-milkjar_DATA, // 11
-round_DATA, // 12
-steeldrum_DATA, // 13
-// mellowtron_DATA, // 18
-organ_simple_DATA, // 20
-// shorgan_DATA, // 24
-ambitone_DATA, // 25
-anne_sine_DATA, // 26
-// belton_DATA, // 27
-// flutterbug_DATA, // 33
-granularglockenfi_DATA, // 36
-shoresine_DATA, // 44
-soft_sk_DATA, // 45
-gtr_lo2_DATA, // 45
-// koto_choir_DATA, // 45
-// uke_c_hi_DATA, // 45
-Upright_Bass_C_DATA, // 45
-Strings2_DATA, // 45
-eupho_long_lo_c_DATA, // 45
-tpt_cup_long_c_DATA, // 45
-// andes_DATA, // 45
-recorder_DATA, // 45
-splashy_DATA, // 45
-shuffle_DATA, // 45
-donn_click_DATA, // 45
-donn_ring_DATA, // 45
-womp_DATA, // 45
+#define NUM_SAMPLES 36
+
+// add some lower octave drones
+
+const int16_t *samples_list[NUM_SAMPLES] = {
+  e_piano_DATA,            // 0
+  Glass_Piano_C_DATA,      // 1
+  glock_hi_c_DATA,         // 2
+  organ_simple_DATA,       // 3
+  anne_sine_DATA,          // 4
+  soft_sk_DATA,            // 5
+  gtr_lo2_DATA,            // 6
+  Upright_Bass_C_DATA,     // 7
+  eupho_long_lo_c_DATA,    // 8
+  recorder_DATA,           // 9
+  shuffle_DATA,            // 10
+  donn_click_DATA,         // 11
+  donn_ring_DATA,          // 12
+  womp_DATA,               // 13
+  clip1_DATA,              // 14 - guitar pattern
+  clip2_DATA,              // 15 - vocal pattern
+  clip4_DATA,              // 16 - guitar hit - its okay
+  clip5_DATA,              // 17 - layered
+  clip6_DATA,              // 18 - choppy
+  clip7rev_DATA,           // 19 - reverb vocals
+  clip8rev_DATA,           // 20 - reverb gtr
+  ambitone_DATA,           // 21
+  granularglockenfi_DATA,  // 22
+  splashy_DATA,            // 23
+  clari_DATA,              // 24
+  balloon_DATA, // 25
+  chair_DATA, // 26
+  drop_DATA, // 27
+  match_light_DATA, // 28
+  pillow_DATA, // 29
+  ping_DATA, // 30
+  root_DATA, // 31
+  seeds_DATA, // 32
+  soap_DATA, // 33
+  suction_DATA, // 34
+  who_DATA // 35
 };
 
-
 const uint64_t samples_lengths[NUM_SAMPLES] = {
-cass_piano_NUM_CELLS, // 0
-e_piano_NUM_CELLS, // 1
-Glass_Piano_C_NUM_CELLS, // 2
-toy_piano_c_NUM_CELLS, // 4
-// bell_tree_NUM_CELLS, // 5
-glock_hi_c_NUM_CELLS, // 8
-milkjar_NUM_CELLS, // 11
-round_NUM_CELLS, // 12
-steeldrum_NUM_CELLS, // 13
-// mellowtron_NUM_CELLS, // 18
-organ_simple_NUM_CELLS, // 20
-// shorgan_NUM_CELLS, // 24
-ambitone_NUM_CELLS, // 25
-anne_sine_NUM_CELLS, // 26
-// belton_NUM_CELLS, // 27
-// flutterbug_NUM_CELLS, // 33
-granularglockenfi_NUM_CELLS, // 36
-shoresine_NUM_CELLS, // 44
-soft_sk_NUM_CELLS, // 45
-gtr_lo2_NUM_CELLS, // 45
-// koto_choir_NUM_CELLS, // 45
-// uke_c_hi_NUM_CELLS, // 45
-Upright_Bass_C_NUM_CELLS, // 45
-Strings2_NUM_CELLS, // 45
-eupho_long_lo_c_NUM_CELLS, // 45
-tpt_cup_long_c_NUM_CELLS, // 45
-// andes_NUM_CELLS, // 45
-recorder_NUM_CELLS, // 45
-splashy_NUM_CELLS, // 45
-shuffle_NUM_CELLS, // 45
-donn_click_NUM_CELLS, // 45
-donn_ring_NUM_CELLS, // 45
-womp_NUM_CELLS, // 45
+  e_piano_NUM_CELLS,            // 0
+  Glass_Piano_C_NUM_CELLS,      // 1
+  glock_hi_c_NUM_CELLS,         // 3
+  organ_simple_NUM_CELLS,       // 6
+  anne_sine_NUM_CELLS,          // 7
+  soft_sk_NUM_CELLS,            // 8
+  gtr_lo2_NUM_CELLS,            // 9
+  Upright_Bass_C_NUM_CELLS,     // 11
+  eupho_long_lo_c_NUM_CELLS,    // 12
+  recorder_NUM_CELLS,           // 13
+  shuffle_NUM_CELLS,            // 14
+  donn_click_NUM_CELLS,         // 15
+  donn_ring_NUM_CELLS,          // 16
+  womp_NUM_CELLS,               // 17
+  clip1_NUM_CELLS,              // 18
+  clip2_NUM_CELLS,              // 19
+  clip4_NUM_CELLS,              // 20
+  clip5_NUM_CELLS,              // 21
+  clip6_NUM_CELLS,              // 22
+  clip7rev_NUM_CELLS,           // 23
+  clip8rev_NUM_CELLS,           // 24
+  ambitone_NUM_CELLS,           // 25
+  granularglockenfi_NUM_CELLS,  // 26
+  splashy_NUM_CELLS,            // 27
+  clari_NUM_CELLS,
+  balloon_NUM_CELLS,
+  chair_NUM_CELLS,
+  drop_NUM_CELLS,
+  match_light_NUM_CELLS,
+  pillow_NUM_CELLS,
+  ping_NUM_CELLS,
+  root_NUM_CELLS,
+  seeds_NUM_CELLS,
+  soap_NUM_CELLS,
+  suction_NUM_CELLS,
+  who_NUM_CELLS
 };

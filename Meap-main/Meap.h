@@ -1,15 +1,27 @@
-/*
-  Meap.h - Library accompanying MEAP boards.
-  Created by Mason Mann, January 24, 2024.
-*/
-#ifndef Meap_h
-#define Meap_h
-#include "Arduino.h"
-#include <Mux.h>  // Arduino Analog-Digital Multiplexers library https://github.com/stechio/arduino-ad-mux-lib
+#ifndef MEAP_H_
+#define MEAP_H_
+
+#include "Meap_classes.h"
 #include <MIDI.h> // Arduino Midi library https://github.com/FortySevenEffects/arduino_midi_library
 
+#include "MozziConfigValues.h"
+#define MOZZI_AUDIO_MODE MOZZI_OUTPUT_I2S_DAC
+#define MOZZI_I2S_FORMAT MOZZI_I2S_FORMAT_LSBJ // PT8211 uses LSBJ format
+
+#define MOZZI_AUDIO_BITS 16
+#define MOZZI_I2S_PIN_BCK 48
+#define MOZZI_I2S_PIN_WS 47
+#define MOZZI_I2S_PIN_DATA 21
+
+#ifndef MOZZI_AUDIO_CHANNELS
+#define MOZZI_AUDIO_CHANNELS MOZZI_STEREO
+#endif
+
+// might need
+#define MOZZI_ANALOG_READ_RESOLUTION 10
+
 // Attempts to include all Mozzi modules, though I may have missed them. Surely Mozzi has an option to include all modules in one line???
-#include <MozziGuts.h>
+#include <Mozzi.h>
 #include <mozzi_midi.h>
 #include <mozzi_fixmath.h>
 #include <mozzi_rand.h>
@@ -19,7 +31,7 @@
 #include <AutoMap.h>
 #include <AutoRange.h>
 #include <CapPoll.h>
-#include <CircularBuffer.h>
+// #include <CircularBuffer.h> // not included because it causes a redeclaration error, should have an #ifdef clause like rest of modules
 #include <ControlDelay.h>
 #include <DCFilter.h>
 #include <Ead.h>
@@ -41,129 +53,54 @@
 #include <StateVariable.h>
 #include <WaveFolder.h>
 #include <WavePacket.h>
+#include <WavePacketSample.h>
 #include <WaveShaper.h>
 
-using namespace admux;
+#include <meap_stk/meap_delay.h>
+#include <meap_stk/meap_delay_linear.h>
+#include <meap_stk/meap_delay_allpass.h>
+#include <meap_stk/meap_fir.h>
+#include <meap_stk/meap_twang.h>
+#include <meap_stk/meap_one_pole.h>
+#include <meap_stk/meap_one_zero.h>
+// #include <meap_stk/meap_plucked.h>
+#include <meap_stk/meap_guitar.h>
+#include <meap_stk/meap_effect.h>
+#include <meap_stk/meap_prc_rev.h>
+#include <meap_stk/meap_biquad.h>
+#include <meap_stk/meap_bowtable.h>
+#include <meap_stk/meap_adsr.h>
+#include <meap_stk/meap_banded_waveguide.h>
+#include <meap_stk/meap_iir.h>
+#include <meap_stk/meap_sinewave.h>
+#include <meap_stk/meap_chorus.h>
+#include <meap_stk/meap_polezero.h>
+#include <meap_stk/meap_brass.h>
+#include <meap_stk/meap_filter.h>
+#include <meap_stk/meap_bowed.h>
+#include <meap_stk/meap_twozero.h>
+// #include <meap_stk/meap_lentpitshift.h>
+// #include <meap_stk/meap_recorder.h>
+#include <meap_stk/meap_freeverb.h>
+#include <meap_stk/meap_control_sine.h>
 
-struct StereoSample
-{
-  int16_t left;
-  int16_t right;
-};
+#include <meap_mozzi/meap_sample.h>
+#include <meap_mozzi/meap_sample16.h>
 
-class Meap
-{
-public:
-  // Constructor
-  Meap();
+#include <meap_modules/mSampleAmbi.h>
+#include <meap_modules/mInstrument.h>
+#include <meap_modules/mSampler.h>
+#include <meap_modules/mSampler16.h>
+#include <meap_modules/mDrumRack.h>
+#include <meap_modules/mSubSynth.h>
+#include <meap_modules/mBasicFM.h>
+#include <meap_modules/mSamplerVoice.h>
+#include <meap_modules/mChopper.h>
+#include <meap_modules/mWavetable.h>
+#include <meap_modules/mWavetableSynth.h>
+#include <meap_modules/mOscBank.h>
+#include <meap_modules/mBasicFMPOLY.h>
 
-  // methods
-  /**
-   * @brief Sets up various processes for MEAP
-   *
-   */
-  void begin();
+#include <dependencies/LinkedList/LinkedList.h>
 
-  /**
-   * @brief Generates a random integer within a specified range, inclusive of the limit numbers.
-   *
-   * @param howsmall is the lower limit of the range, inclusive
-   * @param howbig is the upper limit of the range, inclusive
-   * @return long returns the random number
-   */
-  long irand(long howsmall, long howbig);
-
-  /**
-   * @brief Generates a random decimal between 0 and 1, inclusive, with four decimal points of precision
-   *
-   * @return float returns the random number
-   */
-  float frand();
-
-  /**
-   * @brief Reads the two built-in potentiometers, storing the results in the potVals[] array
-   *
-   */
-  void readPots();
-
-  /**
-   * @brief Reads the touch pad breakout board, storing the results in the touchVals[] array
-   *
-   */
-  void readTouch();
-
-  /**
-   * @brief Reads the built-in dip switches, storing the results in the dipVals[] array
-   *
-   */
-  void readDip();
-
-  /**
-   * @brief Reads the auxilliary multiplexer, storing the result in auxMuxVals[] array
-   *
-   */
-  void readAuxMux();
-
-  /**
-   * @brief User defined function that handles what to do when a touch pad is pressed or released.
-   *
-   * @param number is the number of the pad that was pressed 0-7 corresponding to pads #1-8 respectively
-   * @param pressed is true when a pad is pressed and false when the pad is released
-   */
-  void updateTouch(int number, bool pressed);
-
-  /**
-   * @brief User defined function that handles what to do when a dip switch
-   *
-   * @param number is the number of the switch that was toggled 0-7 corresponding to switches #1-8 respectively
-   * @param up is true when a switch was toggled up and false when a switch was toggled down
-   */
-  void updateDip(int number, bool up);
-
-  /**
-   * @brief A stereo equal power panner
-   *
-   * @param sample is the sample that you want to pan between the left and right output channels
-   * @param pos is the position in the stereo field, 0 is hard left, 127 is center and 255 is hard right
-   * @return StereoSample
-   */
-  StereoSample pan2(int sample, uint8_t pos);
-
-  /**
-   * @brief Calculates the length (in milliseconds) of a quarter note at a specified BPM
-   *
-   * @param tempo in BPM
-   * @return float number of milliseconds in one quarter note at the specified BPM
-   */
-  float tempoToPeriod(float tempo);
-
-  /**
-   * @brief Calculates the length (in microseconds) of a MIDI clock pulse (at 24PPQ) at a specified tempo
-   *
-   * @param tempo in BPM
-   * @return float number of microseconds in one MIDI clock pulse at the specified BPM
-   */
-  float midiPulseMicros(float tempo);
-
-  // variables
-  int dip_pins[8] = {5, 6, 7, 4, 3, 0, 2, 1};
-  int dip_vals[8] = {2, 2, 2, 2, 2, 2, 2, 2}; // set to 2 so dip up/down will execute when program is started
-  int prev_dip_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
-  int aux_mux_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-
-  int touch_pins[8] = {2, 4, 6, 8, 1, 3, 5, 7};
-  int touch_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int prev_touch_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int touch_avgs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int touch_threshold = 400;
-
-  int pot_vals[2] = {0, 0};
-  int pot_pins[2] = {9, 10};
-  Mux *dip_mux;
-  Mux *aux_mux;
-
-private:
-};
-
-#endif
+#endif // MEAP_H_

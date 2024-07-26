@@ -312,12 +312,12 @@ void loop() {
 
 
 void updateControl() {
-  meap.readPots();
+  // meap.readPots();
   meap.readTouch();
-  meap.readDip();
-  meap.readAuxMux();
+  // meap.readDip();
+  // meap.readAuxMux();
+  meap.readInputs();
   updateButtons();
-  updateMU15Gen();
 
   // MARNIE Pot Controls
   //1 pole smoothing here
@@ -414,66 +414,25 @@ AudioOutput_t updateAudio() {
 
 
 void Meap::updateTouch(int pad_num, bool pressed) {
-
-  // if pressed
-  // check how close we are to nearest sixteenth note,,
-  // if the nearest sixteenth note is in the future, proceed as normal
-  // however if the nearest sixteenth is in the past, we need to play the first step
-  // and get ready to play the next step on the next sixteenth
-  if (!mu_15_gen_enable) {
-    if (pressed) {
-      if (patterns[curr_pattern_bank][pad_num].active) {
-        patterns[curr_pattern_bank][pad_num].stop();
-      } else {
-        patterns[curr_pattern_bank][pad_num].start();
-        // check closest sixteenth note here! using ppq???? or maybe i store time with millis or micros?
-        uint32_t curr_time = millis();
-        if (curr_time > last_sixteenth_time && curr_time < last_sixteenth_time + half_sixteenth_length) {
-          debugln("pressed late, accomodating!");
-          //closest sixteenth is in the past,, do something here!!!
-          // use step function
-          patterns[curr_pattern_bank][pad_num].start_flag = false;
-          step(patterns[curr_pattern_bank][pad_num]);
-        }
-      }
-    }
-  }
-
-
   switch (pad_num) {
     case 0:
       if (pressed) {  // Pad 1 pressed
-        if (mu_15_gen_enable) {
-          MIDI.sendProgramChange(12, 1);  //piano
-          MIDI.sendProgramChange(1, 2);   //marimba
-        }
       } else {  // Pad 1 released
       }
       break;
     case 1:
       if (pressed) {  // Pad 2 pressed
-        if (mu_15_gen_enable) {
-            MIDI.sendProgramChange(92, 1); //bowed pad
-            MIDI.sendProgramChange(89, 2); //warmpad
-        }
       } else {  // Pad 2 released
       }
       break;
     case 2:
       if (pressed) {  // Pad 3 pressed
-        if (mu_15_gen_enable) {
-            MIDI.sendProgramChange(52, 1); //ooh
-            MIDI.sendProgramChange(53, 2); //ahh
-        }
+
       } else {  // Pad 3 released
       }
       break;
     case 3:
       if (pressed) {  // Pad 4 pressed
-        if (mu_15_gen_enable) {
-            MIDI.sendProgramChange(108, 1); //ooh
-            MIDI.sendProgramChange(108, 2); // square
-        }
       } else {  // Pad 4 released
       }
       break;
@@ -563,36 +522,8 @@ void updateButtons() {
         case 0:
           if (button_vals[i]) {  // button 0 pressed
             debugln("B0 pressed");
-            midi_micros = meap.midiPulseMicros(250);         // update tempo to song tempo stored in patterns.h
-            half_sixteenth_length = midi_micros * 3 / 1000;  // for fixing timing on pattern triggering with touch pads
-            // midi_file_playing = true;
-            // midi_file_timer = 0;
-            // midi_file_index = 0;
-            MIDI.sendProgramChange(9, 1);  // 10 glock
-
-            tmm_sine_playing = true;
-            tmm_sine_index = 0;
-            tmm_sine_timer = 0;
-
-            tmm_extra_playing = true;
-            tmm_extra_index = 0;
-            tmm_extra_timer = 0;
-
-            tmm_chords_playing = true;
-            tmm_chords_index = 0;
-            tmm_chords_timer = 0;
-
-            tmm_glock_playing = true;
-            tmm_glock_index = 0;
-            tmm_glock_timer = 0;
-
           } else {  // button 0 released
             debugln("B0 released");
-            // midi_file_playing = false;
-            tmm_sine_playing = false;
-            tmm_extra_playing = false;
-            tmm_chords_playing = false;
-            tmm_glock_playing = false;
           }
           break;
         case 1:
@@ -607,12 +538,8 @@ void updateButtons() {
         case 2:                  // glockenspiel enable
           if (button_vals[i]) {  // button 2 pressed
             debugln("B2 pressed");
-            // glock_enable = true;
-            MIDI.turnThruOn();
           } else {  // button 2 released
             debugln("B2 released");
-            // glock_enable = false;
-            MIDI.turnThruOff();
           }
           break;
         case 3:                  // SAMPLE LOOPING MODE
@@ -631,19 +558,15 @@ void updateButtons() {
         case 4:
           if (button_vals[i]) {  // button 4 pressed
             debugln("B4 pressed");
-            mu_15_gran_enable = true;
           } else {  // button 4 released
             debugln("B4 released");
-            mu_15_gran_enable = false;
           }
           break;
         case 5:
           if (button_vals[i]) {  // button 5 pressed
             debugln("B5 pressed");
-            mu_15_gen_enable = true;
           } else {  // button 5 released
             debugln("B5 released");
-            mu_15_gen_enable = false;
           }
           break;
       }
@@ -655,53 +578,18 @@ void updateButtons() {
 
 //executes when a clock step is received
 void clockStep() {
-  // midiFileStep();  // step through midi file
-  tmmFileStep();  // step through tu me manque midi file
 
   if (midi_step_num % 24 == 0) {  // quarter note
-    if (retrigger_mode == kQUARTER) {
-      retriggerNotes(true);
-    }
   }
 
   if (midi_step_num % 12 == 0) {  // eighth note
     randomizeCutoff(rand_cutoff_range);
-    // debugln(rand_cutoff_range);
-    if (retrigger_mode == kEIGHTH) {
-      retriggerNotes(true);
-    }
-    if (meap.aux_mux_vals[0] > 30 && (mu_15_gen_enable == false)) {
-      // debug("glockval: ");
-      // debugln(meap.aux_mux_vals[0]);
-      int notes[] = { 67, 72, 76 };
-      int index = meap.irand(map(meap.aux_mux_vals[0], 0, 4095, -50, 0), 2);
-      int my_note = notes[index];
-      if (meap.irand(0, 1) == 1) {
-        my_note -= 12;
-      }
-      if (index >= 0) {
-        // debugln("glock_trig");
-        noteOnHandler(my_note, 127, MIDI_NOTE_CHANNEL, 3);  // note vel channel override ---- NOTE THAT IF RELEASE IS DOWN THIS NOTE WILL NOT SOUND BECAUSE NOTE OFF IS SO SOON
-        // MIDI.sendNoteOn(my_note, 127, 16);                  // send midi note to glockenspiel
-        noteOffHandler(my_note, MIDI_NOTE_CHANNEL);  // note channel
-      }
-    }
   }
 
   if (midi_step_num % 6 == 0) {  // sixteenth note
     last_sixteenth_time = millis();
     if (meap.irand(0, 4) == 0) {
       randomizeCutoff(rand_cutoff_range);
-    }
-    if (retrigger_mode == kSIXTEENTH) {
-      retriggerNotes(true);
-    }
-
-    //send triggers to patterns
-    for (int bank = 0; bank < NUM_PATTERN_BANKS; bank++) {
-      for (int i = 0; i < 8; i++) {
-        patterns[bank][i].incrementClock(midi_step_num);
-      }
     }
   }
 
@@ -747,9 +635,6 @@ void randomizeCutoff(int range) {
 void noteOnHandler(int note, int velocity, int channel, int pgm_override) {
   if (channel == MIDI_NOTE_CHANNEL) {  // check on which channel we received the MIDI noteOn
     // send notes to midi glockenspiel
-    if (glock_enable) {
-      MIDI.sendNoteOn(note, velocity, glock_channel);
-    }
     if (curr_program < NUM_SAMPLES) {  // play a sample
       // choose voice to play
       int my_program = curr_program;
@@ -1406,85 +1291,6 @@ void tmmFileStep() {
         return;  // reached end of file, exiting
       }
       tmm_extra_timer = 0;
-    }
-  }
-}
-
-void updateMU15Gen() {
-  if (mu_15_gen_enable) {
-    delTime = map(meap.aux_mux_vals[0], 0, 4095, 300, 2);
-    octaveOffset = map(meap.aux_mux_vals[1], 0, 4095, -3, 3);
-
-    if (myDel.ready()) {
-      numWaits1--;
-      numWaits2--;
-
-      myDel.start(delTime);
-      if (numWaits1 <= 0) {
-        numWaits1 = meap.irand(2, 8);
-        if (meap.touch_vals[4]) {
-          numWaits1 = 1;
-        } else if (meap.touch_vals[5]) {
-          numWaits1 = 4;
-        }
-        //generate random note
-        int myNoteNum = meap.irand(0, 7);
-        //calculate mapping values
-        int envVal = map(myNoteNum, 0, 7, 1000, 50);
-        //apply envelope
-        // env1a.setTimes(10, envVal, 0, 0);
-        //apply frequency
-        int myOctave = 0;
-        while (myNoteNum > 3) {
-          myNoteNum -= 4;
-          myOctave++;
-        }
-        myNoteNum = 12 + scaleRoot + majScale[(seventh[myNoteNum] + chordRoot) % 7] + 12 * myOctave + 12 * octaveOffset;
-        // osc1.setFreq(mtof(myNoteNum));
-        // env1a.noteOn();
-        // osc1Pan = meap.irand(0, 1);
-
-        createMIDINote(constrainMIDI(myNoteNum), 100, 1, envVal);
-      }
-
-      if (numWaits2 <= 0) {
-        numWaits2 = meap.irand(8, 16);
-        if (delTime < 4) {
-          numWaits2 = 1;
-        }
-        if (meap.touch_vals[6]) {
-          numWaits2 = 6;
-        } else if (meap.touch_vals[7]) {
-          numWaits2 = 12;
-        }
-        //generate random note
-        int myNoteNum = meap.irand(0, 23);  // switch max to 23
-        //calculate mapping values
-        int envVal = map(myNoteNum, 0, 23, 3500, 500);
-        //apply envelope
-        // env2a.setTimes(10, envVal, 0, 0);
-        //apply frequency
-        int myOctave = 0;
-        while (myNoteNum > 3) {
-          myNoteNum -= 4;
-          myOctave++;
-        }
-        myNoteNum = scaleRoot + majScale[(seventh[myNoteNum] + chordRoot) % 7] + 12 * myOctave - 12 + 12 * octaveOffset;
-        // osc2.setFreq(mtof(myNoteNum));
-        // env2a.noteOn();
-        // osc2Pan = meap.irand(0, 1);
-
-        createMIDINote(constrainMIDI(myNoteNum), 100, 2, envVal);
-      }
-    }
-  }
-  if (!myNoteQueue.isEmpty()) {
-    struct midiNote *myNote = myNoteQueue.getHead();
-    if (millis() > myNote->endTime) {
-      MIDI.sendNoteOff(myNote->noteNum, 100, myNote->channel);
-      free(myNote);
-
-      myNoteQueue.dequeue();
     }
   }
 }

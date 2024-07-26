@@ -2,14 +2,16 @@
   Basic template for a MARNIE L program with clock and midi
  */
 
-#include <MozziGuts.h>
-#include <Oscil.h>
-#include <mozzi_midi.h>
+// #include <MozziGuts.h>
+// #include <Oscil.h>
+// #include <mozzi_midi.h>
 #include <Meap.h>
 #include "MEAP_Wavetable.h"
 #include <LinkedList.h>
 #include "ActiveMidiNote.h"
 #include "wavetable_includes.h"
+
+
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
 
@@ -151,7 +153,7 @@ AudioOutput_t updateAudio() {
   filter.next(immediate_sample);
   immediate_sample = filter.low();
 
-  return StereoOutput::fromAlmostNBit(26, immediate_sample, immediate_sample);
+  return StereoOutput::fromAlmostNBit(28, immediate_sample, immediate_sample);
 }
 
 void Meap::updateTouch(int number, bool pressed) {
@@ -418,7 +420,7 @@ void noteOffHandler(int note, int channel) {
       myNote = humanNoteQueue.get(i);
       if (note == myNote->note_num && channel == myNote->channel) {
         osc_env[myNote->voice_num].noteOff();  // turn off note
-        voice_queue.add(myNote->voice_num);
+        voice_queue.add(myNote->voice_num); 
         delete (myNote);
         humanNoteQueue.remove(i);
         return;
