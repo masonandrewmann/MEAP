@@ -76,7 +76,7 @@ mBasicFM<SAW_MAX_136_AT_16384_2048_NUM_CELLS, AUDIO_RATE> indie_chorus_layer(SAW
 mDrumRack<300000, COLLAR_DELAY_NUM_SAMPLES, AUDIO_RATE> collar_main(collar_delay_list, collar_delay_lengths, collar_delay_drums_data);
 mDrumRack<300000, COLLAR_AUX_NUM_SAMPLES, AUDIO_RATE> collar_aux(collar_aux_list, collar_aux_lengths, collar_aux_drums_data);
 // mBasicFM<TRIANGLE2048_NUM_CELLS, AUDIO_RATE> collar_fm(TRIANGLE2048_DATA, collar_arp_data);
-mBasicFMPOLY<TRIANGLE2048_NUM_CELLS, AUDIO_RATE, 2> collar_fm(TRIANGLE2048_DATA, collar_arp_data);
+mBasicFMPoly<TRIANGLE2048_NUM_CELLS, AUDIO_RATE, 2> collar_fm(TRIANGLE2048_DATA, collar_arp_data);
 
 mDrumRack<300000, COLLAR_SPEECH_SAMPLES, AUDIO_RATE> collar_speech(collar_speech_list, collar_speech_lengths, collar_sample_data);
 // MEAP_Delay_Allpass<int32_t> collar_delay(8192, 32768);  // 8191
@@ -121,7 +121,7 @@ void setup() {
 
 
 
-  indie_chorus.setDecay(1000);
+  indie_chorus.setDecayTime(1000);
 
   sealed_main.init(sealed_samples_list, sealed_samples_length, sealed_samples_data);
   sealed_main.setSampleVolume(2, 0);

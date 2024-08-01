@@ -84,22 +84,33 @@
 #include <meap_stk/meap_freeverb.h>
 #include <meap_stk/meap_control_sine.h>
 
-#include <meap_mozzi/meap_sample.h>
-#include <meap_mozzi/meap_sample16.h>
+// meap extensions to mozzi objects
+#include <meap_mozzi/mSample.h>
+#include <meap_mozzi/mOscil.h>
 
-#include <meap_modules/mSampleAmbi.h>
-#include <meap_modules/mInstrument.h>
+// meap instruments
 #include <meap_modules/mSampler.h>
-#include <meap_modules/mSampler16.h>
-#include <meap_modules/mDrumRack.h>
-#include <meap_modules/mSubSynth.h>
-#include <meap_modules/mBasicFM.h>
 #include <meap_modules/mSamplerVoice.h>
-#include <meap_modules/mChopper.h>
+#include <meap_modules/mDrumRack.h>
+#include <meap_modules/mRompler.h>
+
+#include <meap_modules/mBasicFM.h>
+#include <meap_modules/mBasicFMPoly.h>
+
 #include <meap_modules/mWavetable.h>
 #include <meap_modules/mWavetableSynth.h>
+
 #include <meap_modules/mOscBank.h>
-#include <meap_modules/mBasicFMPOLY.h>
+
+#include <meap_modules/mOperator.h>
+#include <meap_modules/mFM4Voice.h>
+#include <meap_modules/mFM4Poly.h>
+
+#include <meap_modules/mSubSynthVoice.h>
+#include <meap_modules/mSubSynthPoly.h>
+
+// meap effects
+#include <meap_modules/mChopper.h>
 
 #include <dependencies/LinkedList/LinkedList.h>
 

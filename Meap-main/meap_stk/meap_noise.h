@@ -21,7 +21,7 @@ public:
       If the seed value is zero (the default value), the random number generator is
       seeded with the system time.
     */
-    MEAP_Noise(){};
+    MEAP_Noise() {};
 
     //! Return the last computed output value.
     int16_t lastOut(void) const { return last_output_; };

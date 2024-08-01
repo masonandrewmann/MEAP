@@ -7,14 +7,11 @@
   Mason Mann, CC0
  */
 
-#include <MozziGuts.h>
-#include <Oscil.h>
-#include <mozzi_midi.h>
 #include <Meap.h>
 #include <tables/sin8192_int8.h>  // loads sine wavetable
 
 #define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
-#define CV1_PIN 41
+// #define CV1_PIN 41
 // #define CV2_PIN 42 
 
 // int cv_value = 0;
@@ -22,6 +19,7 @@
 Meap meap;
 
 Oscil<8192, AUDIO_RATE> my_sine(SIN8192_DATA);
+Oscil<8192, AUDIO_RATE> my_sine2(SIN8192_DATA);
 
 // unsigned long timer = 0;
 
@@ -31,6 +29,7 @@ void setup() {
   meap.begin();
 
   my_sine.setFreq(440);
+  my_sine2.setFreq(220);
 
   // ledcSetup(0, 5000, 12);  // 0-8191
   // ledcSetup(1, 5000, 12);
@@ -46,9 +45,7 @@ void loop() {
 
 
 void updateControl() {
-  meap.readPots();
-  meap.readTouch();
-  meap.readDip();-
+  meap.readInputs();
 
   // ledcWrite(0, cv_value);
   // ledcWrite(1, cv_value);
@@ -66,15 +63,19 @@ void updateControl() {
   //   }
   // }
 
-  Serial.print(meap.pot_vals[0]);
-  Serial.print("   ");
-  Serial.println(meap.pot_vals[1]);
+  // Serial.print(meap.pot_vals[0]);
+  // Serial.print("   ");
+  // Serial.println(meap.pot_vals[1]);
+
+  my_sine.setFreq((float)map(meap.pot_vals[0], 0, 4095, 100, 2000));
+  my_sine2.setFreq((float)map(meap.pot_vals[1], 0, 4095, 100, 2000));
 }
 
 
 AudioOutput_t updateAudio() {
   int sample = my_sine.next();
-  return StereoOutput::from8Bit(sample, sample);
+  int sample2 = my_sine2.next();
+  return StereoOutput::fromNBit(8, sample, sample2);
 }
 
 void Meap::updateTouch(int number, bool pressed) {

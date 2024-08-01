@@ -1,11 +1,7 @@
 #ifndef MEAP_SAMPLER_H_
 #define MEAP_SAMPLER_H_
 
-// #include "mInstrument.h"
-// #include "meap_sample.h"
-// #include "ADSR.h"
-
-template <uint32_t mMAX_SAMPLE_LENGTH, uint32_t mAUDIO_RATE, class T = int16_t>
+template <uint32_t mSAMPLE_LENGTH, uint32_t mAUDIO_RATE, class T = int16_t>
 class mSampler
 {
 public:
@@ -20,12 +16,16 @@ public:
         gain_ = 0;
         // initialize sample here
         // sample_.setTable();
-        sample_.setEnd(mMAX_SAMPLE_LENGTH);
+        sample_.setEnd(mSAMPLE_LENGTH);
+        velocity_ = 127;
 
-        if(sizeof(T) == sizeof(int16_t)){
-            shift_val_ = 8;
-        } else {
-            shift_val_ = 0;
+        if (sizeof(T) == sizeof(int16_t))
+        {
+            shift_val_ = 15; // 8 bits down for sample birate + 7 bits for velocity
+        }
+        else
+        {
+            shift_val_ = 7; // just 7 bits down for velocity
         }
     };
 
@@ -35,9 +35,16 @@ public:
         sample_.setEnd(TABLE_SIZE);
     }
 
-    //! Start a note with the given frequency and amplitude.
-    void noteOn(float frequency, uint8_t amplitude)
+    void setTableAndEnd(const T *TABLE_NAME, uint64_t TABLE_SIZE)
     {
+        sample_.setTable(TABLE_NAME);
+        sample_.setEnd(TABLE_SIZE);
+    }
+
+    //! Start a note with the given frequency and amplitude.
+    void noteOn(float frequency, uint8_t v_)
+    {
+        velocity_ = v_;
         sample_.setFreq(frequency);
         sample_.start();
         adsr_.noteOn();
@@ -45,6 +52,12 @@ public:
 
     //! Stop a note with the given amplitude (speed of decay).
     void noteOff(uint8_t amplitude)
+    {
+        adsr_.noteOff();
+    }
+
+    //! Stop a note with the given amplitude (speed of decay).
+    void noteOff()
     {
         adsr_.noteOff();
     }
@@ -65,28 +78,43 @@ public:
         sample_.setLoopingOff();
     }
 
-    void setDecay(uint32_t decay){
+    void setAttackTime(uint32_t a_)
+    {
+        adsr_.setAttackTime(a_);
+    }
+
+    void setDecayTime(uint32_t decay)
+    {
         adsr_.setDecayTime(decay);
     }
 
-    //! Perform the control change specified by \e number and \e value (0.0 - 128.0).
-    void controlChange(uint8_t number, uint8_t value) {};
+    void setReleaseTime(uint32_t r)
+    {
+        adsr_.setReleaseTime(r);
+    }
 
-    //! Compute one sample frame and return the specified \c channel value.
-    /*!
-      For monophonic instruments, the \c channel argument is ignored.
-    */
+    void setTimes(uint32_t a_, uint32_t d_, uint32_t s_, uint32_t r_)
+    {
+        adsr_.setTimes(a_, d_, s_, r_);
+    }
+
+    void setLevels(uint32_t a_l_, uint32_t d_l_, uint32_t s_l_, uint32_t r_l_)
+    {
+        adsr_.setTimes(a_l_, d_l_, s_l_, r_l_);
+    }
+
     int32_t next()
     {
         adsr_.update();
         gain_ = adsr_.next();
-        return sample_.next() * gain_ >> shift_val_; // 8 bit gain * 8 bit sample = 16bit result
+        return (sample_.next() * gain_ * velocity_) >> shift_val_; // 8 bit gain * 8 bit sample = 16bit result * velocity >>7 = ~16bit result
     }
 
 protected:
     uint16_t gain_;
+    uint16_t velocity_;
     float freq_;
-    mSampleAmbi<mMAX_SAMPLE_LENGTH, mAUDIO_RATE, T> sample_;
+    mSample<mSAMPLE_LENGTH, mAUDIO_RATE, T> sample_;
 
     uint8_t shift_val_;
 

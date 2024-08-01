@@ -15,11 +15,11 @@
 //   |A|
 //   ___
 
-template <uint32_t NUM_CELLS, uint64_t mAUDIO_RATE, uint16_t mPOLYPHONY>
-class mBasicFMPOLY
+template <uint32_t NUM_CELLS, uint32_t mAUDIO_RATE, uint16_t mPOLYPHONY>
+class mBasicFMPoly
 {
 public:
-    mBasicFMPOLY(const int8_t *TABLE_NAME, uint8_t *base_address)
+    mBasicFMPoly(const int8_t *TABLE_NAME, uint8_t *base_address)
     {
 
         for (uint16_t i = 0; i < mPOLYPHONY; i++)
@@ -70,7 +70,7 @@ public:
         time_ = (current_address_[3] << 8) + current_address_[4];
     }
 
-    void setTimes(uint8_t operator_num, uint64_t a, uint64_t d, uint64_t s, uint64_t r)
+    void setTimes(uint8_t operator_num, uint32_t a, uint32_t d, uint32_t s, uint32_t r)
     {
 
         if (operator_num == 0)
@@ -105,7 +105,7 @@ public:
         c_depth_ = depth;
     }
 
-    void setDecayTime(uint8_t operator_num, uint64_t d_t)
+    void setDecayTime(uint8_t operator_num, uint32_t d_t)
     {
         if (operator_num == 0)
         { // operator A
@@ -119,6 +119,13 @@ public:
             for (uint16_t i = 0; i < mPOLYPHONY; i++)
             {
                 envB_[i].setDecayTime(d_t);
+            }
+        }
+        else if (operator_num == 2)
+        {
+            for (uint16_t i = 0; i < mPOLYPHONY; i++)
+            {
+                envC_[i].setDecayTime(d_t);
             }
         }
     }
@@ -140,37 +147,18 @@ public:
         if (playing_)
         {
             pulse_counter_ += 1;
-            // Serial.println(pulse_counter_);
-
             while (pulse_counter_ >= time_)
             {
                 switch (message_type_) // notes are indexed from 0 on sample_bank starting from C-1 (0)
                 {
                 case 0x80: // note off
-                    for (uint16_t i = 0; i < mPOLYPHONY; i++)
-                    {
-                        if (note_num_[i] == data1_)
-                        {
-                            envA_[i].noteOff();
-                            envB_[i].noteOff();
-                            envC_[i].noteOff();
-                        }
-                    }
-
+                    noteOff(data1_);
                     break;
                 case 0x90: // note on
                     if (data1_ != 127)
                     {
-                        oscA_[curr_voice_].setFreq(mtof(data1_));
-                        envA_[curr_voice_].noteOn();
-                        oscB_[curr_voice_].setFreq(mtof(data1_));
-                        envB_[curr_voice_].noteOn();
-                        oscC_[curr_voice_].setFreq(mtof(data1_ - 12));
-                        envC_[curr_voice_].noteOn();
-                        note_num_[curr_voice_] = data1_;
-                        velocity_[curr_voice_] = data2_;
+                        noteOn(data1_, data2_);
                     }
-                    curr_voice_ = (curr_voice_ + 1) % mPOLYPHONY;
                     break;
                 case 255: // end of file
                     playing_ = false;
@@ -191,24 +179,33 @@ public:
         return playing_;
     }
 
-    // void noteOn(uint16_t sample_num, float freq)
-    // {
-    //     envA_.noteOn();
-    //     oscA_.setFreq(freq);
+    void noteOn(uint16_t sample_num, float freq)
+    {
+        float my_freq = mtof(data1_);
+        float low_freq = mtof(data1_ - 12);
+        oscA_[curr_voice_].setFreq(my_freq);
+        envA_[curr_voice_].noteOn();
+        oscB_[curr_voice_].setFreq(my_freq);
+        envB_[curr_voice_].noteOn();
+        oscC_[curr_voice_].setFreq(low_freq);
+        envC_[curr_voice_].noteOn();
+        note_num_[curr_voice_] = data1_;
+        velocity_[curr_voice_] = data2_;
+        curr_voice_ = (curr_voice_ + 1) % mPOLYPHONY;
+    }
 
-    //     envB_.noteOn();
-    //     oscB_.setFreq(freq);
-
-    //     envC_.noteOn();
-    //     oscC_.setFreq(freq / 2);
-    // }
-
-    // void noteOff(uint16_t sample_num)
-    // {
-    //     envA_.noteOff();
-    //     envB_.noteOff();
-    //     envC_.noteOff();
-    // }
+    void noteOff(uint16_t sample_num)
+    {
+        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        {
+            if (note_num_[i] == data1_)
+            {
+                envA_[i].noteOff();
+                envB_[i].noteOff();
+                envC_[i].noteOff();
+            }
+        }
+    }
 
     int32_t next()
     {

@@ -19,29 +19,15 @@ public:
         data2_ = 0;
         time_ = 0;
 
-        // velocity_ = 255;
-
         pulse_counter_ = 0;
 
         default_freq_ = (float)mAUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
 
         for (uint8_t i; i < mNUM_SAMPLES; i++)
         {
-            // sample_bank_[i].setTable(base_address_[i]);
-            volumes[i] = 255;
-            velocity_[i] = 255;
+            sample_gain_[i] = 255;
+            velocity_[i] = 127;
             sample_bank_[i].setTable(sample_list_[i], sample_lengths_[i]);
-            if (sample_list_[i] == NULL)
-            {
-                Serial.print("list null: ");
-                Serial.println(i);
-            }
-
-            if (sample_lengths_[i] == NULL)
-            {
-                Serial.print("length null: ");
-                Serial.println(i);
-            }
         }
     };
 
@@ -65,9 +51,8 @@ public:
 
         for (uint8_t i; i < mNUM_SAMPLES; i++)
         {
-            volumes[i] = 255;
-            velocity_[i] = 255;
-            // sample_bank_[i].setTable(base_address_[i]);
+            sample_gain_[i] = 255;
+            velocity_[i] = 127;
             sample_bank_[i].setTable(sample_list_[i], sample_lengths[i]);
         }
     }
@@ -110,8 +95,9 @@ public:
                     // sample_bank_[data1_].noteOff(255);
                     break;
                 case 0x90: // note on
-                    sample_bank_[data1_].noteOn(default_freq_, 255);
-                    velocity_[data1_] = data2_;
+                    noteOn(data1_, data2_, default_freq_);
+                    // sample_bank_[data1_].noteOn(default_freq_, 255);
+                    // velocity_[data1_] = data2_;
                     break;
                 case 255: // end of file
                     playing_ = false;
@@ -133,21 +119,11 @@ public:
         return playing_;
     }
 
-    void noteOn(uint16_t sample_num, float freq)
+    void noteOn(uint16_t sample_num, uint8_t vel, float freq)
     {
-        sample_bank_[sample_num].noteOn(freq, 255);
-    }
-
-    void trig(uint16_t sample_num)
-    {
-        sample_bank_[sample_num].setLoopingOn();
-        sample_bank_[sample_num].noteOn(default_freq_, 255);
-    }
-
-    void untrig(uint16_t sample_num)
-    {
-        sample_bank_[sample_num].setLoopingOff();
-        sample_bank_[sample_num].noteOff(255);
+        sample_bank_[sample_num].noteOn(freq, vel);
+        // sample_bank_[data1_].noteOn(default_freq_, 255);
+        // velocity_[data1_] = data2_;
     }
 
     void noteOff(uint16_t sample_num)
@@ -157,7 +133,7 @@ public:
 
     void setSampleVolume(uint8_t sample_num, float volume)
     {
-        volumes[sample_num] = volume;
+        sample_gain_[sample_num] = volume;
     }
 
     int32_t next()
@@ -166,8 +142,7 @@ public:
         uint32_t output_sample = 0;
         for (uint8_t i = 0; i < mNUM_SAMPLES; i++)
         {
-            // output_sample += sample_bank_[i].next();
-            output_sample += (((sample_bank_[i].next() * volumes[i]) >> 8) * velocity_[i]) >> 8;
+            output_sample += ((sample_bank_[i].next() * sample_gain_[i]) >> 8);
         }
         return output_sample;
     }
@@ -177,7 +152,7 @@ protected:
     mSampler<mMAX_SAMPLE_LENGTH, mAUDIO_RATE, int8_t> sample_bank_[mNUM_SAMPLES];
     const int8_t **sample_list_;
     uint32_t *sample_lengths_;
-    uint16_t volumes[mNUM_SAMPLES];
+    uint16_t sample_gain_[mNUM_SAMPLES];
     uint16_t velocity_[mNUM_SAMPLES];
 
     uint8_t *base_address_;

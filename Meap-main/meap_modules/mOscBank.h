@@ -7,7 +7,7 @@ template <uint32_t mNUM_CELLS, uint32_t mAUDIO_RATE, uint16_t mCONTROL_RATE, uin
 class mOscBank
 {
 public:
-    mOscBank(const int8_t *TABLE_NAME, uint8_t *base_address)
+    mOscBank(const int8_t *TABLE_NAME, uint8_t *base_address = NULL)
     {
         a_ = 1;
         d_ = 100;

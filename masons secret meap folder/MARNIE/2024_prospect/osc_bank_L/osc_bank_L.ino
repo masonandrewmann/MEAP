@@ -41,7 +41,7 @@ Meap meap;
 
 // mWavetableSynth<AUDIO_RATE, POLYPHONY, analog_table_FRAME_SIZE, analog_table_NUM_FRAMES> wave(analog_table_DATA, NULL);
 
-mOscBank<COS2048_NUM_CELLS, AUDIO_RATE, 10> bank(COS2048_DATA, NULL);
+mOscBank<COS2048_NUM_CELLS, AUDIO_RATE, CONTROL_RATE, 10> bank(COS2048_DATA);
 
 uint32_t freq_val = 440;
 uint16_t frame_val = 0;

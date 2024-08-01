@@ -24,8 +24,8 @@ struct StereoSample
 
 struct MeapNoteAndVoice
 {
-  uint8_t note_num;
-  uint8_t voice_num;
+  uint16_t note_num;
+  uint16_t voice_num;
 };
 
 enum AdcModes
@@ -177,14 +177,14 @@ public:
   uint64_t aux_mux_ready_time = 0;
   uint64_t mux_propogation_delay = 2; // 1ms propogation delay
   uint64_t pot_update_time = 0;
-  uint64_t pot_update_delay = 10;
+  uint64_t pot_update_delay = 1;
   uint8_t pot_read_num = 0;
   bool adc1flag = false;
   AdcModes adc1_mode = kREADY;
 
   int8_t touch_read_channel = 0;
   uint64_t touch_update_time = 0;
-  uint64_t touch_update_delay = 2;
+  uint64_t touch_update_delay = 1;
   AdcModes touch_mode = kREADY;
 
 private:

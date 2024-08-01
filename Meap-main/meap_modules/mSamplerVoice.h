@@ -103,9 +103,10 @@ public:
     {
         return playing_;
     }
-    
-    void setDecay(uint32_t decay){
-        sample.setDecay(decay);
+
+    void setDecayTime(uint32_t decay)
+    {
+        sample.setDecayTime(decay);
     }
 
     void noteOn(float freq)

@@ -15,7 +15,7 @@
 //   |A|
 //   ___
 
-template <uint32_t NUM_CELLS, uint64_t mAUDIO_RATE>
+template <uint32_t NUM_CELLS, uint32_t mAUDIO_RATE>
 class mBasicFM
 {
 public:
@@ -66,7 +66,7 @@ public:
         time_ = (current_address_[3] << 8) + current_address_[4];
     }
 
-    void setTimes(uint8_t operator_num, uint64_t a, uint64_t d, uint64_t s, uint64_t r)
+    void setTimes(uint8_t operator_num, uint32_t a, uint32_t d, uint32_t s, uint32_t r)
     {
 
         if (operator_num == 0)
@@ -95,7 +95,7 @@ public:
         c_depth_ = depth;
     }
 
-    void setDecayTime(uint8_t operator_num, uint64_t d_t)
+    void setDecayTime(uint8_t operator_num, uint32_t d_t)
     {
         if (operator_num == 0)
         { // operator A
@@ -201,7 +201,7 @@ public:
         Q15n16 modulation = mod_depth_ * (bVal + cVal) >> 8;       // calculate mod depth in 15n16 signed int
         int32_t out_sample = gainA_ * oscA_.phMod(modulation * 4); // scale by factor of 4 and apply phase mod to carrier oscillator
 
-        return (out_sample * velocity_) >> 8;
+        return (out_sample * velocity_) >> 7;
     }
 
     uint8_t *current_address_;

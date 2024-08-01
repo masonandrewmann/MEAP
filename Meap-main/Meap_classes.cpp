@@ -179,20 +179,6 @@ void Meap::readInputs()
     aux_mux_ready_time = millis() + mux_propogation_delay;
   }
 
-  // starting built-in pot conversions
-  if (curr_time > pot_update_time)
-  {
-    if (adc1_mode == kREADY)
-    {
-      REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD, 1 << pot_pins[pot_read_num]); // select channel
-      REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 0);                       // reset conversion register
-      REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 1);                       // start a conversion
-
-      pot_update_time = curr_time + pot_update_delay;
-      adc1_mode = kWAITING;
-    }
-  }
-
   // reading built-in pot conversions
   if (adc1_mode == kWAITING && REG_GET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_DONE_SAR))
   {
@@ -200,6 +186,20 @@ void Meap::readInputs()
     pot_read_num = (pot_read_num + 1) % 2;
     adc1_mode = kREADY;
   }
+
+  // starting built-in pot conversions
+  // if (curr_time > pot_update_time)
+  // {
+  if (adc1_mode == kREADY)
+  {
+    REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD, 1 << pot_pins[pot_read_num]); // select channel
+    REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 0);                       // reset conversion register
+    REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 1);                       // start a conversion
+
+    // pot_update_time = curr_time + pot_update_delay;
+    adc1_mode = kWAITING;
+  }
+  // }
 
   // Starting touch conversion
   if (curr_time > touch_update_time)
