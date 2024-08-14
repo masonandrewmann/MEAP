@@ -120,6 +120,11 @@ public:
         env_.setSustainTime(s_);
     }
 
+    void setSustainLevel(uint16_t s_l)
+    {
+        sustain_level_ = s_l;
+    }
+
     void setReleaseTime(uint32_t r_)
     {
         env_.setReleaseTime(r_);

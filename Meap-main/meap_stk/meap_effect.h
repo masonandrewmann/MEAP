@@ -13,11 +13,11 @@
 */
 /***************************************************/
 
-class MEAP_Effect: public Meap
+class MEAP_Effect : public Meap
 {
 public:
     //! Class constructor.
-    MEAP_Effect(void){};
+    MEAP_Effect(void) {};
 
     //! Set the mixture of input and "effected" levels in the output (0.0 = input only, 1.0 = effect only).
     void setEffectMix(float mix)

@@ -98,9 +98,9 @@ public:
         adsr_.setTimes(a_, d_, s_, r_);
     }
 
-    void setLevels(uint32_t a_l_, uint32_t d_l_, uint32_t s_l_, uint32_t r_l_)
+    void setADLevels(uint32_t a_l_, uint32_t d_l_)
     {
-        adsr_.setTimes(a_l_, d_l_, s_l_, r_l_);
+        adsr_.setADLevels(a_l_, d_l_);
     }
 
     int32_t next()

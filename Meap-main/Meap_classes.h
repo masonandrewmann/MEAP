@@ -2,16 +2,43 @@
   Meap.h - Library accompanying MEAP boards.
   Created by Mason Mann, January 24, 2024.
 */
-#ifndef Meap_classes_h
-#define Meap_classes_h
+#ifndef MEAP_CLASSES_H_1
+#define MEAP_CLASSES_H_1
 
+#define MEAP_MUX_CONTROL_PIN_A 38
+#define MEAP_MUX_CONTROL_PIN_B 45
+#define MEAP_MUX_CONTROL_PIN_C 46
+#define MEAP_MUX_DIP_PIN 12
+#define MEAP_MUX_AUX_PIN 11
+
+#define MEAP_I2C_SDA_PIN 21
+#define MEAP_I2C_SCL_PIN 14
+
+#define MEAP_MIDI_IN_PIN 43
+#define MEAP_MIDI_OUT_PIN 44
+
+#define MEAP_CV1_PIN 41
+#define MEAP_CV2_PIN 42
+
+#define MEAP_LED_0_PIN 36
+#define MEAP_LED_1_PIN 37
+
+#define MEAP_POT_0_PIN 10
+#define MEAP_POT_1_PIN 9
+
+#define MEAP_VOLUME_POT_PIN 17
+
+#include <Wire.h>
 #include <hal/adc_hal.h>
 #include <esp32-hal-adc.h>
 #include "tables/m_sin1024_uint8.h"
 #include "esp32-hal-touch.h"
+#include "driver/i2s_std.h"
+#include "dependencies/sgtl_reg.h"
 
 #include <soc/sens_reg.h>
 
+#include <MozziHeadersOnly.h>
 #include <mozzi_rand.h>
 
 #define MEAP_PI 3.14159265358979;
@@ -34,6 +61,8 @@ enum AdcModes
   kREADY
 };
 
+// GLOBAL VARIABLES SO THEY CAN BE SHARED WITH MOZZI FUNCTIONS
+
 class Meap
 {
 public:
@@ -54,54 +83,28 @@ public:
    * @param howbig is the upper limit of the range, inclusive
    * @return long returns the random number
    */
-  long irand(long howsmall, long howbig);
+  static long irand(long howsmall, long howbig);
 
   /**
    * @brief Generates a random decimal between 0 and 1, inclusive, with four decimal points of precision
    *
    * @return float returns the random number
    */
-  float frand();
+  static float frand();
 
   /**
-   * @brief Reads the two built-in potentiometers, storing the results in the potVals[] array
+   * @brief Reads DIP switches, touch inputs, built-in potentiometers and aux mux in a non-blocking way.
+   * WARNING - this function may not play nicely with additional analog reads!!
    *
    */
-  void readPots();
+  void readInputs();
 
   /**
-   * @brief Reads the touch pad breakout board, storing the results in the touchVals[] array
+   * @brief Reads DIP switches, touch inputs, built-in potentiometers and aux mux in a blocking way. Slower
+   * but easier to add extra inputs
    *
    */
-  void readTouch();
-
-  /**
-   * @brief Reads the built-in dip switches, storing the results in the dipVals[] array
-   *
-   */
-  void readDip();
-
-  /**
-   * @brief Reads the auxilliary multiplexer, storing the result in auxMuxVals[] array
-   *
-   */
-  void readAuxMux();
-
-  /**
-   * @brief User defined function that handles what to do when a touch pad is pressed or released.
-   *
-   * @param number is the number of the pad that was pressed 0-7 corresponding to pads #1-8 respectively
-   * @param pressed is true when a pad is pressed and false when the pad is released
-   */
-  void updateTouch(int number, bool pressed);
-
-  /**
-   * @brief User defined function that handles what to do when a dip switch
-   *
-   * @param number is the number of the switch that was toggled 0-7 corresponding to switches #1-8 respectively
-   * @param up is true when a switch was toggled up and false when a switch was toggled down
-   */
-  void updateDip(int number, bool up);
+  void readInputsSlow();
 
   /**
    * @brief A stereo equal power panner
@@ -128,47 +131,41 @@ public:
    */
   float midiPulseMicros(float tempo);
 
-  void setMuxChannel(int8_t a, int8_t b, int8_t c, int8_t channel);
+  /**
+   * @brief Turns a built-in led on or off
+   *
+   * @param led_num number of the led (0 or 1)
+   * @param led_level 0 for off, 1 for on
+   */
+  void writeLED(uint8_t led_num, uint8_t led_level);
 
-  void turnLedDOn();
-
-  void turnLedDOff();
-
-  void readInputs();
-
-  void mHandleTouch();
-
-  bool mTouchReady();
-
-  uint16_t mTouchResult();
-
-  void mSetCycles(uint16_t measure, uint16_t sleep);
-
-  void mTouchInit();
-
-  uint16_t startTouchConversion(uint8_t pin);
-
-  void mTouchChannelInit(int pad);
+  /**
+   * @brief Sets master volume of output
+   *
+   * @param gain between 60 and 252, 60 being maximum gain
+   */
+  void setCodecGain(uint16_t gain);
 
   // variables
-  int8_t dip_pins[8] = {5, 6, 7, 4, 3, 0, 2, 1};
-  int8_t dip_vals[8] = {2, 2, 2, 2, 2, 2, 2, 2}; // set to 2 so dip up/down will execute when program is started
-  int8_t prev_dip_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int16_t dip_common_pin = 14;
+  int8_t dip_pins[8] = {0, 1, 2, 3, 4, 7, 5, 6}; // previously {5, 6, 7, 4, 3, 0, 2, 1};
+  int8_t dip_vals[8] = {2, 2, 2, 2, 2, 2, 2, 2};
+  int8_t prev_dip_vals[8] = {2, 2, 2, 2, 2, 2, 2, 2}; // set to 2 so dip up/down will execute when program is started
 
   int aux_mux_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
-  int16_t aux_mux_common_pin = 11;
+  int extra_mux_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+  int external_mux_vals[8] = {1, 1, 1, 1, 1, 1, 1, 1};
 
   int touch_pins[8] = {2, 4, 6, 8, 1, 3, 5, 7};
   int touch_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int prev_touch_vals[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int touch_avgs[8] = {0, 0, 0, 0, 0, 0, 0, 0};
   int touch_threshold = 210;
-  // uint64_t touch_fields[8] = {SENS_TOUCH_PAD1_DATA, SENS_TOUCH_PAD2_DATA, SENS_TOUCH_PAD3_DATA, SENS_TOUCH_PAD4_DATA, SENS_TOUCH_PAD5_DATA, SENS_TOUCH_PAD6_DATA, SENS_TOUCH_PAD7_DATA, SENS_TOUCH_PAD8_DATA};
-  // uint64_t touch_registers[8] = {SENS_SAR_TOUCH_STATUS1_REG, SENS_SAR_TOUCH_STATUS2_REG, SENS_SAR_TOUCH_STATUS3_REG, SENS_SAR_TOUCH_STATUS4_REG, SENS_SAR_TOUCH_STATUS5_REG, SENS_SAR_TOUCH_STATUS6_REG, SENS_SAR_TOUCH_STATUS7_REG, SENS_SAR_TOUCH_STATUS8_REG};
+
+  int led_pins[2] = {MEAP_LED_0_PIN, MEAP_LED_1_PIN};
 
   int pot_vals[2] = {0, 0};
-  int pot_pins[2] = {8, 9}; // GPIO 9 and 10 (ADC1 channels 8 and 9)
+  int pot_pins[2] = {MEAP_POT_0_PIN - 1, MEAP_POT_1_PIN - 1}; // GPIO 9 and 10 (ADC1 channels 8 and 9)
+  int volume_val = 0;
 
   // for mux and adc
   int8_t dip_mux_read_channel = 0;
@@ -187,11 +184,74 @@ public:
   uint64_t touch_update_delay = 1;
   AdcModes touch_mode = kREADY;
 
-private:
+protected:
+  /**
+   * @brief Sets channel (0-7) on multiplexer A, B, C control pins
+   *
+   * @param tempo in BPM
+   * @return float number of microseconds in one MIDI clock pulse at the specified BPM
+   */
+  void setMuxChannel(int8_t channel);
+
+  /**
+   * @brief Reads a register from SGTL5000
+   *
+   * @param reg address of register to read
+   * @return value at the register
+   */
+  uint32_t SGread(uint32_t reg);
+
+  /**
+   * @brief Attempts to write a register in SGTL5000
+   *
+   * @param reg address of register to write
+   * @param val value to write in register
+   * @return success or failure of write operation
+   */
+  bool SGwrite(uint32_t reg, uint32_t val);
+
+  /**
+   * @brief Modifies specified bits of SGTL5000 register
+   *
+   * @param reg address of register to write
+   * @param val value to write in register
+   * @param iMask bit mask of values to modify in register (1s get modified)
+   * @return returns 0 if write fails, or the masked value if write succeeds
+   */
+  uint32_t SGmodify(uint32_t reg, uint32_t val, uint32_t iMask);
+
+  /**
+   * @brief Initializes the SGTL5000 audio codec
+   *
+   * @param led_num number of the led (0 or 1)
+   * @param led_level 0 for off, 1 for on
+   */
+  void codecInit();
+
+  /**
+   * @brief Sets registers in SGTL5000 audio codec chip, initializing and starting it
+   *
+   * @return success or failure of initialization
+   */
+  bool sgtlInit();
+
+  // VARIABLES
 };
 
-long irand(long howsmall, long howbig);
+/**
+ * @brief User defined function that handles what to do when a touch pad is pressed or released.
+ *
+ * @param number is the number of the pad that was pressed 0-7 corresponding to pads #1-8 respectively
+ * @param pressed is true when a pad is pressed and false when the pad is released
+ */
+void updateTouch(int number, bool pressed);
 
-float frand();
+/**
+ * @brief User defined function that handles what to do when a dip switch
+ *
+ * @param number is the number of the switch that was toggled 0-7 corresponding to switches #1-8 respectively
+ * @param up is true when a switch was toggled up and false when a switch was toggled down
+ */
+void updateDip(int number, bool up);
 
-#endif // Meap_classes_h
+#endif // MEAP_CLASSES_H_1

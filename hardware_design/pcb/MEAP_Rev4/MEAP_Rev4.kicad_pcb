@@ -8085,7 +8085,7 @@
 			)
 		)
 		(property "Value" "TOUCH_IN"
-			(at 1.269999 9.949998 360)
+			(at 1.269999 9.949998 0)
 			(layer "F.Fab")
 			(uuid "fbae0463-e5ff-403b-99b3-5c64edbc8fec")
 			(effects
@@ -10131,7 +10131,7 @@
 			)
 		)
 		(property "Value" "47"
-			(at 0 1.43 360)
+			(at 0 1.43 0)
 			(layer "F.Fab")
 			(uuid "c221586d-4c1f-4f55-888d-b0720cb9a487")
 			(effects
@@ -10286,7 +10286,7 @@
 			(uuid "fb69049c-168c-44b8-aebb-ace0fe38ef14")
 		)
 		(fp_text user "${REFERENCE}"
-			(at 0 0 360)
+			(at 0 0 0)
 			(layer "F.Fab")
 			(uuid "9d47e24e-3388-4488-a8ba-59ee740fa494")
 			(effects
@@ -24192,7 +24192,7 @@
 		)
 		(fp_arc
 			(start 0.229037 -1.079999)
-			(mid 1.270116 -1.5)
+			(mid 1.270116 -1.500001)
 			(end 2.31113 -1.079837)
 			(stroke
 				(width 0.12)
@@ -24275,7 +24275,7 @@
 		)
 		(fp_arc
 			(start -0.229999 -1.166191)
-			(mid 3.169998 0.000459)
+			(mid 3.169998 0.000454)
 			(end -0.230556 1.165475)
 			(stroke
 				(width 0.1)

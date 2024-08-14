@@ -1,10 +1,10 @@
 #ifndef MEAP_H_
 #define MEAP_H_
 
-#include "Meap_classes.h"
-#include <MIDI.h> // Arduino Midi library https://github.com/FortySevenEffects/arduino_midi_library
-
 #include "MozziConfigValues.h"
+#define ESP_SAMPLE_SIZE 4 // 2 * sizeof(int16_t)
+
+#if MEAP_LEGACY == 3
 #define MOZZI_AUDIO_MODE MOZZI_OUTPUT_I2S_DAC
 #define MOZZI_I2S_FORMAT MOZZI_I2S_FORMAT_LSBJ // PT8211 uses LSBJ format
 
@@ -16,12 +16,40 @@
 #ifndef MOZZI_AUDIO_CHANNELS
 #define MOZZI_AUDIO_CHANNELS MOZZI_STEREO
 #endif
+#include <Mozzi.h>
+#include "legacy/Meap_classes_legacy.h"
+#else
 
-// might need
-#define MOZZI_ANALOG_READ_RESOLUTION 10
+#ifndef MOZZI_AUDIO_RATE
+#define MOZZI_AUDIO_RATE 32768
+#endif
+
+#ifndef MOZZI_CONTROL_RATE
+#define MOZZI_CONTROL_RATE 64
+#endif
+
+#define MOZZI_AUDIO_MODE MOZZI_OUTPUT_EXTERNAL_CUSTOM
+#define MOZZI_AUDIO_BITS 16
+#define MOZZI_PDM_RESOLUTION 8
+
+#ifndef MOZZI_AUDIO_CHANNELS
+#define MOZZI_AUDIO_CHANNELS MOZZI_STEREO
+#endif
+
+// #define ESP_SAMPLE_SIZE (2 * sizeof(int16_t))
+// #define ESP_SAMPLE_SIZE 4 // 2 * sizeof(int16_t)
+
+#include <Mozzi.h>
+
+#include "driver/i2s_std.h"
+// // I2S communication with SGTL5000 Audio Codec
+
+#include "Meap_classes.h"
+#endif
+
+#include <MIDI.h> // Arduino Midi library https://github.com/FortySevenEffects/arduino_midi_library
 
 // Attempts to include all Mozzi modules, though I may have missed them. Surely Mozzi has an option to include all modules in one line???
-#include <Mozzi.h>
 #include <mozzi_midi.h>
 #include <mozzi_fixmath.h>
 #include <mozzi_rand.h>
@@ -110,8 +138,45 @@
 #include <meap_modules/mSubSynthPoly.h>
 
 // meap effects
+
+#ifndef MEAP_LEGACY
 #include <meap_modules/mChopper.h>
 
 #include <dependencies/LinkedList/LinkedList.h>
+
+i2s_chan_handle_t tx_handle;
+i2s_chan_handle_t rx_handle;
+
+// MOZZI output buffer
+bool _esp32_can_buffer_next = true; // initialize to true
+int16_t _esp32_prev_sample[2];
+
+// #define ESP_SAMPLE_SIZE (2 * sizeof(int16_t))
+
+inline bool esp32_tryWriteSample()
+{
+    size_t bytes_written;
+    i2s_channel_write(tx_handle, &_esp32_prev_sample, 4, &bytes_written, 0); // 4 = 2 * sizeof(int16_t)
+    return (bytes_written != 0);
+}
+
+inline void audioOutput(const AudioOutput f)
+{
+    _esp32_prev_sample[0] = f.l();
+    _esp32_prev_sample[1] = f.r();
+
+    _esp32_can_buffer_next = esp32_tryWriteSample();
+}
+
+inline bool canBufferAudioOutput()
+{
+    if (_esp32_can_buffer_next)
+    {
+        return true;
+    }
+    _esp32_can_buffer_next = esp32_tryWriteSample();
+    return _esp32_can_buffer_next;
+}
+#endif
 
 #endif // MEAP_H_

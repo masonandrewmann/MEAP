@@ -19,31 +19,37 @@ public:
         pan_ = 127;
     };
 
-    void trigger(){
-        sustain_ = irand(lower_, higher_);
+    void trigger()
+    {
+        sustain_ = Meap::irand(lower_, higher_);
         adsr_.setSustainTime(sustain_);
         adsr_.noteOn();
         end_time_ = millis() + sustain_;
-        pan_ = irand(0, 255);
+        pan_ = Meap::irand(0, 255);
     }
 
-    void setLengthBounds(uint64_t lower, uint64_t higher){
+    void setLengthBounds(uint64_t lower, uint64_t higher)
+    {
         lower_ = lower;
         higher_ = higher;
     }
 
-    void enable(){
+    void enable()
+    {
         active_ = true;
     }
 
-    void disable(){
+    void disable()
+    {
         active_ = false;
     }
 
     uint64_t next(uint64_t in_sample)
     {
-        if(active_){
-            if(millis() > end_time_){
+        if (active_)
+        {
+            if (millis() > end_time_)
+            {
                 adsr_.noteOff();
             }
             adsr_.update();
@@ -61,18 +67,23 @@ public:
             //     r_sample_ = in_sample;
             // }
             return in_sample; // 8 bit gain * 8 bit sample = 16bit result
-        } else {
+        }
+        else
+        {
             l_sample_ = in_sample >> 1;
             r_sample_ = in_sample >> 1;
             return in_sample;
         }
-
     }
 
-    uint64_t getChannel(uint8_t channel_num){
-        if(channel_num == 0){
+    uint64_t getChannel(uint8_t channel_num)
+    {
+        if (channel_num == 0)
+        {
             return l_sample_;
-        } else if(channel_num == 1){
+        }
+        else if (channel_num == 1)
+        {
             return r_sample_;
         }
     }

@@ -19,7 +19,9 @@ public:
         curr_program_ = 0;
 
         attack_time_ = 1;
+        decay_time_ = 1;
         release_time_ = 100;
+        sustain_level_ = 255;
 
         for (uint8_t i; i < mPOLYPHONY; i++)
         {
@@ -47,6 +49,14 @@ public:
         release_time_ = rt;
     }
 
+    void setADSR(uint32_t at, uint32_t dt, uint32_t sl, uint32_t rt)
+    {
+        attack_time_ = at;
+        decay_time_ = dt;
+        sustain_level_ = sl;
+        release_time_ = rt;
+    }
+
     void noteOn(uint16_t note, float vel)
     {
         int16_t curr_voice_;
@@ -59,8 +69,11 @@ public:
             return; // no free voices, move along...
         }
         sample_bank_[curr_voice_].setTableAndEnd(sample_list_[curr_program_], sample_lengths_[curr_program_]);
-        sample_bank_[curr_voice_].setAttackTime(attack_time_);
-        sample_bank_[curr_voice_].setReleaseTime(release_time_);
+        // sample_bank_[curr_voice_].setAttackTime(attack_time_);
+        // sample_bank_[curr_voice_].setReleaseTime(release_time_);
+        sample_bank_[curr_voice_].setTimes(attack_time_, decay_time_, 4294967295, release_time_);
+        sample_bank_[curr_voice_].setADLevels(255, sustain_level_);
+
         sample_bank_[curr_voice_].noteOn(sample_frequencies[note], vel);
 
         // store note in pressed notes queue
@@ -111,7 +124,9 @@ protected:
     uint16_t velocity_[mPOLYPHONY];
     uint16_t curr_program_;
     uint32_t attack_time_;
+    uint32_t decay_time_;
     uint32_t release_time_;
+    uint32_t sustain_level_;
 
     float sample_frequencies[127];
 
