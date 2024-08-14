@@ -1,41 +1,29 @@
 /*
   Example that tests the basic harware setup of a M.E.A.P. board.
   
-  Plays a constant sine wave at 440Hz and prints to the console 
-  whenever a DIP switch or capacitive touch input is pressed.
-
-  Mason Mann, CC0
+  Generates two sine waves with pitches controlled by potentiometers
+  and sends one out the left channel and one out the right channel
+  Additionally, prints whenever a DIP switch or capacitive touch input 
+  is pressed.
  */
+
+#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
 
 #include <Meap.h>
 #include <tables/sin8192_int8.h>  // loads sine wavetable
-
-#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
-// #define CV1_PIN 41
-// #define CV2_PIN 42 
-
-// int cv_value = 0;
 
 Meap meap;
 
 Oscil<8192, AUDIO_RATE> my_sine(SIN8192_DATA);
 Oscil<8192, AUDIO_RATE> my_sine2(SIN8192_DATA);
 
-// unsigned long timer = 0;
-
 void setup() {
   Serial.begin(115200);      // begins Serial communication with computer
-  startMozzi(CONTROL_RATE);  // starts Mozzi engine with control rate defined above
   meap.begin();
+  startMozzi(CONTROL_RATE);  // starts Mozzi engine with control rate defined above
 
   my_sine.setFreq(440);
   my_sine2.setFreq(220);
-
-  // ledcSetup(0, 5000, 12);  // 0-8191
-  // ledcSetup(1, 5000, 12);
-
-  // ledcAttachPin(CV1_PIN, 0);
-  // ledcAttachPin(CV2_PIN, 1);
 }
 
 
@@ -47,27 +35,7 @@ void loop() {
 void updateControl() {
   meap.readInputs();
 
-  // ledcWrite(0, cv_value);
-  // ledcWrite(1, cv_value);
-
-  // if (meap.dip_vals[0]) {
-  //   if (millis() > timer) {
-  //     cv_value = meap.irand(0, 8191);
-  //     timer += meap.pot_vals[0];
-  //   }
-  // } else {
-  //   cv_value += meap.pot_vals[0];
-  //   if (cv_value > meap.pot_vals[1]) {
-  //     Serial.println("wv_rst");
-  //     cv_value = 0;
-  //   }
-  // }
-
-  // Serial.print(meap.pot_vals[0]);
-  // Serial.print("   ");
-  // Serial.println(meap.pot_vals[1]);
-
-  my_sine.setFreq((float)map(meap.pot_vals[0], 0, 4095, 100, 2000));
+  my_sine.setFreq((float)map(meap.pot_vals[0], 0, 4095, 100, 2000)); // pots will set sines to range 100Hz - 2000Hz
   my_sine2.setFreq((float)map(meap.pot_vals[1], 0, 4095, 100, 2000));
 }
 
