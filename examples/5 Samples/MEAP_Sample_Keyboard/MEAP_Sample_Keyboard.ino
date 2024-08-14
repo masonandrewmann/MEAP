@@ -5,16 +5,14 @@
   Mason Mann, CC0
  */
 
-#include <Meap.h>  // MEAP library, includes all dependent libraries, including all Mozzi modules
-#include "harp_c3.h"
+#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
+#include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
 
-#define CONTROL_RATE 64   // Hz, powers of 2 are most reliable
-#define AUDIO_RATE 32768  // Hz, powers of 2 are most reliable
-
-Meap meap;  // creates MEAP object to handle inputs and other MEAP library functions
-
+Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
+// ---------- YOUR GLOBAL VARIABLES BELOW ----------
+#include "harp_c3.h"
 
 // variables for sample
 Sample<harp_c3_NUM_CELLS, AUDIO_RATE> my_sample(harp_c3_DATA);
@@ -26,6 +24,8 @@ void setup() {
   Serial1.begin(31250, SERIAL_8N1, 43, 44);  // sets up MIDI: baud rate, serial mode, rx pin, tx pin
   startMozzi(CONTROL_RATE);                  // starts Mozzi engine with control rate defined above
   meap.begin();                              // sets up MEAP object
+
+  // ---------- YOUR SETUP CODE BELOW ----------                          
 
   sample_freq = (float)harp_c3_SAMPLERATE / (float)harp_c3_NUM_CELLS;
   my_sample.setFreq(sample_freq);  // play at the speed it was recorded
@@ -39,19 +39,28 @@ void loop() {
 
 
 void updateControl() {
-  meap.readPots();   // Reads on-board MEAP potentionmeters, results are accessed using meap.pot_vals[0] and meap.pot_vals[1]
-  meap.readTouch();  // reads MEAP capacitive touch breakout
-  meap.readDip();    // reads on-board MEAP dip switches
+  meap.readInputs();
+  // ---------- YOUR updateControl CODE BELOW ----------
 }
 
 
 AudioOutput_t updateAudio() {
-  int sample = my_sample.next();
-  return StereoOutput::fromAlmostNBit(8, sample, sample);
+  int out_sample = my_sample.next();
+  return StereoOutput::fromNBit(8, out_sample, out_sample);
 }
 
+/**
+   * Runs whenever a touch pad is pressed or released
+   *
+   * int number: the number (0-7) of the pad that was pressed
+   * bool pressed: true indicated pad was pressed, false indicates it was released
+   */
+void updateTouch(int number, bool pressed) {
+  if (pressed) {  // Any pad pressed
 
-void Meap::updateTouch(int number, bool pressed) {
+  } else {  // Any pad released
+
+  }
   switch (number) {
     case 0:
       if (pressed) {  // pad 0 pressed
@@ -112,14 +121,16 @@ void Meap::updateTouch(int number, bool pressed) {
   }
 }
 
-/** User defined function called whenever a DIP switch is toggled up or down
-  @param number is the number of the switch that was toggled up or down: 0-7
-  @param up is true if the switch was toggled up, and false if the switch was toggled down
-	*/
-void Meap::updateDip(int number, bool up) {
-  if (up) {  // Any DIP up
+/**
+   * Runs whenever a DIP switch is toggled
+   *
+   * int number: the number (0-7) of the switch that was toggled
+   * bool up: true indicated switch was toggled up, false indicates switch was toggled
+   */
+void updateDip(int number, bool up) {
+  if (up) {  // Any DIP toggled up
 
-  } else {  //Any DIP down
+  } else {  //Any DIP toggled down
   }
   switch (number) {
     case 0:

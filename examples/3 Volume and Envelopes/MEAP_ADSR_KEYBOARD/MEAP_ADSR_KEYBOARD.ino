@@ -1,7 +1,9 @@
 /*
   Basic oscillator pitch control with touch keyboard
 
-  Press touch pads to control pitch of oscillator.
+  Press touch pads to play notes in C major scale.
+
+  Potentiometers control attack and release time of envelopes
 
   Mason Mann, CC0
  */
@@ -32,10 +34,9 @@ void setup() {
   for (int i = 0; i < 8; i++) {
     sines[i].setTable(COS2048_DATA);
     sines[i].setFreq(mtof(midi_notes[i]));
-    envelopes[i].setAttackTime(10);
-    envelopes[i].setSustainTime(4294967295);  // max value of unsigned 32 bit int,, notes can sustain for arbitrary time limit
-    envelopes[i].setReleaseTime(500);
-    envelopes[i].setADLevels(255, 255);
+    envelopes[i].setTimes(1, 100, 4294967295, 500);  // attack=1ms, decay=100ms, sustain=maximum value of unsigned 32bit int (notes can
+                                                   //sustain for an arbitrary amount of time), release=500ms
+    envelopes[i].setADLevels(255, 127); // attack will rise to maximum volume, note will sustain at half volume
   }
 }
 
@@ -46,12 +47,11 @@ void loop() {
 
 
 void updateControl() {
-  meap.readPots();   // Reads on-board MEAP potentionmeters, results are accessed using meap.pot_vals[0] and meap.pot_vals[1]
-  meap.readTouch();  // reads MEAP capacitive touch breakout
-  meap.readDip();    // reads on-board MEAP dip switches
+  meap.readInputs();
+  // ---------- YOUR updateControl CODE BELOW ----------
 
-  int attack_time = map(meap.pot_vals[1], 0, 4095, 10, 1000);
-  int release_time = map(meap.pot_vals[0], 0, 4095, 10, 1000);
+  int attack_time = map(meap.pot_vals[0], 0, 4095, 10, 1000); // attack time between 10ms and 1000ms
+  int release_time = map(meap.pot_vals[1], 0, 4095, 10, 1000); // release time between 10ms and 1000ms
 
   for (int i = 0; i < 8; i++) {
     envelopes[i].setAttackTime(attack_time);
@@ -61,24 +61,26 @@ void updateControl() {
 
 
 AudioOutput_t updateAudio() {
-  int sample = 0;
+  int out_sample = 0;
 
   for (int i = 0; i < 8; i++) {
     envelopes[i].update();
     gains[i] = envelopes[i].next();
-    sample += sines[i].next() * gains[i];
+    out_sample += sines[i].next() * gains[i];
   }
-  return StereoOutput::fromAlmostNBit(19, sample, sample);
+  return StereoOutput::fromNBit(19, out_sample, out_sample);
 }
 
-/** User defined function called whenever a DIP switch is toggled up or down
-  @param number is the number of the switch that was toggled up or down: 0-7
-  @param up is true if the switch was toggled up, and false if the switch was toggled down
-	*/
-void Meap::updateDip(int number, bool up) {
-  if (up) {  // Any DIP up
+/**
+   * Runs whenever a DIP switch is toggled
+   *
+   * int number: the number (0-7) of the switch that was toggled
+   * bool up: true indicated switch was toggled up, false indicates switch was toggled
+   */
+void updateDip(int number, bool up) {
+  if (up) {  // Any DIP toggld up
 
-  } else {  //Any DIP down
+  } else {  //Any DIP toggled down
   }
   switch (number) {
     case 0:
@@ -124,11 +126,13 @@ void Meap::updateDip(int number, bool up) {
   }
 }
 
-/** User defined function called whenever a touch pad is pressed or released
-  @param number is the number of the pad that was pressed or released: 0-7
-  @param pressed is true if the pad was pressed and false if the pad was released
-	*/
-void Meap::updateTouch(int number, bool pressed) {
+/**
+   * Runs whenever a touch pad is pressed or released
+   *
+   * int number: the number (0-7) of the pad that was pressed
+   * bool pressed: true indicated pad was pressed, false indicates it was released
+   */
+void updateTouch(int number, bool pressed) {
   if (pressed) {  // Any pad pressed
     envelopes[number].noteOn();
   } else {  // Any pad released

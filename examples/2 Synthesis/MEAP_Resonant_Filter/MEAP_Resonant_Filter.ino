@@ -8,30 +8,27 @@
  Pressing Pad 2 will change filter response to highpass
  Pressing Pad 3 will change filter response to bandpass
  Pressing Pad 4 will change filter response to notch
-
-  Mason Mann, CC0
  */
 
-#include <Meap.h>                        // MEAP library, includes all dependent libraries, including all Mozzi modules
-#include <tables/sin8192_int8.h>         // loads sine wavetable
-#include <tables/whitenoise8192_int8.h>  // loads white noise wavetable
 
-#define CONTROL_RATE 64   // Hz, powers of 2 are most reliable
-#define AUDIO_RATE 32768  // Hz, powers of 2 are most reliable
+#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
+#include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
 
-Meap meap;  // creates MEAP object to handle inputs and other MEAP library functions
-
+Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
+// ---------- YOUR GLOBAL VARIABLES BELOW ----------
+#include <tables/whitenoise8192_int8.h>  // loads white noise wavetable
 
 Oscil<WHITENOISE8192_NUM_CELLS, AUDIO_RATE> white_noise(WHITENOISE8192_DATA);
 
 MultiResonantFilter<uint8_t> filter;  // Multifilter applied to an 8-bit signal.
+
 enum types { lowpass,
              bandpass,
              highpass,
-             notch };
-int filter_type = 0;
+             notch } filter_type = lowpass;
+// int filter_type = 0;
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -49,9 +46,8 @@ void loop() {
 
 
 void updateControl() {
-  meap.readPots();   // Reads on-board MEAP potentionmeters, results are accessed using meap.pot_vals[0] and meap.pot_vals[1]
-  meap.readTouch();  // reads MEAP capacitive touch breakout
-  meap.readDip();    // reads on-board MEAP dip switches
+  meap.readInputs();
+ // ---------- YOUR updateControl CODE BELOW ----------
   int cutoff = map(meap.pot_vals[0], 0, 4095, 0, 255);
   int resonance = map(meap.pot_vals[1], 0, 4095, 0, 255);
   filter.setCutoffFreqAndResonance(cutoff, resonance);
@@ -59,9 +55,9 @@ void updateControl() {
 
 
 AudioOutput_t updateAudio() {
-  int sig;
-  filter.next(white_noise.next());
-  switch (filter_type)  // recover the output from the current selected filter type.
+  int sig = 0;
+  filter.next(white_noise.next()); // calculates all filter outputs
+  switch (filter_type)  // grab the output from the current selected filter type.
   {
     case lowpass:
       sig = filter.low();  // lowpassed sample
@@ -76,18 +72,20 @@ AudioOutput_t updateAudio() {
       sig = filter.notch();  // notched sample
       break;
   }
-  return StereoOutput::fromAlmostNBit(11, sig, sig);
+  return StereoOutput::fromNBit(11, sig, sig);
 }
 
 
-/** User defined function called whenever a DIP switch is toggled up or down
-  @param number is the number of the switch that was toggled up or down: 0-7
-  @param up is true if the switch was toggled up, and false if the switch was toggled down
-	*/
-void Meap::updateDip(int number, bool up) {
-  if (up) {  // Any DIP up
+/**
+   * Runs whenever a DIP switch is toggled
+   *
+   * int number: the number (0-7) of the switch that was toggled
+   * bool up: true indicated switch was toggled up, false indicates switch was toggled
+   */
+void updateDip(int number, bool up) {
+  if (up) {  // Any DIP toggled up
 
-  } else {  //Any DIP down
+  } else {  //Any DIP toggled down
   }
   switch (number) {
     case 0:
@@ -133,11 +131,13 @@ void Meap::updateDip(int number, bool up) {
   }
 }
 
-/** User defined function called whenever a touch pad is pressed or released
-  @param number is the number of the pad that was pressed or released: 0-7
-  @param pressed is true if the pad was pressed and false if the pad was released
-	*/
-void Meap::updateTouch(int number, bool pressed) {
+/**
+   * Runs whenever a touch pad is pressed or released
+   *
+   * int number: the number (0-7) of the pad that was pressed
+   * bool pressed: true indicated pad was pressed, false indicates it was released
+   */
+void updateTouch(int number, bool pressed) {
   if (pressed) {  // Any pad pressed
 
   } else {  // Any pad released

@@ -2,19 +2,21 @@
   Basic template for working with a stock MEAP board.
  */
 
-#define CONTROL_RATE 64   // Hz, powers of 2 are most reliable
+#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
+#include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
 
-#include <Meap.h> // MEAP library, includes all dependent libraries, including all Mozzi modules
-
-Meap meap;  // creates MEAP object to handle inputs and other MEAP library functions
-
+Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
+
+// ---------- YOUR GLOBAL VARIABLES BELOW ----------
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
   Serial1.begin(31250, SERIAL_8N1, 43, 44);  // sets up MIDI: baud rate, serial mode, rx pin, tx pin
   startMozzi(CONTROL_RATE);                  // starts Mozzi engine with control rate defined above
   meap.begin();                              // sets up MEAP object
+
+  // ---------- YOUR SETUP CODE BELOW ----------
 }
 
 
@@ -27,6 +29,7 @@ void loop() {
 	*/
 void updateControl() {
   meap.readInputs();
+  // ---------- YOUR updateControl CODE BELOW ----------
 }
 
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
@@ -36,7 +39,18 @@ AudioOutput_t updateAudio() {
   return StereoOutput::fromNBit(8, sample, sample);
 }
 
-void Meap::updateTouch(int number, bool pressed) {
+/**
+   * Runs whenever a touch pad is pressed or released
+   *
+   * int number: the number (0-7) of the pad that was pressed
+   * bool pressed: true indicated pad was pressed, false indicates it was released
+   */
+void updateTouch(int number, bool pressed) {
+  if (pressed) {  // Any pad pressed
+
+  } else {  // Any pad released
+
+  }
   switch (number) {
     case 0:
       if (pressed) {  // Pad 1 pressed
@@ -97,7 +111,18 @@ void Meap::updateTouch(int number, bool pressed) {
   }
 }
 
-void Meap::updateDip(int number, bool up) {
+/**
+   * Runs whenever a DIP switch is toggled
+   *
+   * int number: the number (0-7) of the switch that was toggled
+   * bool up: true indicated switch was toggled up, false indicates switch was toggled
+   */
+void updateDip(int number, bool up) {
+  if (up) {  // Any DIP toggled up
+
+  } else {  //Any DIP toggled down
+
+  }
   switch (number) {
     case 0:
       if (up) {  // DIP 1 up
