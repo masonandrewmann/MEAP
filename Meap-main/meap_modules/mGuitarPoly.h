@@ -1,56 +1,20 @@
-#ifndef MFM4POLY_H_
-#define MFM4POLY_H_
+#ifndef MGUITARPOLY_H_
+#define MGUITARPOLY_H_
 
-#include <tables/sin8192_int8.h> // table for Oscils to play
 #include <dependencies/LinkedList/LinkedList.h>
 
-template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, uint16_t mPOLYPHONY = 4, class T = int8_t>
-class mFM4Poly
+template <uint16_t mPOLYPHONY = 4>
+class mGuitarPoly
 {
 public:
-    mFM4Poly(const int8_t *TABLE_NAME, uint8_t *midi_table_name)
+    mGuitarPoly()
     {
+        sustain_ = 0.5;
+
         for (uint16_t i = 0; i < mPOLYPHONY; i++)
         {
-            voices[i].init(TABLE_NAME);
-            free_voices_.unshift(i); // add all voices to voice queue
-        }
-        curr_voice_ = 0;
-        midi_table_name_ = midi_table_name;
-        playing_ = false;
-
-        message_type_ = 0;
-        data1_ = 0;
-        data2_ = 0;
-        time_ = 0;
-
-        pulse_counter_ = 0;
-    };
-
-    mFM4Poly(const int8_t *TABLE_NAME)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].init(TABLE_NAME);
-            free_voices_.unshift(i); // add all voices to voice queue
-        }
-        curr_voice_ = 0;
-        midi_table_name_ = NULL;
-        playing_ = false;
-
-        message_type_ = 0;
-        data1_ = 0;
-        data2_ = 0;
-        time_ = 0;
-
-        pulse_counter_ = 0;
-    };
-
-    mFM4Poly()
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].init(SIN8192_DATA);
+            voices.setPluckPosition(0.5, i);
+            voices.setLoopGain(0.5, i);
             free_voices_.unshift(i); // add all voices to voice queue
         }
         curr_voice_ = 0;
@@ -65,9 +29,28 @@ public:
         pulse_counter_ = 0;
     }
 
+    //! Set the pluck position for one or all strings.
+    /*!
+        Position between 0 and 1
+    */
+    void setPluckPosition(float position)
+    {
+        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+            voices.setPluckPosition(position, i);
+    };
+
+    //! Set the loop gain for one or all strings.
+    /*!
+    Gain between 0 and 1
+    */
+    void setLoopGain(float gain)
+    {
+        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+            voices.setLoopGain(gain, i);
+    }
+
     void begin()
     {
-        // start_time = millis();
         playing_ = true;
         current_midi_address_ = midi_table_name_;
         pulse_counter_ = 0;
@@ -83,7 +66,7 @@ public:
         playing_ = false;
         for (uint16_t i = 0; i < mPOLYPHONY; i++)
         {
-            voices[i].noteOff();
+            voices.noteOff(0.5, i);
         }
     }
 
@@ -97,12 +80,12 @@ public:
                 switch (message_type_) // notes are indexed from 0 on sample_bank starting from C-1 (0)
                 {
                 case 0x80: // note off
-                    noteOff(data1_);
+                    noteOff(data1_, sustain_);
                     break;
                 case 0x90: // note on
                     if (data1_ != 127)
                     {
-                        noteOn(data1_, data2_);
+                        noteOn(data1_, ((float)data2_) * 0.007874015748); // vel *1/127
                     }
                     break;
                 case 255: // end of file
@@ -124,6 +107,11 @@ public:
         return playing_;
     }
 
+    void setSustain(float sus)
+    {
+        sustain_ = sus;
+    }
+
     void noteOn(uint16_t note, float vel)
     {
         if (free_voices_.size() > 0)
@@ -135,13 +123,31 @@ public:
             return; // no free voices, move along...
         }
 
-        voices[curr_voice_].noteOn(note, vel);
+        voices.noteOn(mtof(note), ((float)vel) / 127.f, curr_voice_);
 
         // store note in pressed notes queue
         MeapNoteAndVoice *my_note = new MeapNoteAndVoice;
         my_note->note_num = note;
         my_note->voice_num = curr_voice_;
         nonfree_voices_.add(my_note);
+    }
+
+    void noteOff(uint16_t note, float sus)
+    {
+
+        uint8_t num_nonfree_voices = nonfree_voices_.size();
+        for (uint8_t i = 0; i < num_nonfree_voices; i++)
+        {
+            if (nonfree_voices_.get(i)->note_num == note)
+            {
+                uint8_t voice_num = nonfree_voices_.get(i)->voice_num; // voice num of note to turn off
+                voices.noteOff(sus, voice_num);
+                free_voices_.add(voice_num);     // re-add voice to free queue
+                delete (nonfree_voices_.get(i)); // delete voice from pressed queue
+                nonfree_voices_.remove(i);       // remove freed voice from pressed queue
+                return;
+            }
+        }
     }
 
     void noteOff(uint16_t note)
@@ -153,7 +159,7 @@ public:
             if (nonfree_voices_.get(i)->note_num == note)
             {
                 uint8_t voice_num = nonfree_voices_.get(i)->voice_num; // voice num of note to turn off
-                voices[voice_num].noteOff();
+                voices.noteOff(voice_num, sustain_);
                 free_voices_.add(voice_num);     // re-add voice to free queue
                 delete (nonfree_voices_.get(i)); // delete voice from pressed queue
                 nonfree_voices_.remove(i);       // remove freed voice from pressed queue
@@ -162,59 +168,27 @@ public:
         }
     }
 
-    void flush()
-    {
-        nonfree_voices_.clear();
-        free_voices_.clear();
-        for (uint8_t i = 0; i < mPOLYPHONY; i++)
-        {
-            free_voices_.unshift(i); // add all voices to voice queue
-            voices[i].noteOff();
-        }
-    }
-
-    void setAlgorithm(uint16_t a)
-    {
-        if (a < 0)
-        {
-            a = 0;
-        }
-        else if (a > 10)
-        {
-            a = 10;
-        }
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setAlgorithm(a);
-        }
-    }
-
-    void update()
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].update();
-        }
-    }
-
     int32_t next()
     {
-        int32_t out_sample = 0;
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            out_sample += voices[i].next();
-        }
+        int32_t out_sample = voices.next();
 
         return out_sample;
     }
 
     uint8_t *current_midi_address_;
 
-    mFM4Voice<mNUM_CELLS, T> voices[mPOLYPHONY];
+    MEAP_Guitar<mPOLYPHONY> voices;
 
 protected:
+    int16_t stringState_[mPOLYPHONY]; // 0 = off, 1 = decaying, 2 = on
+    uint16_t decayCounter_[mPOLYPHONY];
+    float pluckGains_[mPOLYPHONY];
+    // uint32_t *filePointer_;
+
     LinkedList<int16_t> free_voices_;
     LinkedList<MeapNoteAndVoice *> nonfree_voices_;
+
+    float sustain_;
 
     uint16_t curr_voice_;
 
@@ -232,4 +206,4 @@ protected:
     uint16_t time_;
 };
 
-#endif // MFM4POLY_H_
+#endif // MGUITARPOLY_H_

@@ -137,6 +137,20 @@
 #include <meap_modules/mSubSynthVoice.h>
 #include <meap_modules/mSubSynthPoly.h>
 
+#include <meap_modules/mStringSynthVoice.h>
+#include <meap_modules/mStringSynthPoly.h>
+
+#include <meap_modules/mGrainGenerator.h>
+#include <meap_modules/mGrainCloud.h>
+#include <meap_modules/mSampleGrainGenerator.h>
+#include <meap_modules/mSampleGrainCloud.h>
+
+#include <meap_modules/mGuitarPoly.h>
+
+#include <meap_modules/mFM2Voice.h>
+
+#include <meap_modules/mFM2Poly.h>
+
 // meap effects
 
 #ifndef MEAP_LEGACY

@@ -1,7 +1,7 @@
 #ifndef MFM4VOICE_H_
 #define MFM4VOICE_H_
 
-#include <tables/sin2048_int8.h> // table for Oscils to play
+#include <tables/sin8192_int8.h> // table for Oscils to play
 
 // ALGORITHMS
 // 0: 3 -> 2 -> 1 -> 0
@@ -15,7 +15,7 @@
 // 8: (3 -> 2) + 1 + 0
 // 9: 3 + 2 + 1 + 0
 
-template <uint32_t mNUM_CELLS = SIN2048_NUM_CELLS, uint32_t mAUDIO_RATE = AUDIO_RATE, uint32_t mCONTROL_RATE = CONTROL_RATE, class T = int8_t>
+template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, class T = int8_t>
 class mFM4Voice
 {
 public:
@@ -23,7 +23,7 @@ public:
     {
         for (uint16_t i = 0; i < 4; i++)
         {
-            op[i].init(SIN2048_DATA);
+            op[i].init(SIN8192_DATA);
             last_output[i] = 0;
         }
         algorithm = 0;
@@ -55,6 +55,12 @@ public:
         op[1].setFreqRatio(two_r);
         op[2].setFreqRatio(three_r);
         op[3].setFreqRatio(four_r);
+    }
+
+    // 0-3
+    float getRatio(int op_num)
+    {
+        return op[op_num].getFreqRatio();
     }
 
     void setAlgorithm(uint16_t a)
@@ -181,7 +187,7 @@ public:
     }
 
     int32_t last_output[4];
-    mOperator<mNUM_CELLS, mAUDIO_RATE, mCONTROL_RATE, T> op[4];
+    mOperator<mNUM_CELLS, T> op[4];
 
 protected:
     uint16_t algorithm;

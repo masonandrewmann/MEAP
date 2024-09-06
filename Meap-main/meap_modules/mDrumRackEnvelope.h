@@ -1,11 +1,11 @@
-#ifndef MEAP_DRUMRACK_H_
-#define MEAP_DRUMRACK_H_
+#ifndef MEAP_DRUMRACKENVELOPE_H_
+#define MEAP_DRUMRACKENVELOPE_H_
 
-template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mNUM_SAMPLES>
+template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mNUM_SAMPLES, uint64_t mAUDIO_RATE>
 class mDrumRack
 {
 public:
-    mDrumRack(const int8_t **sample_list, uint32_t *sample_lengths, uint8_t *base_address)
+    mDrumRackEnvelope(const int8_t **sample_list, uint32_t *sample_lengths, uint8_t *base_address)
     {
         sample_list_ = sample_list;
         sample_lengths_ = sample_lengths;
@@ -21,7 +21,7 @@ public:
 
         pulse_counter_ = 0;
 
-        default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
+        default_freq_ = (float)mAUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
 
         for (uint8_t i; i < mNUM_SAMPLES; i++)
         {
@@ -31,7 +31,7 @@ public:
         }
     };
 
-    mDrumRack(const int8_t **sample_list, uint32_t *sample_lengths)
+    mDrumRackEnvelope(const int8_t **sample_list, uint32_t *sample_lengths)
     {
         sample_list_ = sample_list;
         sample_lengths_ = sample_lengths;
@@ -47,7 +47,7 @@ public:
 
         pulse_counter_ = 0;
 
-        default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
+        default_freq_ = (float)mAUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
 
         for (uint8_t i; i < mNUM_SAMPLES; i++)
         {
@@ -73,7 +73,7 @@ public:
 
         pulse_counter_ = 0;
 
-        default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
+        default_freq_ = (float)mAUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
 
         for (uint8_t i; i < mNUM_SAMPLES; i++)
         {
@@ -122,13 +122,11 @@ public:
                     break;
                 case 0x90: // note on
                     noteOn(data1_, data2_, default_freq_);
-                    // Serial.println(data1_);
                     // sample_bank_[data1_].noteOn(default_freq_, 255);
                     // velocity_[data1_] = data2_;
                     break;
                 case 255: // end of file
                     playing_ = false;
-                    return;
                     break;
                 }
                 pulse_counter_ = 0;
@@ -150,6 +148,7 @@ public:
     void noteOn(uint16_t sample_num, uint8_t vel, float freq)
     {
         sample_bank_[sample_num].noteOn(freq, vel);
+        env_[sample_num].noteOn();
         // sample_bank_[data1_].noteOn(default_freq_, 255);
         // velocity_[data1_] = data2_;
     }
@@ -157,13 +156,15 @@ public:
     void noteOn(uint16_t sample_num)
     {
         sample_bank_[sample_num].noteOn(default_freq_, 127);
+        env_[sample_num].noteOn();
         // sample_bank_[data1_].noteOn(default_freq_, 255);
         // velocity_[data1_] = data2_;
     }
 
     void noteOff(uint16_t sample_num)
     {
-        sample_bank_[sample_num].noteOff(255);
+        // sample_bank_[sample_num].noteOff(255);
+        env_[sample_num].noteOff();
     }
 
     void setSampleVolume(uint8_t sample_num, float volume)
@@ -174,17 +175,21 @@ public:
     int32_t next()
     {
         // updateMidi();
-        uint64_t output_sample = 0;
+        uint32_t output_sample = 0;
         for (uint8_t i = 0; i < mNUM_SAMPLES; i++)
         {
-            output_sample += (sample_bank_[i].next() * sample_gain_[i]);
+            env_[i].update();
+            output_sample += ((sample_bank_[i].next() * sample_gain_[i] * env_.next()));
         }
-        return (output_sample >> 8);
+        return (output_sample >> 16);
     }
+
+    ADSR<mAUDIO_RATE, mAUDIO_RATE> env_[mNUM_SAMPLES];
 
 protected:
     // sampler voices
-    mSampler<mMAX_SAMPLE_LENGTH, int8_t> sample_bank_[mNUM_SAMPLES];
+    mSampler<mMAX_SAMPLE_LENGTH, mAUDIO_RATE, int8_t> sample_bank_[mNUM_SAMPLES];
+
     const int8_t **sample_list_;
     uint32_t *sample_lengths_;
     uint16_t sample_gain_[mNUM_SAMPLES];
@@ -206,4 +211,4 @@ protected:
     uint16_t time_;
 };
 
-#endif // MEAP_DRUMRACK_H_
+#endif // MEAP_DRUMRACKENVELOPE_H_

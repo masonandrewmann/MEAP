@@ -1,33 +1,36 @@
-#ifndef MSUBSYNTHPOLY_H_
-#define MSUBSYNTHPOLY_H_
+#ifndef MSTRINGSYNTHPOLY_H_
+#define MSTRINGSYNTHPOLY_H_
 
-#include <tables/saw2048_int8.h> // table for Oscils to play
 #include <dependencies/LinkedList/LinkedList.h>
 
-template <uint32_t mNUM_CELLS = SAW2048_NUM_CELLS, uint32_t mNUM_OSC = 1, uint16_t mPOLYPHONY = 4, class T = int8_t>
-class mSubSynthPoly
+template <uint16_t mPOLYPHONY = 4, class T = int8_t>
+class mStringSynthPoly
 {
 public:
-    mSubSynthPoly(const int8_t *TABLE_NAME, uint8_t *midi_table_name)
-    {
-        init(TABLE_NAME, midi_table_name);
-    };
-
-    mSubSynthPoly(const int8_t *TABLE_NAME)
-    {
-        init(TABLE_NAME, NULL);
-    };
-
-    mSubSynthPoly()
-    {
-        init(SAW2048_DATA, NULL);
-    }
-
-    void init(const int8_t *TABLE_NAME, uint8_t *midi_table_name)
+    mStringSynthPoly()
     {
         for (uint16_t i = 0; i < mPOLYPHONY; i++)
         {
-            voices[i].init(TABLE_NAME);
+            voices[i].init();
+            free_voices_.unshift(i); // add all voices to voice queue
+        }
+        curr_voice_ = 0;
+        midi_table_name_ = NULL;
+        playing_ = false;
+
+        message_type_ = 0;
+        data1_ = 0;
+        data2_ = 0;
+        time_ = 0;
+
+        pulse_counter_ = 0;
+    }
+
+    mStringSynthPoly(uint8_t *midi_table_name)
+    {
+        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        {
+            voices[i].init();
             free_voices_.unshift(i); // add all voices to voice queue
         }
         curr_voice_ = 0;
@@ -44,6 +47,7 @@ public:
 
     void begin()
     {
+        // start_time = millis();
         playing_ = true;
         current_midi_address_ = midi_table_name_;
         pulse_counter_ = 0;
@@ -51,6 +55,46 @@ public:
         data1_ = current_midi_address_[1];
         data2_ = current_midi_address_[2];
         time_ = (current_midi_address_[3] << 8) + current_midi_address_[4];
+    }
+
+    void setADSR(uint32_t a_t, uint32_t d_t, uint16_t s_l, uint32_t r_t)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setADSR(a_t, d_t, s_l, r_t);
+        }
+    }
+
+    void setCutoffFreqAndResonance(uint32_t c, uint32_t r)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setCutoffFreqAndResonance(c, r);
+        }
+    }
+
+    void setDetune(uint32_t d_v)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setDetune(d_v);
+        }
+    }
+
+    void setEnsembleMix(uint32_t e_v)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setEnsembleMix(e_v);
+        }
+    }
+
+    void setPhaserFreq(float p_f)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setPhaserFreq(p_f);
+        }
     }
 
     void stop()
@@ -100,16 +144,6 @@ public:
         return playing_;
     }
 
-    void flush()
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].noteOff();
-            free_voices_.unshift(i); // add all voices to voice queue
-        }
-        nonfree_voices_.clear();
-    }
-
     void noteOn(uint16_t note, float vel)
     {
         if (free_voices_.size() > 0)
@@ -146,128 +180,16 @@ public:
                 return;
             }
         }
-        return;
     }
 
-    void setOscGain(uint16_t osc_num, uint16_t osc_gain)
+    void flush()
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        nonfree_voices_.clear();
+        free_voices_.clear();
+        for (uint8_t i = 0; i < mPOLYPHONY; i++)
         {
-            voices[i].setOscGain(osc_num, osc_gain);
-        }
-    }
-
-    void setOscSemitones(uint16_t osc_num, uint16_t semitone_offset)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setOscSemitones(osc_num, semitone_offset);
-        }
-    }
-
-    void setOscDetune(uint16_t osc_num, float amount)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setOscDetune(osc_num, amount);
-        }
-    }
-
-    // 0 - 255
-    void setCutoff(uint16_t cutoff_val)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setCutoff(cutoff_val);
-        }
-    }
-
-    // 0 - 255
-    void setResonance(uint16_t resonance_val)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setResonance(resonance_val);
-        }
-    }
-
-    void setAttackTime(uint32_t a_)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setAttackTime(a_);
-        }
-    }
-
-    void setDecayTime(uint32_t d_)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setDecayTime(d_);
-        }
-    }
-
-    void setSustainLevel(uint32_t s_)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setSustainLevel(s_);
-        }
-    }
-
-    void setReleaseTime(uint32_t r_)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setReleaseTime(r_);
-        }
-    }
-
-    void setNoiseGain(uint32_t noise_gain)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setNoiseGain(noise_gain);
-        }
-    }
-
-    void setFilterEnvAmount(uint32_t amount)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setFilterEnvAmount(amount);
-        }
-    }
-
-    void setFilterAttackTime(uint32_t time)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setFilterAttackTime(time);
-        }
-    }
-
-    void setFilterReleaseTime(uint32_t time)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setFilterReleaseTime(time);
-        }
-    }
-
-    void setFilterDecayTime(uint32_t time)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setFilterDecayTime(time);
-        }
-    }
-
-    void setFilterSustainLevel(uint32_t level)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].setFilterSustainLevel(level);
+            free_voices_.unshift(i); // add all voices to voice queue
+            voices[i].noteOff();
         }
     }
 
@@ -292,7 +214,7 @@ public:
 
     uint8_t *current_midi_address_;
 
-    mSubSynthVoice<mNUM_CELLS, mNUM_OSC, T> voices[mPOLYPHONY];
+    mStringSynthVoice<T> voices[mPOLYPHONY];
 
 protected:
     LinkedList<int16_t> free_voices_;
@@ -314,4 +236,4 @@ protected:
     uint16_t time_;
 };
 
-#endif // MSUBSYNTHPOLY_H_
+#endif // MSTRINGSYNTHPOLY_H_

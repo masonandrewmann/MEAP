@@ -1,13 +1,13 @@
 #ifndef MEAP_SAMPLER_VOICE_H_
 #define MEAP_SAMPLER_VOICE_H_
 
-template <uint64_t mMAX_SAMPLE_LENGTH, uint64_t mAUDIO_RATE, class T = int16_t>
+template <uint64_t mMAX_SAMPLE_LENGTH, class T = int16_t>
 class mSamplerVoice
 {
 public:
     mSamplerVoice(const T *TABLE_NAME, uint64_t TABLE_SIZE, uint8_t *base_address)
     {
-        default_freq_ = (float)mAUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
+        default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
         for (int i = 0; i < 128; i++)
         {
             m_freq_table[i] = default_freq_ * (float)pow(2.f, ((float)(60 - i) * -1.0) / 12.f);
@@ -126,7 +126,7 @@ public:
     }
 
 protected:
-    mSampler<mMAX_SAMPLE_LENGTH, mAUDIO_RATE, T> sample;
+    mSampler<mMAX_SAMPLE_LENGTH, T> sample;
 
     // reading midi file
     uint8_t *base_address_;

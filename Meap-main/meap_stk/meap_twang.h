@@ -108,7 +108,7 @@ public:
 
     //! Return the last computed output value.
     // float lastOut( void ) { return lastFrame_[0]; };
-    float lastOut(void) { return lastOutput_; };
+    T lastOut(void) { return lastOutput_; };
 
     //! Compute and return one output sample.
     T next(T input)
@@ -127,7 +127,7 @@ protected:
     MEAP_Delay_Linear<int16_t> combDelay_;  // dummy lengths
     MEAP_fir<int16_t> loopFilter_;
 
-    float lastOutput_;
+    T lastOutput_;
     float frequency_;
     float loopGain_;
     float pluckPosition_;

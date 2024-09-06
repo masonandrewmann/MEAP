@@ -37,12 +37,12 @@
 /***************************************************/
 
 #define BASE_COUPLING_GAIN 0.01f
-template <int NUM_STRINGS>
+template <int16_t NUM_STRINGS>
 class MEAP_Guitar
 {
 public:
     //! Class constructor, specifying an arbitrary number of strings (default = 6).
-    MEAP_Guitar(int hi) : couplingFilter_(0.9), pickFilter_(0.95)
+    MEAP_Guitar() : couplingFilter_(0.9), pickFilter_(0.95)
     {
         num_strings_ = NUM_STRINGS;
 
@@ -228,12 +228,12 @@ public:
     };
 
     //! Return the last computed output value.
-    float lastOut(void) { return last_output_; };
+    int32_t lastOut(void) { return last_output_; };
 
     //! Take an optional input sample and compute one output sample.
-    float next(float input = 0.0)
+    int32_t next(float input = 0.0)
     {
-        float temp, output = 0.0;
+        int32_t temp, output = 0.0;
         last_output_ /= num_strings_; // evenly spread coupling across strings
         for (uint16_t i = 0; i < num_strings_; i++)
         {
@@ -283,7 +283,7 @@ protected:
     MEAP_OnePole<int16_t> couplingFilter_;
     float couplingGain_;
     int16_t *excitation_;
-    int16_t last_output_;
+    int32_t last_output_;
 };
 
 #endif // MEAP_GUITAR_H

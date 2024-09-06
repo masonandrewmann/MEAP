@@ -15,7 +15,7 @@
 //   |A|
 //   ___
 
-template <uint32_t NUM_CELLS, uint32_t mAUDIO_RATE, uint16_t mPOLYPHONY>
+template <uint32_t NUM_CELLS, uint16_t mPOLYPHONY>
 class mBasicFMPoly
 {
 public:
@@ -164,12 +164,12 @@ public:
                     playing_ = false;
                     break;
                 }
+                current_address_ += 5;
                 pulse_counter_ = 0;
                 message_type_ = current_address_[0];
                 data1_ = current_address_[1];
                 data2_ = current_address_[2];
                 time_ = (current_address_[3] << 8) + current_address_[4];
-                current_address_ += 5;
             }
         }
     }
@@ -235,15 +235,15 @@ public:
 
 protected:
     Oscil<NUM_CELLS, AUDIO_RATE> oscA_[mPOLYPHONY];
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> envA_[mPOLYPHONY];
+    ADSR<AUDIO_RATE, AUDIO_RATE> envA_[mPOLYPHONY];
     uint16_t gainA_[mPOLYPHONY];
 
     Oscil<WHITENOISE8192_NUM_CELLS, AUDIO_RATE> oscB_[mPOLYPHONY];
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> envB_[mPOLYPHONY];
+    ADSR<AUDIO_RATE, AUDIO_RATE> envB_[mPOLYPHONY];
     uint16_t gainB_[mPOLYPHONY];
 
     Oscil<SQUARE_MAX_68_AT_16384_2048_NUM_CELLS, AUDIO_RATE> oscC_[mPOLYPHONY];
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> envC_[mPOLYPHONY];
+    ADSR<AUDIO_RATE, AUDIO_RATE> envC_[mPOLYPHONY];
     uint16_t gainC_[mPOLYPHONY];
 
     uint8_t velocity_[mPOLYPHONY];

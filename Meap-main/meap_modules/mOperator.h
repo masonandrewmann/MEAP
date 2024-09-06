@@ -1,7 +1,7 @@
 #ifndef MOPERATOR_H_
 #define MOPERATOR_H_
 
-template <uint32_t NUM_CELLS, uint32_t mAUDIO_RATE, uint32_t mCONTROL_RATE, class T = int8_t>
+template <uint32_t NUM_CELLS, class T = int8_t>
 class mOperator
 {
 public:
@@ -18,7 +18,7 @@ public:
         osc_.setTable(TABLE_NAME);
         osc_.setFreq(220);
         sustain_time_ = 4294967295;
-        env_.setTimes(1, 1, sustain_time_, 1);
+        env_.setTimes(0, 0, sustain_time_, 0);
         sustain_level_ = 255;
         env_.setADLevels(255, sustain_level_);
         env_val_ = 0;
@@ -57,6 +57,11 @@ public:
         note_active_ = false;
     }
 
+    void setTable(const T *TABLE_NAME)
+    {
+        osc_.setTable(TABLE_NAME);
+    }
+
     void setFreq(float f_)
     {
         osc_.setFreq(f_ * osc_freq_ratio_);
@@ -65,6 +70,11 @@ public:
     void setFreqRatio(float r_)
     {
         osc_freq_ratio_ = r_;
+    }
+
+    float getFreqRatio()
+    {
+        return osc_freq_ratio_;
     }
 
     void setLoopingOn()
@@ -99,6 +109,7 @@ public:
         drone_ = false;
     }
 
+    // 0-255
     void setGain(uint16_t g_)
     {
         gain_ = g_;
@@ -143,7 +154,7 @@ public:
 
     void update()
     {
-        // env_.update();
+        env_.update();
         if (looping_on_ && note_active_ && (env_.playing() == false))
         {
             env_.noteOn();
@@ -152,7 +163,7 @@ public:
 
     int32_t next()
     {
-        env_.update();
+        // env_.update();
         if (drone_)
         {
             env_val_ = 255;
@@ -168,7 +179,7 @@ public:
     // mod input is 8bit
     int32_t fmNext(int16_t mod_input)
     {
-        env_.update();
+        // env_.update();
         if (drone_)
         {
             env_val_ = 255;
@@ -186,7 +197,7 @@ public:
     // mod input is 8bit
     int32_t next(int16_t mod_input)
     {
-        env_.update();
+        // env_.update();
         if (drone_)
         {
             env_val_ = 255;
@@ -205,7 +216,7 @@ protected:
     Oscil<NUM_CELLS, AUDIO_RATE> osc_;
     float osc_freq_ratio_;
 
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> env_;
+    ADSR<CONTROL_RATE, AUDIO_RATE> env_;
     uint16_t env_val_;
     uint16_t shift_val_;
     uint32_t sustain_time_;

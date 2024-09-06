@@ -3,7 +3,7 @@
 
 #include <tables/saw2048_int8.h> // table for Oscils to play
 
-template <uint32_t mNUM_CELLS = SAW2048_NUM_CELLS, uint32_t mNUM_OSC = 3, uint32_t mAUDIO_RATE = AUDIO_RATE, uint32_t mCONTROL_RATE = CONTROL_RATE, class T = int8_t>
+template <uint32_t mNUM_CELLS = SAW2048_NUM_CELLS, uint32_t mNUM_OSC = 1, class T = int8_t>
 class mSubSynthVoice
 {
 public:
@@ -89,6 +89,7 @@ public:
     void setFilterSustainLevel(uint16_t level)
     {
         filter_sustain_level_ = level;
+        filter_env_.setADLevels(filter_env_amount_, (filter_env_amount_ * filter_sustain_level_) >> 8);
     }
 
     // 0-255
@@ -190,6 +191,7 @@ public:
             cutoff_val = 0;
         }
         filter_.setCutoffFreqAndResonance(cutoff_val, resonance_);
+        amp_env_.update();
     }
 
     void noteOn(uint16_t note, uint16_t vel)
@@ -202,8 +204,7 @@ public:
                 osc_[i].setPhase(0);
             }
         }
-        // amp_env_.setADLevels(vel << 1, (vel * sustain_level_ >> 7));
-        amp_env_.setADLevels(vel << 1, (vel * sustain_level_ >> 7));
+        amp_env_.setADLevels(vel << 1, (vel * sustain_level_) >> 7);
         amp_env_.noteOn();
         filter_env_.noteOn();
     }
@@ -222,25 +223,24 @@ public:
         for (uint16_t i = 0; i < mNUM_OSC; i++)
         {
 
-            output_sample += osc_[i].next() * osc_gain_[i];
+            output_sample += (osc_[i].next() * osc_gain_[i]);
         }
 
         output_sample += ((xorshift96() % noise_upper_) - noise_sub_) * noise_gain_; // noise sample with same bitrate as osc
 
-        amp_env_.update();
-        output_sample = (output_sample * amp_env_.next() >> shift_val_); // down to 16 bits
-
         filter_.next(output_sample);
         output_sample = filter_.low();
+
+        output_sample = (output_sample * amp_env_.next()) >> shift_val_; // down to 16 bits
 
         return output_sample;
     }
 
 protected:
-    Oscil<mNUM_CELLS, mAUDIO_RATE> osc_[mNUM_OSC];
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> amp_env_;
+    Oscil<mNUM_CELLS, AUDIO_RATE> osc_[mNUM_OSC];
+    ADSR<CONTROL_RATE, AUDIO_RATE> amp_env_;
     MultiResonantFilter<uint8_t> filter_;
-    ADSR<mCONTROL_RATE, mCONTROL_RATE> filter_env_;
+    ADSR<CONTROL_RATE, CONTROL_RATE> filter_env_;
 
     uint16_t noise_gain_;
     uint16_t osc_gain_[mNUM_OSC];
@@ -248,10 +248,10 @@ protected:
     float osc_detune_[mNUM_OSC];
     uint16_t cutoff_;
     uint16_t resonance_;
-    uint16_t shift_val_;
-    uint16_t sustain_level_;
     uint16_t filter_env_amount_;
     uint16_t filter_sustain_level_;
+    uint16_t shift_val_;
+    uint16_t sustain_level_;
     int32_t noise_upper_;
     int32_t noise_sub_;
 

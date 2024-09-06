@@ -1,7 +1,7 @@
 #ifndef MEAP_SAMPLER_H_
 #define MEAP_SAMPLER_H_
 
-template <uint32_t mSAMPLE_LENGTH, uint32_t mAUDIO_RATE, class T = int16_t>
+template <uint32_t mSAMPLE_LENGTH, class T = int16_t>
 class mSampler
 {
 public:
@@ -114,11 +114,11 @@ protected:
     uint16_t gain_;
     uint16_t velocity_;
     float freq_;
-    mSample<mSAMPLE_LENGTH, mAUDIO_RATE, T> sample_;
+    mSample<mSAMPLE_LENGTH, AUDIO_RATE, T> sample_;
 
     uint8_t shift_val_;
 
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> adsr_;
+    ADSR<AUDIO_RATE, AUDIO_RATE> adsr_;
 };
 
 #endif // MEAP_SAMPLER_H_

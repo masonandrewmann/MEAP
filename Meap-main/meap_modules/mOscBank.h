@@ -251,8 +251,14 @@ public:
         {
             gain_[i] = adsr_[i].next();
             osc_detune_[i].setFreq(detune_freq_[i]);
-
-            output_sample += (osc_[i].next() + osc_detune_[i].next()) * gain_[i];
+            if (detune_enable_)
+            {
+                output_sample += (osc_[i].next() + osc_detune_[i].next()) * gain_[i];
+            }
+            else
+            {
+                output_sample += (osc_[i].next() << 1) * gain_[i];
+            }
 
             // output_sample += osc_detune_[i].next() * gain_[i];
             // }

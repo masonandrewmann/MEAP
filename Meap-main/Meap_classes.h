@@ -97,14 +97,14 @@ public:
    * WARNING - this function may not play nicely with additional analog reads!!
    *
    */
-  void readInputs();
+  void readInputsFast();
 
   /**
    * @brief Reads DIP switches, touch inputs, built-in potentiometers and aux mux in a blocking way. Slower
    * but easier to add extra inputs
    *
    */
-  void readInputsSlow();
+  void readInputs();
 
   /**
    * @brief A stereo equal power panner
@@ -144,7 +144,42 @@ public:
    *
    * @param gain between 60 and 252, 60 being maximum gain
    */
-  void setCodecGain(uint16_t gain);
+  static void setCodecGain(uint16_t gain);
+
+  /**
+   * @brief Sets channel (0-7) on multiplexer A, B, C control pins
+   *
+   * @param tempo in BPM
+   * @return float number of microseconds in one MIDI clock pulse at the specified BPM
+   */
+  void setMuxChannel(int8_t channel);
+
+  /**
+   * @brief Reads a register from SGTL5000
+   *
+   * @param reg address of register to read
+   * @return value at the register
+   */
+  static uint32_t SGread(uint32_t reg);
+
+  /**
+   * @brief Attempts to write a register in SGTL5000
+   *
+   * @param reg address of register to write
+   * @param val value to write in register
+   * @return success or failure of write operation
+   */
+  static bool SGwrite(uint32_t reg, uint32_t val);
+
+  /**
+   * @brief Modifies specified bits of SGTL5000 register
+   *
+   * @param reg address of register to write
+   * @param val value to write in register
+   * @param iMask bit mask of values to modify in register (1s get modified)
+   * @return returns 0 if write fails, or the masked value if write succeeds
+   */
+  static uint32_t SGmodify(uint32_t reg, uint32_t val, uint32_t iMask);
 
   // variables
   int8_t dip_pins[8] = {0, 1, 2, 3, 4, 7, 5, 6}; // previously {5, 6, 7, 4, 3, 0, 2, 1};
@@ -165,7 +200,7 @@ public:
 
   int pot_vals[2] = {0, 0};
   int pot_pins[2] = {MEAP_POT_0_PIN - 1, MEAP_POT_1_PIN - 1}; // GPIO 9 and 10 (ADC1 channels 8 and 9)
-  int volume_val = 0;
+  int16_t volume_val = 0;
 
   // for mux and adc
   int8_t dip_mux_read_channel = 0;
@@ -185,41 +220,6 @@ public:
   AdcModes touch_mode = kREADY;
 
 protected:
-  /**
-   * @brief Sets channel (0-7) on multiplexer A, B, C control pins
-   *
-   * @param tempo in BPM
-   * @return float number of microseconds in one MIDI clock pulse at the specified BPM
-   */
-  void setMuxChannel(int8_t channel);
-
-  /**
-   * @brief Reads a register from SGTL5000
-   *
-   * @param reg address of register to read
-   * @return value at the register
-   */
-  uint32_t SGread(uint32_t reg);
-
-  /**
-   * @brief Attempts to write a register in SGTL5000
-   *
-   * @param reg address of register to write
-   * @param val value to write in register
-   * @return success or failure of write operation
-   */
-  bool SGwrite(uint32_t reg, uint32_t val);
-
-  /**
-   * @brief Modifies specified bits of SGTL5000 register
-   *
-   * @param reg address of register to write
-   * @param val value to write in register
-   * @param iMask bit mask of values to modify in register (1s get modified)
-   * @return returns 0 if write fails, or the masked value if write succeeds
-   */
-  uint32_t SGmodify(uint32_t reg, uint32_t val, uint32_t iMask);
-
   /**
    * @brief Initializes the SGTL5000 audio codec
    *

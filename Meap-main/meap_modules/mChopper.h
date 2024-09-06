@@ -23,6 +23,10 @@ public:
     {
         sustain_ = Meap::irand(lower_, higher_);
         adsr_.setSustainTime(sustain_);
+        // if (adsr_.playing())
+        // {
+        //     return;
+        // }
         adsr_.noteOn();
         end_time_ = millis() + sustain_;
         pan_ = Meap::irand(0, 255);

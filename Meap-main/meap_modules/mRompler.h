@@ -3,7 +3,14 @@
 
 #include <dependencies/LinkedList/LinkedList.h>
 
-template <uint64_t mMAX_SAMPLE_LENGTH, uint64_t mAUDIO_RATE, uint8_t mPOLYPHONY, class T = int8_t>
+struct RomplerNote
+{
+    uint16_t note_num;
+    uint16_t voice_num;
+    uint16_t program_num;
+};
+
+template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mPOLYPHONY, class T = int8_t>
 class mRompler
 {
 public:
@@ -15,7 +22,7 @@ public:
         sample_list_ = sample_list;
         sample_lengths_ = sample_lengths;
 
-        default_freq_ = (float)mAUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
+        default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
         curr_program_ = 0;
 
         attack_time_ = 1;
@@ -23,7 +30,7 @@ public:
         release_time_ = 100;
         sustain_level_ = 255;
 
-        for (uint8_t i; i < mPOLYPHONY; i++)
+        for (uint8_t i = 0; i < mPOLYPHONY; i++)
         {
             velocity_[i] = 127;
             sample_bank_[i].setTable(sample_list_[curr_program_], sample_lengths[curr_program_]);
@@ -57,6 +64,22 @@ public:
         release_time_ = rt;
     }
 
+    void setLoopingOn()
+    {
+        for (uint8_t j = 0; j < mPOLYPHONY; j++)
+        {
+            sample_bank_[j].setLoopingOn();
+        }
+    }
+
+    void setLoopingOff()
+    {
+        for (uint8_t j = 0; j < mPOLYPHONY; j++)
+        {
+            sample_bank_[j].setLoopingOff();
+        }
+    }
+
     void noteOn(uint16_t note, float vel)
     {
         int16_t curr_voice_;
@@ -69,17 +92,41 @@ public:
             return; // no free voices, move along...
         }
         sample_bank_[curr_voice_].setTableAndEnd(sample_list_[curr_program_], sample_lengths_[curr_program_]);
-        // sample_bank_[curr_voice_].setAttackTime(attack_time_);
-        // sample_bank_[curr_voice_].setReleaseTime(release_time_);
         sample_bank_[curr_voice_].setTimes(attack_time_, decay_time_, 4294967295, release_time_);
         sample_bank_[curr_voice_].setADLevels(255, sustain_level_);
 
         sample_bank_[curr_voice_].noteOn(sample_frequencies[note], vel);
 
         // store note in pressed notes queue
-        MeapNoteAndVoice *my_note = new MeapNoteAndVoice;
+        RomplerNote *my_note = new RomplerNote;
         my_note->note_num = note;
         my_note->voice_num = curr_voice_;
+        my_note->program_num = curr_program_;
+        nonfree_voices_.add(my_note);
+    }
+
+    void noteOn(uint16_t note, float vel, int16_t program_override)
+    {
+        int16_t curr_voice_;
+        if (free_voices_.size() > 0)
+        {
+            curr_voice_ = free_voices_.shift(); // remove head element and return it!
+        }
+        else
+        {
+            return; // no free voices, move along...
+        }
+        sample_bank_[curr_voice_].setTableAndEnd(sample_list_[program_override], sample_lengths_[program_override]);
+        sample_bank_[curr_voice_].setTimes(attack_time_, decay_time_, 4294967295, release_time_);
+        sample_bank_[curr_voice_].setADLevels(255, sustain_level_);
+
+        sample_bank_[curr_voice_].noteOn(sample_frequencies[note], vel);
+
+        // store note in pressed notes queue
+        RomplerNote *my_note = new RomplerNote;
+        my_note->note_num = note;
+        my_note->voice_num = curr_voice_;
+        my_note->program_num = program_override;
         nonfree_voices_.add(my_note);
     }
 
@@ -89,7 +136,7 @@ public:
         uint8_t num_nonfree_voices = nonfree_voices_.size();
         for (uint8_t i = 0; i < num_nonfree_voices; i++)
         {
-            if (nonfree_voices_.get(i)->note_num == note)
+            if (nonfree_voices_.get(i)->note_num == note && nonfree_voices_.get(i)->program_num == curr_program_)
             {
                 uint8_t voice_num = nonfree_voices_.get(i)->voice_num; // voice num of note to turn off
                 sample_bank_[voice_num].noteOff();
@@ -98,6 +145,35 @@ public:
                 nonfree_voices_.remove(i);       // remove freed voice from pressed queue
                 return;
             }
+        }
+    }
+
+    void noteOff(uint16_t note, uint16_t program_override)
+    {
+
+        uint8_t num_nonfree_voices = nonfree_voices_.size();
+        for (uint8_t i = 0; i < num_nonfree_voices; i++)
+        {
+            if (nonfree_voices_.get(i)->note_num == note && nonfree_voices_.get(i)->program_num == program_override)
+            {
+                uint8_t voice_num = nonfree_voices_.get(i)->voice_num; // voice num of note to turn off
+                sample_bank_[voice_num].noteOff();
+                free_voices_.add(voice_num);     // re-add voice to free queue
+                delete (nonfree_voices_.get(i)); // delete voice from pressed queue
+                nonfree_voices_.remove(i);       // remove freed voice from pressed queue
+                return;
+            }
+        }
+    }
+
+    void flush()
+    {
+        nonfree_voices_.clear();
+        free_voices_.clear();
+        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        {
+            free_voices_.unshift(i); // add all voices to voice queue
+            sample_bank_[i].noteOff();
         }
     }
 
@@ -118,7 +194,7 @@ public:
 
 protected:
     // sampler voices
-    mSampler<mMAX_SAMPLE_LENGTH, mAUDIO_RATE, T> sample_bank_[mPOLYPHONY];
+    mSampler<mMAX_SAMPLE_LENGTH, T> sample_bank_[mPOLYPHONY];
     const T **sample_list_;
     uint64_t *sample_lengths_;
     uint16_t velocity_[mPOLYPHONY];
@@ -133,7 +209,7 @@ protected:
     float default_freq_;
 
     LinkedList<int16_t> free_voices_;
-    LinkedList<MeapNoteAndVoice *> nonfree_voices_;
+    LinkedList<RomplerNote *> nonfree_voices_;
 };
 
 #endif // MROMPLER_H_

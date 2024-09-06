@@ -15,7 +15,7 @@
 //   |A|
 //   ___
 
-template <uint32_t NUM_CELLS, uint32_t mAUDIO_RATE>
+template <uint32_t NUM_CELLS>
 class mBasicFM
 {
 public:
@@ -208,15 +208,15 @@ public:
 
 protected:
     Oscil<NUM_CELLS, AUDIO_RATE> oscA_;
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> envA_;
+    ADSR<AUDIO_RATE, AUDIO_RATE> envA_;
     uint16_t gainA_;
 
     Oscil<WHITENOISE8192_NUM_CELLS, AUDIO_RATE> oscB_;
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> envB_;
+    ADSR<AUDIO_RATE, AUDIO_RATE> envB_;
     uint16_t gainB_;
 
     Oscil<SQUARE_MAX_68_AT_16384_2048_NUM_CELLS, AUDIO_RATE> oscC_;
-    ADSR<mAUDIO_RATE, mAUDIO_RATE> envC_;
+    ADSR<AUDIO_RATE, AUDIO_RATE> envC_;
     uint16_t gainC_;
 
     uint8_t velocity_;
