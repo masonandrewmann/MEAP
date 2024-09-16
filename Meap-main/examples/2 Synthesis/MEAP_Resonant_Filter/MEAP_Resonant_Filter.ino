@@ -11,8 +11,8 @@
  */
 
 
-#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
-#include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
+#define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
+#include <Meap.h>         // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
@@ -20,15 +20,16 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out por
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
 #include <tables/whitenoise8192_int8.h>  // loads white noise wavetable
 
-Oscil<WHITENOISE8192_NUM_CELLS, AUDIO_RATE> white_noise(WHITENOISE8192_DATA);
+mOscil<WHITENOISE8192_NUM_CELLS, AUDIO_RATE> white_noise(WHITENOISE8192_DATA);
 
-MultiResonantFilter<uint8_t> filter;  // Multifilter applied to an 8-bit signal.
+MultiResonantFilter<uint8_t> filter;
 
-enum types { lowpass,
-             bandpass,
-             highpass,
-             notch } filter_type = lowpass;
-// int filter_type = 0;
+enum types {
+  lowpass,
+  bandpass,
+  highpass,
+  notch
+} filter_type = lowpass;
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -47,7 +48,7 @@ void loop() {
 
 void updateControl() {
   meap.readInputs();
- // ---------- YOUR updateControl CODE BELOW ----------
+  // ---------- YOUR updateControl CODE BELOW ----------
   int cutoff = map(meap.pot_vals[0], 0, 4095, 0, 255);
   int resonance = map(meap.pot_vals[1], 0, 4095, 0, 255);
   filter.setCutoffFreqAndResonance(cutoff, resonance);
@@ -55,24 +56,24 @@ void updateControl() {
 
 
 AudioOutput_t updateAudio() {
-  int sig = 0;
-  filter.next(white_noise.next()); // calculates all filter outputs
+  int64_t out_sample = white_noise.next();
+  filter.next(out_sample);
   switch (filter_type)  // grab the output from the current selected filter type.
   {
     case lowpass:
-      sig = filter.low();  // lowpassed sample
+      out_sample = filter.low();  // lowpassed sample
       break;
     case highpass:
-      sig = filter.high();  // highpassed sample
+      out_sample = filter.high();  // highpassed sample
       break;
     case bandpass:
-      sig = filter.band();  // bandpassed sample
+      out_sample = filter.band();  // bandpassed sample
       break;
     case notch:
-      sig = filter.notch();  // notched sample
+      out_sample = filter.notch();  // notched sample
       break;
   }
-  return StereoOutput::fromNBit(11, sig, sig);
+  return StereoOutput::fromNBit(11, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
 

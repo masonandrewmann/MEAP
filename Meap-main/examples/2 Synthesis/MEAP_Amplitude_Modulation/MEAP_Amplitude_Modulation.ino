@@ -6,7 +6,7 @@
   Pot 2 controls modulation depth.
  */
 
-#define CONTROL_RATE 64   // Hz, powers of 2 are most reliable
+#define CONTROL_RATE 128   // Hz, powers of 2 are most reliable
 #include <Meap.h> // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;  // creates MEAP object to handle inputs and other MEAP library functions
@@ -16,8 +16,8 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out por
 
 #include <tables/triangle_warm8192_int8.h>  // includes triangle wavetable
 
-Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> carrier_osc(TRIANGLE_WARM8192_DATA);
-Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> modulator_osc(TRIANGLE_WARM8192_DATA);
+mOscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> carrier_osc(TRIANGLE_WARM8192_DATA);
+mOscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> modulator_osc(TRIANGLE_WARM8192_DATA);
 
 int mod_depth = 0;
 
@@ -49,8 +49,8 @@ void updateControl() {
 AudioOutput_t updateAudio() {
   int carrier_sample = carrier_osc.next() * mod_depth;
   int modulator_sample = modulator_osc.next();
-  int out_sample = carrier_sample * modulator_sample;
-  return StereoOutput::fromAlmostNBit(24, out_sample, out_sample);
+  int64_t out_sample = (carrier_sample * modulator_sample);
+  return StereoOutput::fromNBit(24, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
 }
 
 

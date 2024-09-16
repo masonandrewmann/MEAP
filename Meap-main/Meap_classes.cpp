@@ -37,16 +37,37 @@ void Meap::begin()
   pinMode(MEAP_LED_0_PIN, OUTPUT);
   pinMode(MEAP_LED_1_PIN, OUTPUT);
 
+  // adjust smoothing amount based on control rate
+  if (CONTROL_RATE == 128)
+  {
+    meap_alpha = 0.92;
+    meap_one_minus_alpha = 0.08;
+  }
+  else if (CONTROL_RATE == 64)
+  {
+    meap_alpha = 0.88;
+    meap_one_minus_alpha = 0.12;
+  }
+  else if (CONTROL_RATE == 256)
+  {
+    meap_alpha = 0.96;
+    meap_one_minus_alpha = 0.04;
+  }
+
+  pot_vals[0] = analogRead(MEAP_POT_0_PIN);
+  pot_vals[1] = analogRead(MEAP_POT_1_PIN);
+  volume_val = analogRead(MEAP_VOLUME_POT_PIN);
+
   // set up ADC1
-  REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_FORCE, 1); // adc controlled by software
-  REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD_FORCE, 1); // channel select controlled by software
-  REG_WRITE(SENS_SAR_ATTEN1_REG, 0xFFFFFFFF);                         // set attenuation
-  analogRead(8);                                                      // rlly hacky, just let the API get ADC1 set up bc it seems like i was missing something
+  // REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_FORCE, 1); // adc controlled by software
+  // REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD_FORCE, 1); // channel select controlled by software
+  REG_WRITE(SENS_SAR_ATTEN1_REG, 0xFFFFFFFF); // set attenuation
+  analogRead(8);                              // rlly hacky, just let the API get ADC1 set up bc it seems like i was missing something
 
   // set up ADC2
-  REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_FORCE, 1); // adc controlled by software
-  REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_SAR2_EN_PAD_FORCE, 1); // channel select controlled by software
-  analogRead(11);                                                     // rlly hacky, just let the API get ADC2 set up bc it seems like i was missing something!
+  // REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_FORCE, 1); // adc controlled by software
+  // REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_SAR2_EN_PAD_FORCE, 1); // channel select controlled by software
+  analogRead(11); // rlly hacky, just let the API get ADC2 set up bc it seems like i was missing something!
 
   // set up touch FSM
   // REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL2_REG, RTC_CNTL_TOUCH_START_FORCE, 1); // software will start readings
@@ -62,6 +83,7 @@ void Meap::begin()
   // touchRead(8);
   // REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL1_REG, RTC_CNTL_TOUCH_MEAS_NUM, 1); // only one reading
   // REG_SET_FIELD(SENS_SAR_TOUCH_CONF_REG, SENS_TOUCH_OUTEN, 1 << 1);    // choose channel 1 to begin
+  touchSetCycles(1, 1);
 
   pinMode(18, INPUT); // for external multiplexer
 
@@ -236,21 +258,28 @@ void Meap::readInputsFast()
   }
 }
 
+// Reads DIP inputs, touch pads and potentiometers using blocking functions. Not the most efficient way to read them but it works.
+// takes ~133us eek
+// total touchreads take ~20us
+// three analogreads at end take 100us total
 void Meap::readInputs()
 {
 
   // read dips and buttons
   for (int i = 0; i < 8; i++)
   {
-    setMuxChannel(i);
-    setMuxChannel(i);
-    setMuxChannel(i);
-    setMuxChannel(i);
-    setMuxChannel(i);
+    setMuxChannel(i); // repeated several times to allow address signals to propogate through multiplexers
+    touch_avgs[i] = touchRead(touch_pins[i]);
+
+    // process the touch pads
+    touch_vals[i] = touch_avgs[i] > touch_threshold;
+    if (touch_vals[i] != prev_touch_vals[i])
+    {
+      updateTouch(i, touch_vals[i]);
+      prev_touch_vals[i] = touch_vals[i];
+    }
+
     dip_vals[dip_pins[i]] = !digitalRead(MEAP_MUX_DIP_PIN); // read the DIP mux common pin
-    aux_mux_vals[i] = analogRead(11);
-    // extra_mux_vals[i] = analogRead(13);
-    // external_mux_vals[i] = digitalRead(18);
 
     // was a dip pressed?
     if (dip_vals[dip_pins[i]] != prev_dip_vals[dip_pins[i]])
@@ -258,21 +287,16 @@ void Meap::readInputs()
       updateDip(dip_pins[i], dip_vals[dip_pins[i]]);
       prev_dip_vals[dip_pins[i]] = dip_vals[dip_pins[i]];
     }
-
-    // was a button pressed
   }
 
   // read builtin pots
-  pot_vals[0] = analogRead(MEAP_POT_0_PIN);
-  pot_vals[1] = analogRead(MEAP_POT_1_PIN);
-  // volume_val = analogRead(MEAP_VOLUME_POT_PIN);
+  pot_vals[0] = (pot_vals[0] * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_POT_0_PIN));
+  pot_vals[1] = (pot_vals[1] * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_POT_1_PIN));
+  volume_val = (volume_val * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_VOLUME_POT_PIN));
 
-  int16_t prev_volume_val = volume_val;
-  volume_val = prev_volume_val + (0.9) * ((analogRead(MEAP_VOLUME_POT_PIN) >> 6) - prev_volume_val);
-  if (volume_val != prev_volume_val)
-  {
-    setCodecGain(124 - volume_val);
-  }
+  // pot_vals[0] = analogRead(MEAP_POT_0_PIN);
+  // pot_vals[1] = analogRead(MEAP_POT_1_PIN);
+  // volume_val = analogRead(MEAP_VOLUME_POT_PIN);
 }
 
 StereoSample Meap::pan2(int64_t sample, uint8_t pos)
@@ -363,8 +387,8 @@ bool Meap::sgtlInit()
 
   SGwrite(CHIP_DIG_POWER, 0x0073); // power up all digital stuff
   delay(400);
-  // SGwrite(CHIP_LINE_OUT_VOL, 0x1F1F); // default approx 1.3 volts peak-to-peak
-  SGwrite(CHIP_LINE_OUT_VOL, 0x1414); // default approx 1.3 volts peak-to-peak
+  SGwrite(CHIP_LINE_OUT_VOL, 0x1F1F); // default approx 1.3 volts peak-to-peak
+  // SGwrite(CHIP_LINE_OUT_VOL, 0x1414); // default approx 1.3 volts peak-to-peak
 
   SGwrite(CHIP_CLK_CTRL, 0x0000); // 32 kHz, 256*Fs
   SGwrite(CHIP_I2S_CTRL, 0x0030); // SCLK=64*Fs, 16bit, I2S format

@@ -8,7 +8,7 @@
   Mason Mann, CC0
  */
 
-#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
+#define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
 #include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
@@ -17,8 +17,8 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out por
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
 #include <tables/sin8192_int8.h>  // loads sine wavetable
 
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> carrier_osc(SIN8192_DATA);
-Oscil<SIN8192_NUM_CELLS, AUDIO_RATE> modulator_osc(SIN8192_DATA);
+mOscil<SIN8192_NUM_CELLS, AUDIO_RATE> carrier_osc(SIN8192_DATA);
+mOscil<SIN8192_NUM_CELLS, AUDIO_RATE> modulator_osc(SIN8192_DATA);
 
 Q16n16 modDepth = 0;
 
@@ -50,8 +50,8 @@ void updateControl() {
 
 AudioOutput_t updateAudio() {
   Q15n16 modulation = modDepth * modulator_osc.next() >> 8;  // calculate mod depth in 15n16 signed int
-  int out_sample = carrier_osc.phMod(modulation * 4);
-  return StereoOutput::fromNBit(8, out_sample, out_sample);  // scale by factor of 4 and apply phase mod to carrier oscillator
+  int64_t out_sample = carrier_osc.phMod(modulation * 4);
+  return StereoOutput::fromNBit(8, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);  // scale by factor of 4 and apply phase mod to carrier oscillator
 }
 
 

@@ -7,7 +7,7 @@
   is pressed.
  */
 
-#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
+#define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
 
 #include <Meap.h>
 #include <tables/sin8192_int8.h>  // loads sine wavetable
@@ -21,9 +21,6 @@ void setup() {
   Serial.begin(115200);      // begins Serial communication with computer
   meap.begin();
   startMozzi(CONTROL_RATE);  // starts Mozzi engine with control rate defined above
-
-  my_sine.setFreq(440);
-  my_sine2.setFreq(220);
 }
 
 
@@ -33,17 +30,30 @@ void loop() {
 
 
 void updateControl() {
+  uint64_t before = micros();
   meap.readInputs();
+  uint64_t after = micros();
+  // Serial.println(after-before); // prints time one call of readInputs takes
 
   my_sine.setFreq((float)map(meap.pot_vals[0], 0, 4095, 100, 2000)); // pots will set sines to range 100Hz - 2000Hz
   my_sine2.setFreq((float)map(meap.pot_vals[1], 0, 4095, 100, 2000));
+
+  // Serial.print("p0:");
+  // Serial.print(meap.pot_vals[0]);
+  // Serial.print(",");
+  // Serial.print("p1:");
+  // Serial.print(meap.pot_vals[1]); 
+  // Serial.print(",");
+  // Serial.print("v:");
+  // Serial.println(meap.volume_val); 
 }
 
 
 AudioOutput_t updateAudio() {
   int sample = my_sine.next();
   int sample2 = my_sine2.next();
-  return StereoOutput::fromNBit(8, sample, sample2);
+  return StereoOutput::fromNBit(8, (sample * meap.volume_val) >> 12, (sample2 * meap.volume_val) >> 12); // testing pots
+  // return StereoOutput::fromNBit(16, (meap_input_frame[0] * meap.volume_val) >> 12, (meap_input_frame[1] * meap.volume_val) >> 12); // testing line in
 }
 /**
    * Runs whenever a touch pad is pressed or released

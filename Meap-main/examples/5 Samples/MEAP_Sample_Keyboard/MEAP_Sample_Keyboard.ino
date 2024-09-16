@@ -5,17 +5,17 @@
   Mason Mann, CC0
  */
 
-#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
+#define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
 #include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
-#include "harp_c3.h"
+#include "tables/Glass_Piano_C.h"
 
 // variables for sample
-Sample<harp_c3_NUM_CELLS, AUDIO_RATE> my_sample(harp_c3_DATA);
+mSample<Glass_Piano_C_NUM_CELLS, AUDIO_RATE, int16_t> my_sample(Glass_Piano_C_DATA);
 float sample_freq;
 
 
@@ -27,9 +27,8 @@ void setup() {
 
   // ---------- YOUR SETUP CODE BELOW ----------                          
 
-  sample_freq = (float)harp_c3_SAMPLERATE / (float)harp_c3_NUM_CELLS;
+  sample_freq = (float)Glass_Piano_C_SAMPLERATE / (float)Glass_Piano_C_NUM_CELLS;
   my_sample.setFreq(sample_freq);  // play at the speed it was recorded
-  my_sample.rangeWholeSample();
 }
 
 
@@ -46,7 +45,7 @@ void updateControl() {
 
 AudioOutput_t updateAudio() {
   int out_sample = my_sample.next();
-  return StereoOutput::fromNBit(8, out_sample, out_sample);
+  return StereoOutput::fromNBit(16, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
 }
 
 /**

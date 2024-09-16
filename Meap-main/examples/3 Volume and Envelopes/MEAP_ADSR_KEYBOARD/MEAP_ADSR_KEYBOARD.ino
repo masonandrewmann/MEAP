@@ -10,16 +10,14 @@
 #include <Meap.h>                 // MEAP library, includes all dependent libraries, including all Mozzi modules
 #include <tables/cos2048_int8.h>  // loads sine wavetable
 
-#define CONTROL_RATE 64   // Hz, powers of 2 are most reliable
-#define AUDIO_RATE 32768  // Hz, powers of 2 are most reliable
-
+#define CONTROL_RATE 128   // Hz, powers of 2 are most reliable
 
 Meap meap;  // creates MEAP object to handle inputs and other MEAP library functions
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
 
-Oscil<COS2048_NUM_CELLS, AUDIO_RATE> sines[8];
+mOscil<COS2048_NUM_CELLS, AUDIO_RATE> sines[8];
 ADSR<AUDIO_RATE, AUDIO_RATE> envelopes[8];
 int gains[8] = { 0 };
 
@@ -61,14 +59,14 @@ void updateControl() {
 
 
 AudioOutput_t updateAudio() {
-  int out_sample = 0;
+  int64_t out_sample = 0;
 
   for (int i = 0; i < 8; i++) {
     envelopes[i].update();
     gains[i] = envelopes[i].next();
     out_sample += sines[i].next() * gains[i];
   }
-  return StereoOutput::fromNBit(19, out_sample, out_sample);
+  return StereoOutput::fromNBit(19, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
 /**

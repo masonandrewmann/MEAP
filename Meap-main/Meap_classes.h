@@ -219,6 +219,10 @@ public:
   uint64_t touch_update_delay = 1;
   AdcModes touch_mode = kREADY;
 
+  // input smoothing
+  float meap_alpha = 0.92;
+  float meap_one_minus_alpha = 0.08;
+
 protected:
   /**
    * @brief Initializes the SGTL5000 audio codec

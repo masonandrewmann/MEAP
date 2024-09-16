@@ -165,6 +165,8 @@ i2s_chan_handle_t rx_handle;
 bool _esp32_can_buffer_next = true; // initialize to true
 int16_t _esp32_prev_sample[2];
 
+int16_t meap_input_frame[2];
+
 // #define ESP_SAMPLE_SIZE (2 * sizeof(int16_t))
 
 inline bool esp32_tryWriteSample()
@@ -180,6 +182,10 @@ inline void audioOutput(const AudioOutput f)
     _esp32_prev_sample[1] = f.r();
 
     _esp32_can_buffer_next = esp32_tryWriteSample();
+
+    // audio input
+    size_t bytes_read;
+    i2s_channel_read(rx_handle, &meap_input_frame, 4, &bytes_read, 0);
 }
 
 inline bool canBufferAudioOutput()

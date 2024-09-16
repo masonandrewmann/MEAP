@@ -53,7 +53,7 @@ The usage is:
 char2mozzi.py infilename outfilename tablename samplerate
 */
 // template <uint16_t NUM_TABLE_CELLS, uint16_t UPDATE_RATE, bool DITHER_PHASE=false>
-template <uint16_t NUM_TABLE_CELLS, uint16_t UPDATE_RATE, class T = int8_t>
+template <uint16_t NUM_TABLE_CELLS, uint32_t UPDATE_RATE, class T = int8_t>
 class mOscil
 {
 
@@ -179,6 +179,22 @@ each direction. This fixed point math number is interpreted as a SFix<15,16> int
         phase_increment_fractional = ((uint32_t)frequency) * ((OSCIL_F_BITS_AS_MULTIPLIER * NUM_TABLE_CELLS) / UPDATE_RATE);
     }
 
+    /** Set the oscillator frequency with an uint16_t. This is faster than using a
+    float, so it's useful when processor time is tight, but it can be tricky with
+    low and high frequencies, depending on the size of the wavetable being used. If
+    you're not getting the results you expect, try explicitly using a float, or try
+    setFreq_Q24n8() or or setFreq_Q16n16().
+    @param frequency to play the wave table.
+    */
+    inline void setFreq(long int frequency)
+    {
+        // TB2014-8-20 change this following Austin Grossman's suggestion on user list
+        // https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/mozzi-users/u4D5NMzVnQs/pCmiWInFvrkJ
+        // phase_increment_fractional = ((((uint32_t)NUM_TABLE_CELLS<<ADJUST_FOR_NUM_TABLE_CELLS)*frequency)/UPDATE_RATE) << (OSCIL_F_BITS - ADJUST_FOR_NUM_TABLE_CELLS);
+        // to this:
+        phase_increment_fractional = ((uint32_t)frequency) * ((OSCIL_F_BITS_AS_MULTIPLIER * NUM_TABLE_CELLS) / UPDATE_RATE);
+    }
+
     /** Set the oscillator frequency with a float. Using a float is the most reliable
     way to set frequencies, -Might- be slower than using an int but you need either
     this, setFreq_Q24n8() or setFreq_Q16n16() for fractional frequencies.
@@ -187,6 +203,16 @@ each direction. This fixed point math number is interpreted as a SFix<15,16> int
     inline void setFreq(float frequency)
     { // 1 us - using float doesn't seem to incur measurable overhead with the oscilloscope
         phase_increment_fractional = (uint32_t)((((float)NUM_TABLE_CELLS * frequency) / UPDATE_RATE) * OSCIL_F_BITS_AS_MULTIPLIER);
+    }
+
+    /** Set the oscillator frequency with a float. Using a float is the most reliable
+    way to set frequencies, -Might- be slower than using an int but you need either
+    this, setFreq_Q24n8() or setFreq_Q16n16() for fractional frequencies.
+    @param frequency to play the wave table.
+     */
+    inline void setFreq(double frequency)
+    { // 1 us - using float doesn't seem to incur measurable overhead with the oscilloscope
+        phase_increment_fractional = (uint32_t)((((float)NUM_TABLE_CELLS * (float)frequency) / UPDATE_RATE) * OSCIL_F_BITS_AS_MULTIPLIER);
     }
 
     /** Set the frequency using Q24n8 fixed-point number format.
