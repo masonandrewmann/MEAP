@@ -3,6 +3,9 @@
 
  Pot 0 controls filter attack time
  Pot 1 controls resonance
+
+ DIP 0 toggles octave
+ DIP 1 toggles waveform: down = saw, up = square
  */
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
@@ -12,9 +15,10 @@ Meap meap;                                            // creates MEAP object to 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
-#include <tables/smoothsquare8192_int8.h>  // loads square wave
-#include <tables/saw8192_int8.h>           // loads square wave
-mOscil<SAW8192_NUM_CELLS, AUDIO_RATE> osc(SAW8192_DATA);
+#include <tables/sq8192_int16.h>  // loads square wave
+#include <tables/saw8192_int16.h>           // loads square wave
+
+mOscil<saw8192_int16_NUM_CELLS, AUDIO_RATE, int16_t> osc(saw8192_int16_DATA);
 
 MultiResonantFilter filter;
 
@@ -61,7 +65,7 @@ AudioOutput_t updateAudio() {
   filter.next(out_sample);                                     // send oscillator
   out_sample = filter.low();                                   // grab lowpass output from filter
   out_sample = (out_sample * amplitude_envelope.next()) >> 8;  // apply amplitude envelope
-  return StereoOutput::fromNBit(11, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
+  return StereoOutput::fromNBit(19, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
 
@@ -86,9 +90,9 @@ void updateDip(int number, bool up) {
       break;
     case 1:
       if (up) {  // DIP 1 up
-        osc.setTable(SAW8192_DATA); // set oscillator's table to a saw wave
+        osc.setTable(sq8192_int16_DATA); // set oscillator's table to a square wave
       } else {  // DIP 1 down
-        osc.setTable(SMOOTHSQUARE8192_DATA); // set oscillator's table to a square wave
+        osc.setTable(saw8192_int16_DATA); // set oscillator's table to a saw wave
       }
       break;
     case 2:
