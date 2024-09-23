@@ -1,4 +1,4 @@
-#ifndef MEAP_POLEZERO_H
+ #ifndef MEAP_POLEZERO_H
 #define MEAP_POLEZERO_H
 
 /***************************************************/

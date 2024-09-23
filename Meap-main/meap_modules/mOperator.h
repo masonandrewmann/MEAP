@@ -177,24 +177,6 @@ public:
     }
 
     // mod input is 8bit
-    int32_t fmNext(int16_t mod_input)
-    {
-        // env_.update();
-        if (drone_)
-        {
-            env_val_ = 255;
-        }
-        else
-        {
-            env_val_ = env_.next();
-        }
-        UFix<16, 16> deviation = 1.0;
-        auto modulation = deviation * toSFraction(mod_input);
-        last_out_ = osc_.phMod(modulation);
-        return last_out_ * env_val_ * gain_ >> shift_val_; // returns a 16 bit sample
-    }
-
-    // mod input is 8bit
     int32_t next(int16_t mod_input)
     {
         // env_.update();

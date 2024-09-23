@@ -115,6 +115,7 @@
 // meap extensions to mozzi objects
 #include <meap_mozzi/mSample.h>
 #include <meap_mozzi/mOscil.h>
+#include <meap_mozzi/mEad.h>
 
 // meap instruments
 #include <meap_modules/mSampler.h>

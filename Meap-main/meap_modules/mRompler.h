@@ -30,7 +30,7 @@ public:
         release_time_ = 100;
         sustain_level_ = 255;
 
-        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
         {
             velocity_[i] = 127;
             sample_bank_[i].setTable(sample_list_[curr_program_], sample_lengths[curr_program_]);
@@ -177,6 +177,14 @@ public:
         }
     }
 
+    void update()
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            sample_bank_[i].update();
+        }
+    }
+
     void setProgram(int16_t p)
     {
         curr_program_ = p;
@@ -185,7 +193,7 @@ public:
     int32_t next()
     {
         uint32_t output_sample = 0;
-        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
         {
             output_sample += sample_bank_[i].next();
         }

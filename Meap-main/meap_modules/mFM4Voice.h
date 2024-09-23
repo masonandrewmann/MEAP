@@ -103,7 +103,7 @@ public:
     int32_t next()
     {
         int32_t output_sample;
-        switch (algorithm)
+        switch (algorithm) // replace this switch statement with something more efficient!
         {
         case 0:
             last_output[3] = op[3].next();

@@ -10,6 +10,21 @@ class mFM2Poly
 public:
     mFM2Poly(const int8_t *TABLE_NAME, uint8_t *midi_table_name)
     {
+        init(TABLE_NAME, midi_table_name);
+    };
+
+    mFM2Poly(const int8_t *TABLE_NAME)
+    {
+        init(TABLE_NAME, NULL);
+    };
+
+    mFM2Poly()
+    {
+        init(SIN8192_DATA, NULL);
+    }
+
+    void init(const int8_t *TABLE_NAME, uint8_t *midi_table_name)
+    {
         for (uint16_t i = 0; i < mPOLYPHONY; i++)
         {
             voices[i].init(TABLE_NAME);
@@ -25,49 +40,12 @@ public:
         time_ = 0;
 
         pulse_counter_ = 0;
-    };
-
-    mFM2Poly(const int8_t *TABLE_NAME)
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].init(TABLE_NAME);
-            free_voices_.unshift(i); // add all voices to voice queue
-        }
-        curr_voice_ = 0;
-        midi_table_name_ = NULL;
-        playing_ = false;
-
-        message_type_ = 0;
-        data1_ = 0;
-        data2_ = 0;
-        time_ = 0;
-
-        pulse_counter_ = 0;
-    };
-
-    mFM2Poly()
-    {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].init(SIN8192_DATA);
-            free_voices_.unshift(i); // add all voices to voice queue
-        }
-        curr_voice_ = 0;
-        midi_table_name_ = NULL;
-        playing_ = false;
-
-        message_type_ = 0;
-        data1_ = 0;
-        data2_ = 0;
-        time_ = 0;
-
-        pulse_counter_ = 0;
     }
 
     void begin()
     {
         // start_time = millis();
+        stop();
         playing_ = true;
         current_midi_address_ = midi_table_name_;
         pulse_counter_ = 0;
@@ -85,6 +63,7 @@ public:
         {
             voices[i].noteOff();
         }
+        flush();
     }
 
     void updateMidi()
@@ -107,6 +86,7 @@ public:
                     break;
                 case 255: // end of file
                     playing_ = false;
+                    return;
                     break;
                 }
                 current_midi_address_ += 5;

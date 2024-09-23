@@ -13,7 +13,6 @@ public:
         adsr_.setADLevels(255, 255);
         freq_ = 1.0;
         sample_.setFreq(freq_);
-        gain_ = 0;
         // initialize sample here
         // sample_.setTable();
         sample_.setEnd(mSAMPLE_LENGTH);
@@ -103,22 +102,25 @@ public:
         adsr_.setADLevels(a_l_, d_l_);
     }
 
-    int32_t next()
+    void update()
     {
         adsr_.update();
-        gain_ = adsr_.next();
-        return (sample_.next() * gain_ * velocity_) >> shift_val_; // 8 bit gain * 8 bit sample = 16bit result * velocity >>7 = ~16bit result
+    }
+
+    int32_t next()
+    {
+
+        return (sample_.next() * adsr_.next() * velocity_) >> shift_val_; // 8 bit gain * 8 bit sample = 16bit result * velocity >>7 = ~16bit result
     }
 
 protected:
-    uint16_t gain_;
     uint16_t velocity_;
     float freq_;
     mSample<mSAMPLE_LENGTH, AUDIO_RATE, T> sample_;
 
     uint8_t shift_val_;
 
-    ADSR<AUDIO_RATE, AUDIO_RATE> adsr_;
+    ADSR<CONTROL_RATE, AUDIO_RATE> adsr_;
 };
 
 #endif // MEAP_SAMPLER_H_

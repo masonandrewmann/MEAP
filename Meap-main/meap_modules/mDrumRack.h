@@ -23,10 +23,9 @@ public:
 
         default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
 
-        for (uint8_t i; i < mNUM_SAMPLES; i++)
+        for (int i = mNUM_SAMPLES; --i >= 0;)
         {
             sample_gain_[i] = 255;
-            velocity_[i] = 127;
             sample_bank_[i].setTable(sample_list_[i], sample_lengths_[i]);
         }
     };
@@ -49,10 +48,9 @@ public:
 
         default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
 
-        for (uint8_t i; i < mNUM_SAMPLES; i++)
+        for (int i = mNUM_SAMPLES; --i >= 0;)
         {
             sample_gain_[i] = 255;
-            velocity_[i] = 127;
             sample_bank_[i].setTable(sample_list_[i], sample_lengths_[i]);
         }
     };
@@ -75,10 +73,9 @@ public:
 
         default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
 
-        for (uint8_t i; i < mNUM_SAMPLES; i++)
+        for (int i = mNUM_SAMPLES; --i >= 0;)
         {
             sample_gain_[i] = 255;
-            velocity_[i] = 127;
             sample_bank_[i].setTable(sample_list_[i], sample_lengths[i]);
         }
     }
@@ -99,7 +96,7 @@ public:
     {
         // send noteoffs to everything
         playing_ = false;
-        for (uint16_t i = 0; i < mNUM_SAMPLES; i++)
+        for (int i = mNUM_SAMPLES; --i >= 0;)
         {
             sample_bank_[i].noteOff(255);
         }
@@ -110,21 +107,15 @@ public:
         if (playing_)
         {
             pulse_counter_ += 1;
-            // Serial.println(pulse_counter_);
-
             while (pulse_counter_ >= time_)
             {
 
                 switch (message_type_) // notes are indexed from 0 on sample_bank starting from C-1 (0)
                 {
-                case 0x80: // note off
-                    // sample_bank_[data1_].noteOff(255);
-                    break;
+                // case 0x80: // note off
+                //     break;
                 case 0x90: // note on
                     noteOn(data1_, data2_, default_freq_);
-                    // Serial.println(data1_);
-                    // sample_bank_[data1_].noteOn(default_freq_, 255);
-                    // velocity_[data1_] = data2_;
                     break;
                 case 255: // end of file
                     playing_ = false;
@@ -133,11 +124,11 @@ public:
                 }
                 pulse_counter_ = 0;
 
+                current_address_ += 5;
                 message_type_ = current_address_[0];
                 data1_ = current_address_[1];
                 data2_ = current_address_[2];
                 time_ = (current_address_[3] << 8) + current_address_[4];
-                current_address_ += 5;
             }
         }
     }
@@ -147,23 +138,19 @@ public:
         return playing_;
     }
 
-    void noteOn(uint16_t sample_num, uint8_t vel, float freq)
+    void noteOn(uint16_t sample_num, uint16_t vel, float freq)
     {
-        sample_bank_[sample_num].noteOn(freq, vel);
-        // sample_bank_[data1_].noteOn(default_freq_, 255);
-        // velocity_[data1_] = data2_;
+        sample_bank_[sample_num].noteOn(freq, ((vel * sample_gain_[sample_num]) >> 8));
     }
 
     void noteOn(uint16_t sample_num)
     {
-        sample_bank_[sample_num].noteOn(default_freq_, 127);
-        // sample_bank_[data1_].noteOn(default_freq_, 255);
-        // velocity_[data1_] = data2_;
+        sample_bank_[sample_num].noteOn(default_freq_, sample_gain_[sample_num] >> 1);
     }
 
     void noteOff(uint16_t sample_num)
     {
-        sample_bank_[sample_num].noteOff(255);
+        sample_bank_[sample_num].noteOff();
     }
 
     void setSampleVolume(uint8_t sample_num, float volume)
@@ -171,15 +158,23 @@ public:
         sample_gain_[sample_num] = volume;
     }
 
+    void update()
+    {
+        for (int i = mNUM_SAMPLES; --i >= 0;)
+        {
+            sample_bank_[i].update();
+        }
+    }
+
     int32_t next()
     {
-        // updateMidi();
         uint64_t output_sample = 0;
-        for (uint8_t i = 0; i < mNUM_SAMPLES; i++)
+        for (int i = mNUM_SAMPLES; --i >= 0;)
         {
-            output_sample += (sample_bank_[i].next() * sample_gain_[i]);
+            // output_sample += (sample_bank_[i].next() * sample_gain_[i]);
+            output_sample += sample_bank_[i].next();
         }
-        return (output_sample >> 8);
+        return output_sample;
     }
 
 protected:
@@ -188,7 +183,6 @@ protected:
     const int8_t **sample_list_;
     uint32_t *sample_lengths_;
     uint16_t sample_gain_[mNUM_SAMPLES];
-    uint16_t velocity_[mNUM_SAMPLES];
 
     uint8_t *base_address_;
     uint8_t *current_address_;

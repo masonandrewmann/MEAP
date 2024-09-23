@@ -72,7 +72,6 @@ public:
         if (playing_)
         {
             pulse_counter_ += 1;
-
             while (pulse_counter_ >= time_)
             {
                 switch (message_type_) // notes are indexed from 0 on sample_bank starting from C-1 (0)
@@ -86,15 +85,15 @@ public:
                     break;
                 case 255: // end of file
                     playing_ = false;
+                    return;
                     break;
                 }
                 pulse_counter_ = 0;
-
+                current_address_ += 5;
                 message_type_ = current_address_[0];
                 data1_ = current_address_[1];
                 data2_ = current_address_[2];
                 time_ = (current_address_[3] << 8) + current_address_[4];
-                current_address_ += 5;
             }
         }
     }

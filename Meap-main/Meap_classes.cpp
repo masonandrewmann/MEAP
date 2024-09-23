@@ -61,8 +61,8 @@ void Meap::begin()
   // set up ADC1
   // REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_FORCE, 1); // adc controlled by software
   // REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD_FORCE, 1); // channel select controlled by software
-  REG_WRITE(SENS_SAR_ATTEN1_REG, 0xFFFFFFFF); // set attenuation
-  analogRead(8);                              // rlly hacky, just let the API get ADC1 set up bc it seems like i was missing something
+  // REG_WRITE(SENS_SAR_ATTEN1_REG, 0xFFFFFFFF); // set attenuation
+  analogRead(8); // rlly hacky, just let the API get ADC1 set up bc it seems like i was missing something
 
   // set up ADC2
   // REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_FORCE, 1); // adc controlled by software
@@ -266,7 +266,7 @@ void Meap::readInputs()
 {
 
   // read dips and buttons
-  for (int i = 0; i < 8; i++)
+  for (int i = 8; --i >= 0;)
   {
     setMuxChannel(i); // repeated several times to allow address signals to propogate through multiplexers
     touch_avgs[i] = touchRead(touch_pins[i]);
@@ -398,7 +398,7 @@ bool Meap::sgtlInit()
   SGwrite(CHIP_ADCDAC_CTRL, 0x0000); // disable dac mute
   SGwrite(CHIP_DAC_VOL, 0x3C3C);     // digital gain, 0dB
 
-  SGwrite(CHIP_ANA_HP_CTRL, 0x1818); // set volume (0db)
+  SGwrite(CHIP_ANA_HP_CTRL, 0x0000); // set output volume to +12dB (0x1818 if you want 0dB)
   SGwrite(CHIP_ANA_CTRL, 0x0026);    // enable zero cross detectors -- was 36 but i think that mutes headphones??
 
   return true;

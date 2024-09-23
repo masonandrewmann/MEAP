@@ -10,7 +10,7 @@ class mFM4Poly
 public:
     mFM4Poly(const int8_t *TABLE_NAME, uint8_t *midi_table_name)
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].init(TABLE_NAME);
             free_voices_.unshift(i); // add all voices to voice queue
@@ -29,7 +29,7 @@ public:
 
     mFM4Poly(const int8_t *TABLE_NAME)
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].init(TABLE_NAME);
             free_voices_.unshift(i); // add all voices to voice queue
@@ -48,7 +48,7 @@ public:
 
     mFM4Poly()
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].init(SIN8192_DATA);
             free_voices_.unshift(i); // add all voices to voice queue
@@ -81,7 +81,7 @@ public:
     {
         // send noteoffs to everything
         playing_ = false;
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].noteOff();
         }
@@ -107,6 +107,7 @@ public:
                     break;
                 case 255: // end of file
                     playing_ = false;
+                    return;
                     break;
                 }
                 current_midi_address_ += 5;
@@ -148,7 +149,7 @@ public:
     {
 
         uint8_t num_nonfree_voices = nonfree_voices_.size();
-        for (uint8_t i = 0; i < num_nonfree_voices; i++)
+        for (int i = num_nonfree_voices; --i >= 0;)
         {
             if (nonfree_voices_.get(i)->note_num == note)
             {
@@ -166,7 +167,7 @@ public:
     {
         nonfree_voices_.clear();
         free_voices_.clear();
-        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             free_voices_.unshift(i); // add all voices to voice queue
             voices[i].noteOff();
@@ -183,7 +184,7 @@ public:
         {
             a = 10;
         }
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].setAlgorithm(a);
         }
@@ -191,7 +192,7 @@ public:
 
     void update()
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].update();
         }
@@ -200,7 +201,7 @@ public:
     int32_t next()
     {
         int32_t out_sample = 0;
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             out_sample += voices[i].next();
         }

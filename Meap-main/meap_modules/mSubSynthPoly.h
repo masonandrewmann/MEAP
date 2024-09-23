@@ -83,6 +83,7 @@ public:
                     break;
                 case 255: // end of file
                     playing_ = false;
+                    return;
                     break;
                 }
                 current_midi_address_ += 5;
