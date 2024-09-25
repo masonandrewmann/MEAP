@@ -63,7 +63,7 @@ void updateTouch(int number, bool pressed) {
   switch (number) {
     case 0:
       if (pressed) {  // pad 0 pressed
-        my_sample.setFreq((float)sample_freq);
+        my_sample.setFreq(sample_freq);
         my_sample.start();
       } else {  // pad 0 released
       }

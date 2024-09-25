@@ -61,6 +61,7 @@ public:
     mSample(const T *TABLE_NAME) : table(TABLE_NAME), endpos_fractional((uint64_t)NUM_TABLE_CELLS << SAMPLE_F_BITS) // so isPlaying() will work
     {
         setLoopingOff();
+        phase_fractional = endpos_fractional;
         // rangeWholeSample();
     }
 
@@ -71,6 +72,7 @@ public:
     mSample() : endpos_fractional((uint64_t)NUM_TABLE_CELLS << SAMPLE_F_BITS)
     {
         setLoopingOff();
+        phase_fractional = endpos_fractional;
         // rangeWholeSample();
     }
 
@@ -135,8 +137,6 @@ public:
     {
         looping = false;
     }
-
-
 
     /**
     Returns the sample at the current phase position, or 0 if looping is off
@@ -224,6 +224,16 @@ public:
     inline void setFreq(float frequency)
     { // 1 us - using float doesn't seem to incur measurable overhead with the oscilloscope
         phase_increment_fractional = (uint64_t)((((float)NUM_TABLE_CELLS * frequency) / UPDATE_RATE) * SAMPLE_F_BITS_AS_MULTIPLIER);
+    }
+
+    /** Set the sample frequency with a float. Using a float is the most reliable
+    way to set frequencies, -Might- be slower than using an int but you need either
+    this or setFreq_Q24n8 for fractional frequencies.
+    @param frequency to play the wave table.
+    */
+    inline void setFreq(double frequency)
+    { // 1 us - using float doesn't seem to incur measurable overhead with the oscilloscope
+        phase_increment_fractional = (uint64_t)((((float)NUM_TABLE_CELLS * (float)frequency) / UPDATE_RATE) * SAMPLE_F_BITS_AS_MULTIPLIER);
     }
 
     /** Set the frequency using Q24n8 fixed-point number format.

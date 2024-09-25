@@ -23,6 +23,7 @@ mOscil<saw8192_int16_NUM_CELLS, AUDIO_RATE, int16_t> osc(saw8192_int16_DATA);
 MultiResonantFilter filter;
 
 ADSR<CONTROL_RATE, AUDIO_RATE> amplitude_envelope;
+
 ADSR<CONTROL_RATE, CONTROL_RATE> filter_envelope;
 
 int notes[8] = { 48, 50, 52, 53, 55, 57, 59, 60 }; // choose MIDI pitches of keyboard notes
