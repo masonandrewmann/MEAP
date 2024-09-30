@@ -398,7 +398,8 @@ bool Meap::sgtlInit()
   SGwrite(CHIP_ADCDAC_CTRL, 0x0000); // disable dac mute
   SGwrite(CHIP_DAC_VOL, 0x3C3C);     // digital gain, 0dB
 
-  SGwrite(CHIP_ANA_HP_CTRL, 0x0000); // set output volume to +12dB (0x1818 if you want 0dB)
+  // SGwrite(CHIP_ANA_HP_CTRL, 0x0000); // set output volume to +12dB
+  SGwrite(CHIP_ANA_HP_CTRL, 0x1818); // set output volume to 0dB
   SGwrite(CHIP_ANA_CTRL, 0x0026);    // enable zero cross detectors -- was 36 but i think that mutes headphones??
 
   return true;

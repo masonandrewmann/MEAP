@@ -136,7 +136,7 @@ public:
     inline void setLoopingOff()
     {
         looping = false;
-    }
+    } 
 
     /**
     Returns the sample at the current phase position, or 0 if looping is off

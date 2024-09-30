@@ -84,6 +84,8 @@
 #include <WavePacketSample.h>
 #include <WaveShaper.h>
 
+#include <meap_modules/midi_notes.h>
+
 #include <meap_stk/meap_delay.h>
 #include <meap_stk/meap_delay_linear.h>
 #include <meap_stk/meap_delay_allpass.h>

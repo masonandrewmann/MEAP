@@ -15,7 +15,7 @@
 #define MEAP_WAVETABLE_H
 
 // fractional bits for oscillator index precision
-#define OSCIL_F_BITS 16
+#define OSCIL_F_BITS 16 
 #define OSCIL_F_BITS_AS_MULTIPLIER 65536
 
 // phmod_proportion is an 15n16 fixed-point number
