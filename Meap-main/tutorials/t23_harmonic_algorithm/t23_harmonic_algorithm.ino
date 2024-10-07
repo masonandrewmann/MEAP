@@ -1,5 +1,5 @@
 /*
-  Basic template for working with a stock MEAP board.
+  Implements a basic version of Laurie Spiegel's Harmonic Algorithm, changing chords every second.
  */
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
@@ -12,10 +12,10 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out por
 
 // Synthesis
 #include <tables/triangle_warm8192_int8.h>
-Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc1(TRIANGLE_WARM8192_DATA);
-Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc2(TRIANGLE_WARM8192_DATA);
-Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc3(TRIANGLE_WARM8192_DATA);
-Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc4(TRIANGLE_WARM8192_DATA);
+mOscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc1(TRIANGLE_WARM8192_DATA);
+mOscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc2(TRIANGLE_WARM8192_DATA);
+mOscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc3(TRIANGLE_WARM8192_DATA);
+mOscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc4(TRIANGLE_WARM8192_DATA);
 
 ADSR<AUDIO_RATE, AUDIO_RATE> env1;
 ADSR<AUDIO_RATE, AUDIO_RATE> env2;
@@ -35,10 +35,6 @@ int chord_length = 1000;
 
 int tree_level = 4;  // what level of chord tree are we on
 
-int entropy = 0;  // amount of entropy from 0 to 100
-
-
-
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
   Serial1.begin(31250, SERIAL_8N1, 43, 44);  // sets up MIDI: baud rate, serial mode, rx pin, tx pin
@@ -53,17 +49,17 @@ void setup() {
   osc3.setFreq(mtof(scale_root + major_scale[(triad[2] + chord_root) % 7]));
   osc4.setFreq(mtof(12 + scale_root + major_scale[(triad[0] + chord_root) % 7]));
 
+  // sets envelope attack and sustain levels
   env1.setADLevels(255, 0);
   env2.setADLevels(255, 0);
   env3.setADLevels(255, 0);
   env4.setADLevels(255, 0);
 
+  // sets envelope times
   env1.setTimes(1, 500, 1, 1);
   env2.setTimes(1, 500, 1, 1);
   env3.setTimes(1, 500, 1, 1);
   env4.setTimes(1, 500, 1, 1);
-
-  chord_timer.start(10);
 }
 
 
@@ -78,14 +74,15 @@ void updateControl() {
   meap.readInputs();
   // ---------- YOUR updateControl CODE BELOW ----------
   if (chord_timer.ready()) {
+
     // move to next tree level
-    if (tree_level != 0) {
-      tree_level = tree_level - 1;  // move one level down tree
-    } else {
-      tree_level = meap.irand(0, 4);  // if at bottom of tree, jump to a random level
+    if (tree_level != 0) {  // move one level down tree
+      tree_level = tree_level - 1;
+    } else {  // if at bottom of tree (0), jump to a random level
+      tree_level = meap.irand(0, 4);
     }
 
-    // choose chord
+    // choose chord depending on current level
     switch (tree_level) {
       case 4:            // leaves: iii
         chord_root = 2;  // iii chord (E minor)
@@ -98,21 +95,22 @@ void updateControl() {
         }
         break;
       case 2:                           // branches: IV or ii
-        if (meap.irand(1, 100) > 33) {  // 33% chance f ii, 66% change of IV
-          chord_root = 1;               // ii chord (D minor)
+        if (meap.irand(1, 100) > 33) {  // 66% change of IV, 33% chance of ii
+          chord_root = 3;               // IV chord (F major)
         } else {
-          chord_root = 3;  // IV chord (F major)
+
+          chord_root = 1;  // ii chord (D minor)
         }
         break;
-      case 1:
-        if (meap.irand(1, 100) > 25) {  // boughs: V or vii˚
+      case 1:// boughs: V or vii˚
+        if (meap.irand(1, 100) > 25) {  // 75% change of V, 25% chance of vii˚
           chord_root = 4;               // V chord (G major)
         } else {
           chord_root = 6;  // vii˚ chord (B diminished)
         }
         break;
-      case 0:  // trunk: I or vi
-        if (meap.irand(1, 100) > 25) {
+      case 0:                 // trunk: I or vi
+        if (meap.irand(1, 100) > 25) { // 75% change of I, 25% chance of vi
           chord_root = 0;  // I chord (C major)
         } else {
           chord_root = 5;  // vi chord (A minor)
@@ -126,6 +124,7 @@ void updateControl() {
     osc3.setFreq(mtof(scale_root + major_scale[(triad[2] + chord_root) % 7]));      // fifth of chord (modded to octave)
     osc4.setFreq(2 * mtof(scale_root + major_scale[(triad[0] + chord_root) % 7]));  // octave above root
 
+    // trigger all notes
     env1.noteOn();
     env2.noteOn();
     env3.noteOn();
