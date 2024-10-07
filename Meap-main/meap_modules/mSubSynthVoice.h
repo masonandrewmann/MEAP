@@ -41,6 +41,7 @@ public:
         filter_.setCutoffFreq(255);
         filter_.setResonance(0);
         sustain_level_ = 255;
+        filter_key_offset = 0;
 
         if (sizeof(T) == sizeof(int16_t))
         {
@@ -181,7 +182,7 @@ public:
     void update()
     {
         filter_env_.update();
-        int32_t cutoff_val = filter_env_.next() + cutoff_;
+        int32_t cutoff_val = filter_env_.next() + cutoff_ + filter_key_offset;
         if (cutoff_val > 255)
         {
             cutoff_val = 255;
@@ -207,6 +208,10 @@ public:
         amp_env_.setADLevels(vel << 1, (vel * sustain_level_) >> 7);
         amp_env_.noteOn();
         filter_env_.noteOn();
+        if (note > 60)
+        {
+            filter_key_offset = (note - 60) * 2;
+        }
     }
 
     void noteOff()
@@ -242,6 +247,7 @@ protected:
     MultiResonantFilter<uint8_t> filter_;
     ADSR<CONTROL_RATE, CONTROL_RATE> filter_env_;
 
+    int8_t filter_key_offset;
     uint16_t noise_gain_;
     uint16_t osc_gain_[mNUM_OSC];
     int16_t osc_semitones_[mNUM_OSC];

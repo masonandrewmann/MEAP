@@ -3,12 +3,39 @@
  */
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
-#include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
+#include <Meap.h>         // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
+
+// Synthesis
+#include <tables/triangle_warm8192_int8.h>
+Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc1(TRIANGLE_WARM8192_DATA);
+Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc2(TRIANGLE_WARM8192_DATA);
+Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc3(TRIANGLE_WARM8192_DATA);
+Oscil<TRIANGLE_WARM8192_NUM_CELLS, AUDIO_RATE> osc4(TRIANGLE_WARM8192_DATA);
+
+ADSR<AUDIO_RATE, AUDIO_RATE> env1;
+ADSR<AUDIO_RATE, AUDIO_RATE> env2;
+ADSR<AUDIO_RATE, AUDIO_RATE> env3;
+ADSR<AUDIO_RATE, AUDIO_RATE> env4;
+
+// templates
+int major_scale[] = { 0, 2, 4, 5, 7, 9, 11 };  // template for building major scale on top of 12TET
+int scale_root = 60;                           // root of major scale
+
+int triad[] = { 0, 2, 4 };  // template for triad on top of major scale
+int chord_root = 2;         // root of triad
+
+// chord timer
+EventDelay chord_timer;
+int chord_length = 1000;
+
+int tree_level = 4;  // what level of chord tree are we on
+
+int entropy = 0;  // amount of entropy from 0 to 100
 
 
 
@@ -19,6 +46,24 @@ void setup() {
   meap.begin();                              // sets up MEAP object
 
   // ---------- YOUR SETUP CODE BELOW ----------
+
+  //set oscillators to pitches of first chord (iii chord on c major scale)
+  osc1.setFreq(mtof(scale_root + major_scale[(triad[0] + chord_root) % 7]));
+  osc2.setFreq(mtof(scale_root + major_scale[(triad[1] + chord_root) % 7]));
+  osc3.setFreq(mtof(scale_root + major_scale[(triad[2] + chord_root) % 7]));
+  osc4.setFreq(mtof(12 + scale_root + major_scale[(triad[0] + chord_root) % 7]));
+
+  env1.setADLevels(255, 0);
+  env2.setADLevels(255, 0);
+  env3.setADLevels(255, 0);
+  env4.setADLevels(255, 0);
+
+  env1.setTimes(1, 500, 1, 1);
+  env2.setTimes(1, 500, 1, 1);
+  env3.setTimes(1, 500, 1, 1);
+  env4.setTimes(1, 500, 1, 1);
+
+  chord_timer.start(10);
 }
 
 
@@ -32,15 +77,76 @@ void loop() {
 void updateControl() {
   meap.readInputs();
   // ---------- YOUR updateControl CODE BELOW ----------
+  if (chord_timer.ready()) {
+    // move to next tree level
+    if (tree_level != 0) {
+      tree_level = tree_level - 1;  // move one level down tree
+    } else {
+      tree_level = meap.irand(0, 4);  // if at bottom of tree, jump to a random level
+    }
 
+    // choose chord
+    switch (tree_level) {
+      case 4:            // leaves: iii
+        chord_root = 2;  // iii chord (E minor)
+        break;
+      case 3:                           // twigs: I or vi
+        if (meap.irand(1, 100) > 25) {  // 25% chance of I, 75% chance of vi
+          chord_root = 5;               // vi chord (A minor)
+        } else {
+          chord_root = 0;  // I chord (C major)
+        }
+        break;
+      case 2:                           // branches: IV or ii
+        if (meap.irand(1, 100) > 33) {  // 33% chance f ii, 66% change of IV
+          chord_root = 1;               // ii chord (D minor)
+        } else {
+          chord_root = 3;  // IV chord (F major)
+        }
+        break;
+      case 1:
+        if (meap.irand(1, 100) > 25) {  // boughs: V or vii˚
+          chord_root = 4;               // V chord (G major)
+        } else {
+          chord_root = 6;  // vii˚ chord (B diminished)
+        }
+        break;
+      case 0:  // trunk: I or vi
+        if (meap.irand(1, 100) > 25) {
+          chord_root = 0;  // I chord (C major)
+        } else {
+          chord_root = 5;  // vi chord (A minor)
+        }
+        break;
+    }
+
+    // set oscillator frequencies
+    osc1.setFreq(mtof(scale_root + major_scale[(triad[0] + chord_root) % 7]));      // root of chord (modded to octave)
+    osc2.setFreq(mtof(scale_root + major_scale[(triad[1] + chord_root) % 7]));      // third of chord (modded to octave)
+    osc3.setFreq(mtof(scale_root + major_scale[(triad[2] + chord_root) % 7]));      // fifth of chord (modded to octave)
+    osc4.setFreq(2 * mtof(scale_root + major_scale[(triad[0] + chord_root) % 7]));  // octave above root
+
+    env1.noteOn();
+    env2.noteOn();
+    env3.noteOn();
+    env4.noteOn();
+
+    // start timer
+    chord_timer.start(chord_length);
+  }
 }
 
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
-  int64_t out_sample = my_sine1.next() * my_envelope1.next() + my_sine2.next() * my_envelope2.next();
+  env1.update();
+  env2.update();
+  env3.update();
+  env4.update();
 
-  return StereoOutput::fromNBit(18, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
+  int64_t out_sample = osc1.next() * env1.next() + osc2.next() * env2.next() + osc3.next() * env3.next() + osc4.next() * env4.next();
+
+  return StereoOutput::fromNBit(18, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
 /**
@@ -53,7 +159,6 @@ void updateTouch(int number, bool pressed) {
   if (pressed) {  // Any pad pressed
 
   } else {  // Any pad released
-
   }
   switch (number) {
     case 0:
@@ -125,7 +230,6 @@ void updateDip(int number, bool up) {
   if (up) {  // Any DIP toggled up
 
   } else {  //Any DIP toggled down
-
   }
   switch (number) {
     case 0:

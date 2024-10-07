@@ -99,6 +99,13 @@ public:
         phase_fractional = startpos_fractional;
     }
 
+    /** Stops the sample by jumping to the end (won't stop samples that are looping)
+     */
+    inline void stop()
+    {
+        phase_fractional = endpos_fractional;
+    }
+
     /** Sets a new start position plays the sample from that position.
     @param startpos position in samples from the beginning of the sound.
     */
@@ -136,7 +143,7 @@ public:
     inline void setLoopingOff()
     {
         looping = false;
-    } 
+    }
 
     /**
     Returns the sample at the current phase position, or 0 if looping is off

@@ -124,6 +124,7 @@
 #include <meap_modules/mSamplerVoice.h>
 #include <meap_modules/mDrumRack.h>
 #include <meap_modules/mRompler.h>
+#include <meap_modules/mSamplerPoly.h>
 
 #include <meap_modules/mBasicFM.h>
 #include <meap_modules/mBasicFMPoly.h>

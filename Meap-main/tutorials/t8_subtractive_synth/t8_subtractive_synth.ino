@@ -55,7 +55,7 @@ void updateControl() {
     // ---------- YOUR updateControl CODE BELOW ----------
   
     amplitude_envelope.update();                                                                       // update filter envelope
-    filter_envelope.update();                                                                          // update filter envelope
+    filter_envelope.update();                                                                          // update filter envelopeenvelope
     filter_envelope.setTimes(map(meap.pot_vals[0], 0, 4095, 1, 2000), 400, 1000000, 500);              // use pot 0 to control filter envelope attack time
     filter.setCutoffFreqAndResonance(filter_envelope.next(), map(meap.pot_vals[1], 0, 4095, 0, 255));  // use filter envelope to control cutoff, and pot 1 to control resonance
   }
