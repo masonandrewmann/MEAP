@@ -258,14 +258,12 @@ public:
     uint8_t *current_address_;
 
 protected:
-    // mOscil<NUM_CELLS, AUDIO_RATE> oscA_[mPOLYPHONY];
     mOscil<NUM_CELLS, AUDIO_RATE, int16_t> oscA_[mPOLYPHONY];
     // ADSR<AUDIO_RATE, AUDIO_RATE> envA_[mPOLYPHONY];
     mEad<CONTROL_RATE> envA_[mPOLYPHONY];
 
     int32_t gainA_[mPOLYPHONY];
 
-    // mOscil<WHITENOISE8192_NUM_CELLS, AUDIO_RATE, int16_t> oscB_[mPOLYPHONY];
     mOscil<looped_noise_int16_NUM_CELLS, AUDIO_RATE, int16_t> oscB_[mPOLYPHONY];
     // ADSR<AUDIO_RATE, AUDIO_RATE> envB_[mPOLYPHONY];
     mEad<CONTROL_RATE> envB_[mPOLYPHONY];

@@ -45,11 +45,11 @@ void loop() {
 void updateControl() {
   meap.readInputs();
   // ---------- YOUR updateControl CODE BELOW ----------
-  if (metro1.ready()) {
-    metro1.start(sequence_rhythms[sequence_index] * sixteenth_length);
-    oscil1.setFreq(mtof(sequence_pitches[sequence_index]));
-    env1.noteOn();
-    sequence_index = (sequence_index + 1) % sequence_length;
+  if (metro1.ready()) { // next note ready to play
+    metro1.start(sequence_rhythms[sequence_index] * sixteenth_length); // start timer for length of note
+    oscil1.setFreq(mtof(sequence_pitches[sequence_index])); // set frequency to pitch of note
+    env1.noteOn(); // trigger note to start
+    sequence_index = (sequence_index + 1) % sequence_length; // move to next note of melody and cycle back to start if at end
   }
 }
 

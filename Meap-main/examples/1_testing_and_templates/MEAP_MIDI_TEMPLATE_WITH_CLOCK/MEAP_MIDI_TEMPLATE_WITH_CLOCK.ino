@@ -70,7 +70,7 @@ void updateControl() {
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
-  int64_t sample = 0;
+  int64_t out_sample = 0;
   return StereoOutput::fromNBit(8, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
 }
 
