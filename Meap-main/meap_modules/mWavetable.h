@@ -22,30 +22,28 @@
 #define OSCIL_PHMOD_BITS 16
 
 /**
-Oscil plays a wavetable, cycling through the table to generate an audio or
-control signal. The frequency of the signal can be set or changed with
-setFreq(), and the output of an Oscil can be produced with next() for a simple
-cycling oscillator, or atIndex() for a particular sample in the table.
-@tparam NUM_TABLE_CELLS This is defined in the table ".h" file the Oscil will be
-using. It's important that it's a power of 2, and either a literal number (eg. "8192") or a
-defined macro, rather than a const or int, for the Oscil to run fast enough.
-@tparam UPDATE_RATE This will be AUDIO_RATE if the Oscil is updated in
-updateAudio(), or CONTROL_RATE if it's updated each time updateControl() is
-called. It could also be a fraction of CONTROL_RATE if you are doing some kind
-of cyclic updating in updateControl(), for example, to spread out the processor load.
-@todo Use conditional compilation to optimise setFreq() variations for different table
-sizes.
-@note If you #define OSCIL_DITHER_PHASE before you #include <Oscil.h>,
-the phase increments will be dithered, which reduces spurious frequency spurs
-in the audio output, at the cost of some extra processing and memory.
-@section int8_t2mozzi
-Converting soundfiles for Mozzi
-There is a python script called char2mozzi.py in the Mozzi/python folder.
-The usage is:
-char2mozzi.py infilename outfilename tablename samplerate
+  mWavetable is a slight extension of mOscil to allow for multi-frame wavetables. These wavetables are often used
+  in wavetable synth plugins. mWavetable has specifically been written with a process for supporting wavetables converted
+  from the free VST plugin Vital https://vital.audio/
+
+  The process is as follows:
+
+    1. Design/choose a wavetable in vital
+    2. Export as a .wav file. (From the main vital window, click the pencil symbol next to your wavetable. In the wavetable window,
+    choose "Export as a .wav File" from the hamburger menu button)
+    3. Convert to a compatible format using the vital tool here: https://ogreto.es/meapscripts
+    4. Move to sketch folder and import
+
+  The wav file exported from vital consists of 256 frames of 2048 samples each. In the vital tool from step #3, you are able to decrease the frame size or
+  specify the step size which will only keep every nth frame. Both of these options allow you to decrease the file size at the expense of some fidelity.
+  Leaving them at 2048 and 1 respectively will preserve full wavetable fidelity.
+
+  Beyond that, mWavetable functions exactly as mOscil, with the exception of the setFrame function. This allows you to choose which of the wavetable frames
+  will be read. It's really just a quick and convenient way of swapping between tables as you might do manually with mOscil. By default, these vital wavetables
+  have 256 frames so you can easily connect the output of an 8-bit oscillator or envelope to the setFrame function to sweep through frames.
 */
-// template <uint16_t NUM_TABLE_CELLS, uint16_t UPDATE_RATE, bool DITHER_PHASE=false>
-template <uint32_t FRAME_SIZE, uint32_t NUM_FRAMES, uint16_t UPDATE_RATE, uint64_t NUM_TABLE_CELLS>
+// template <uint16_t FRAME_SIZE, uint16_t UPDATE_RATE, bool DITHER_PHASE=false>
+template <uint32_t FRAME_SIZE, uint32_t NUM_FRAMES, uint16_t UPDATE_RATE>
 class mWavetable
 {
 
@@ -77,14 +75,8 @@ public:
   {
 
     incrementPhase();
-    // if (phase_fractional > endpos_fractional) {
-    //   phase_fractional = startpos_fractional + (phase_fractional - endpos_fractional);
-    // }
 
-    // WARNNG this is hard coded for when SAMPLE_F_BITS is 16
-    // uint64_t index = phase_fractional >> SAMPLE_F_BITS;
-
-    uint64_t index = frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1));
+    uint64_t index = frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (FRAME_SIZE - 1));
 
     int64_t out = FLASH_OR_RAM_READ<const int16_t>(table + index);
     int64_t difference = FLASH_OR_RAM_READ<const int16_t>((table + 1) + index) - out;
@@ -92,40 +84,13 @@ public:
     int64_t fractional = phase_fractional & 65535; // remove integer component leaving only fraction, maybe i could just cast to uint16_t
 
     int64_t diff_fraction = (difference * fractional) >> 16;
-
-    // .... alpha = (unsigned int)phase_fractional) >> 8)
-    // multiply difference by fractional proportion (should between 0 and 1 i think!)
-    // add result onto ut and return
-
-    // iiii iiii iiii iiii ffff ffff ffff ffff
-    // NUM_TABLE_CELLS - 1 mask
-    // 0000 0000 0000 0000 0000 0111 1111 1111
-    // i want
-    // 0000 0111 1111 1111 0000 0000 0000 0000
-    // so i just bitshift up by 16
-    // uint32_t masked_phase_fractional = phase_fractional & (((uint32_t)NUM_TABLE_CELLS - 1)<<16);
-
-    // stk interp
-
-    // find round down index (iIndex)
-    // find fractional roundoff (alpha)
-    // find value at iIndex (tmp)
-    // find difference between tmp and value at iIndex + 1
-    // multiply difference by alpha and add to tmp
-    // return tmp
-
-    // int8_t diff_fraction = (int8_t)(((((unsigned int)phase_fractional) >> 8) * difference) >> 8);  // (unsigned int) phase_fractional keeps low word, then>> for only 8 bit precision
     out += diff_fraction;
 
     return out;
   }
 
-  //   /** Returns the current sample.
-  //    */
-  // inline int16_t readTable() {
-  //   return FLASH_OR_RAM_READ<const int16_t>(table + frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
-  // }
-
+  /** Sets frame of wavetable.
+   */
   inline void setFrame(uint16_t frame_num)
   {
     if (frame_num >= NUM_FRAMES)
@@ -133,18 +98,6 @@ public:
       frame_num = NUM_FRAMES - 1;
     }
     frame_offset = FRAME_SIZE * frame_num;
-
-    // uint64_t start = FRAME_SIZE * frame_num;
-    // uint64_t end = start + FRAME_SIZE - 1;
-
-    // uint64_t my_pos = phase_fractional - startpos_fractional;
-
-    // startpos_fractional = (uint64_t)start << SAMPLE_F_BITS;
-    // endpos_fractional = (uint64_t)end << SAMPLE_F_BITS;
-
-    // phase_fractional = startpos_fractional + my_pos;
-
-    // phase_fractional = startpos_fractional;
   }
 
   /** Change the sound table which will be played by the Oscil.
@@ -196,9 +149,25 @@ public:
   {
     // TB2014-8-20 change this following Austin Grossman's suggestion on user list
     // https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/mozzi-users/u4D5NMzVnQs/pCmiWInFvrkJ
-    // phase_increment_fractional = ((((uint32_t)NUM_TABLE_CELLS<<ADJUST_FOR_NUM_TABLE_CELLS)*frequency)/UPDATE_RATE) << (OSCIL_F_BITS - ADJUST_FOR_NUM_TABLE_CELLS);
+    // phase_increment_fractional = ((((uint32_t)FRAME_SIZE<<ADJUST_FOR_FRAME_SIZE)*frequency)/UPDATE_RATE) << (OSCIL_F_BITS - ADJUST_FOR_FRAME_SIZE);
     // to this:
-    phase_increment_fractional = ((uint64_t)frequency) * ((OSCIL_F_BITS_AS_MULTIPLIER * NUM_TABLE_CELLS) / UPDATE_RATE);
+    phase_increment_fractional = ((uint64_t)frequency) * ((OSCIL_F_BITS_AS_MULTIPLIER * FRAME_SIZE) / UPDATE_RATE);
+  }
+
+  /** Set the oscillator frequency with an uint16_t. This is faster than using a
+    float, so it's useful when processor time is tight, but it can be tricky with
+    low and high frequencies, depending on the size of the wavetable being used. If
+    you're not getting the results you expect, try explicitly using a float, or try
+    setFreq_Q24n8() or or setFreq_Q16n16().
+    @param frequency to play the wave table.
+    */
+  inline void setFreq(long int frequency)
+  {
+    // TB2014-8-20 change this following Austin Grossman's suggestion on user list
+    // https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/mozzi-users/u4D5NMzVnQs/pCmiWInFvrkJ
+    // phase_increment_fractional = ((((uint32_t)FRAME_SIZE<<ADJUST_FOR_FRAME_SIZE)*frequency)/UPDATE_RATE) << (OSCIL_F_BITS - ADJUST_FOR_FRAME_SIZE);
+    // to this:
+    phase_increment_fractional = ((uint64_t)frequency) * ((OSCIL_F_BITS_AS_MULTIPLIER * FRAME_SIZE) / UPDATE_RATE);
   }
 
   /** Set the oscillator frequency with a float. Using a float is the most reliable
@@ -208,7 +177,7 @@ public:
      */
   inline void setFreq(float frequency)
   { // 1 us - using float doesn't seem to incur measurable overhead with the oscilloscope
-    phase_increment_fractional = (uint64_t)((((float)NUM_TABLE_CELLS * frequency) / UPDATE_RATE) * OSCIL_F_BITS_AS_MULTIPLIER);
+    phase_increment_fractional = (uint64_t)((((float)FRAME_SIZE * frequency) / UPDATE_RATE) * OSCIL_F_BITS_AS_MULTIPLIER);
   }
 
   /** Set the frequency using Q24n8 fixed-point number format.
@@ -220,20 +189,13 @@ public:
     */
   inline void setFreq_Q24n8(Q24n8 frequency)
   {
-    // phase_increment_fractional = (frequency* (NUM_TABLE_CELLS>>3)/(UPDATE_RATE>>6)) << (F_BITS-(8-3+6));
-    // TB2016-10-2 line below might have been left in accidentally while making the 2014 change below, remove for now
-    //      phase_increment_fractional = (((((uint32_t)NUM_TABLE_CELLS<<ADJUST_FOR_NUM_TABLE_CELLS)>>3)*frequency)/(UPDATE_RATE>>6))
-    //                                   << (OSCIL_F_BITS - ADJUST_FOR_NUM_TABLE_CELLS - (8-3+6));
-
-    // TB2014-8-20 change this following Austin Grossman's suggestion on user list
-    // https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/mozzi-users/u4D5NMzVnQs/pCmiWInFvrkJ
-    if ((256UL * NUM_TABLE_CELLS) >= UPDATE_RATE)
+    if ((256UL * FRAME_SIZE) >= UPDATE_RATE)
     {
-      phase_increment_fractional = ((uint64_t)frequency) * ((256UL * NUM_TABLE_CELLS) / UPDATE_RATE);
+      phase_increment_fractional = ((uint64_t)frequency) * ((256UL * FRAME_SIZE) / UPDATE_RATE);
     }
     else
     {
-      phase_increment_fractional = ((uint64_t)frequency) / (UPDATE_RATE / (256UL * NUM_TABLE_CELLS));
+      phase_increment_fractional = ((uint64_t)frequency) / (UPDATE_RATE / (256UL * FRAME_SIZE));
     }
   }
 
@@ -247,26 +209,15 @@ public:
     */
   inline void setFreq_Q16n16(Q16n16 frequency)
   {
-    // phase_increment_fractional = ((frequency * (NUM_TABLE_CELLS>>7))/(UPDATE_RATE>>6)) << (F_BITS-16+1);
-    //  TB2014-8-20 change this following Austin Grossman's suggestion on user list
-    //  https://groups.google.com/forum/?utm_medium=email&utm_source=footer#!msg/mozzi-users/u4D5NMzVnQs/pCmiWInFvrkJ
-    // phase_increment_fractional = (((((uint32_t)NUM_TABLE_CELLS<<ADJUST_FOR_NUM_TABLE_CELLS)>>7)*frequency)/(UPDATE_RATE>>6))
-    //                              << (OSCIL_F_BITS - ADJUST_FOR_NUM_TABLE_CELLS - 16 + 1);
-    if (NUM_TABLE_CELLS >= UPDATE_RATE)
+    if (FRAME_SIZE >= UPDATE_RATE)
     {
-      phase_increment_fractional = ((uint64_t)frequency) * (NUM_TABLE_CELLS / UPDATE_RATE);
+      phase_increment_fractional = ((uint64_t)frequency) * (FRAME_SIZE / UPDATE_RATE);
     }
     else
     {
-      phase_increment_fractional = ((uint64_t)frequency) / (UPDATE_RATE / NUM_TABLE_CELLS);
+      phase_increment_fractional = ((uint64_t)frequency) / (UPDATE_RATE / FRAME_SIZE);
     }
   }
-  /*
-        inline
-        void setFreqMidi(int8_t note_num) {
-            setFreq_Q16n16(mtof(note_num));
-        }
-    */
 
   /** Set a specific phase increment.  See phaseIncFromFreq().
     @param phaseinc_fractional a phase increment value as calculated by phaseIncFromFreq().
@@ -279,7 +230,7 @@ public:
 private:
   /** Used for shift arithmetic in setFreq() and its variations.
    */
-  static const uint16_t ADJUST_FOR_NUM_TABLE_CELLS = (NUM_TABLE_CELLS < 2048) ? 8 : 0;
+  static const uint16_t ADJUST_FOR_FRAME_SIZE = (FRAME_SIZE < 2048) ? 8 : 0;
 
   /** Increments the phase of the oscillator without returning a sample.
    */
@@ -289,20 +240,12 @@ private:
     phase_fractional += phase_increment_fractional;
   }
 
-  // /** Returns the current sample.
-  //    */
-  // inline int16_t readTable() {
-  //   return FLASH_OR_RAM_READ<const int16_t>(table + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
-  // }
-
   /** Returns the current sample.
    */
   inline int16_t readTable()
   {
-    return FLASH_OR_RAM_READ<const int16_t>(table + frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+    return FLASH_OR_RAM_READ<const int16_t>(table + frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (FRAME_SIZE - 1)));
   }
-
-  // location & NUM_TABLE_CELLS - 1 // this is their weird way of doing the modulo
 
   uint64_t phase_fractional;
   uint64_t phase_increment_fractional;
@@ -310,10 +253,5 @@ private:
   uint64_t frame_offset;
   const int16_t *table;
 };
-
-/**
-@example 01.Basics/Vibrato/Vibrato.ino
-This is an example using Oscil::phMod to produce vibrato using phase modulation.
-*/
 
 #endif /* MEAP_WAVETABLE_H */

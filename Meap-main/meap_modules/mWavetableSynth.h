@@ -146,7 +146,7 @@ public:
         osc_[curr_voice].setTable(table_);
         osc_[curr_voice].setFrame(frame_num_);
         adsr_[curr_voice].setTimes(a_, d_, s_, r_);
- 
+
         // start the note
         freq_[curr_voice] = mtof(note_num);
         osc_[curr_voice].setFreq(freq_[curr_voice]);
@@ -232,7 +232,7 @@ public:
     }
 
 protected:
-    mWavetable<mFRAME_SIZE, mNUM_FRAMES, mAUDIO_RATE, mFRAME_SIZE> osc_[mPOLYPHONY];
+    mWavetable<mFRAME_SIZE, mNUM_FRAMES, mAUDIO_RATE> osc_[mPOLYPHONY];
 
     ADSR<mCONTROL_RATE, mAUDIO_RATE> adsr_[mPOLYPHONY];
     uint16_t gain_[mPOLYPHONY];

@@ -147,7 +147,7 @@ each direction. This fixed point math number is interpreted as a SFix<15,16> int
 @return a sample from the table.
 */
     template <int8_t NI, int8_t NF, uint8_t RANGE>
-    inline int8_t phMod(SFix<NI, NF, RANGE> phmod_proportion)
+    inline T phMod(SFix<NI, NF, RANGE> phmod_proportion)
     {
         return phMod(SFix<15, 16>(phmod_proportion).asRaw());
     }
@@ -158,7 +158,7 @@ each direction. This fixed point math number is interpreted as a SFix<15,16> int
     each direction.
     @return a sample from the table.
     */
-    inline int8_t phMod(SFix<15, 16> phmod_proportion)
+    inline T phMod(SFix<15, 16> phmod_proportion)
     {
         return phMod(phmod_proportion.asRaw());
     }
