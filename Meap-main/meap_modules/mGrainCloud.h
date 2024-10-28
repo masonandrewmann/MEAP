@@ -3,7 +3,7 @@
 
 #include <tables/sin8192_int8.h> // table for Oscils to play
 
-template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, uint32_t mAUDIO_RATE = AUDIO_RATE, uint32_t mCONTROL_RATE = CONTROL_RATE, uint16_t mPOLYPHONY = 8, class T = int8_t>
+template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, uint16_t MAX_GRAINS = 8, class T = int8_t>
 class mGrainCloud
 {
 public:
@@ -19,7 +19,7 @@ public:
 
     void init(const T *TABLE_NAME)
     {
-        for (int i = 0; i < mPOLYPHONY; i++)
+        for (int i = 0; i < MAX_GRAINS; i++)
         {
             grains[i].init(TABLE_NAME);
         }
@@ -53,8 +53,8 @@ public:
     // takes in densities in terms of grains per second, and converts them to thresholds to be used internally
     void setDensities(uint16_t starting_density, uint16_t ending_density)
     {
-        grain_density_[0] = (float)starting_density / (float)mCONTROL_RATE * 1000;
-        grain_density_[1] = (float)ending_density / (float)mCONTROL_RATE * 1000;
+        grain_density_[0] = (float)starting_density / (float)CONTROL_RATE * 1000;
+        grain_density_[1] = (float)ending_density / (float)CONTROL_RATE * 1000;
         density_difference_ = grain_density_[1] - grain_density_[0];
     }
 
@@ -88,7 +88,7 @@ public:
 
     void setTable(const T *TABLE_NAME)
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (uint16_t i = 0; i < MAX_GRAINS; i++)
         {
             grains[i].setTable(TABLE_NAME);
         }
@@ -134,7 +134,7 @@ public:
 
                     // trigger a grain
                     grains[curr_grain_].noteOn(Meap::irand(grain_freq_min_[0] + elapsed_over_cloud_length * freq_min_difference_, grain_freq_max_[0] + elapsed_over_cloud_length * freq_max_difference_));
-                    curr_grain_ = (curr_grain_ + 1) % mPOLYPHONY;
+                    curr_grain_ = (curr_grain_ + 1) % MAX_GRAINS;
                 }
             }
         }
@@ -144,7 +144,7 @@ public:
     int32_t next()
     {
         int32_t out_sample = 0;
-        for (int i = 0; i < mPOLYPHONY; i++)
+        for (int i = 0; i < MAX_GRAINS; i++)
         {
             out_sample += grains[i].next();
         }
@@ -153,7 +153,7 @@ public:
     }
 
 protected:
-    mGrainGenerator<mNUM_CELLS, mAUDIO_RATE> grains[mPOLYPHONY];
+    mGrainGenerator<mNUM_CELLS, AUDIO_RATE, T> grains[MAX_GRAINS];
 
     uint64_t cloud_end_time_;
     bool cloud_active_;

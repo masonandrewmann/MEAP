@@ -155,6 +155,8 @@
 
 #include <meap_modules/mFM2Poly.h>
 
+#include <meap_modules/mRandomDistribution.h>
+
 // meap effects
 
 #ifndef MEAP_LEGACY

@@ -42,6 +42,9 @@
 #include <mozzi_rand.h>
 
 #define MEAP_PI 3.14159265358979;
+#define MEAP_2_PI 6.28318530717958;
+#define MEAP_SQRT_2_PI 2.5066282746309994;
+#define MEAP_EULER 2.718281828459045
 
 struct StereoSample
 {

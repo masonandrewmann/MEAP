@@ -1,9 +1,5 @@
 /*
-  Extension of basic template to include a framework for handling midi messages.
-  Implements a basic 24 Pulse-Per-Quarter note clock (the MIDI standard that most 
-  devices use for synchronization) which can be generated internally or received 
-  from an external MIDI clock source.
-
+  Sends MIDI note on and note off messages to play a melody on MIDI channel 1
  */
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
@@ -24,6 +20,20 @@ int clock_pulse_num = 0;
 float clock_bpm = 120;  // BPM when in internal clock mode
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
+
+
+EventDelay metro1;
+int metro1_period;  // period will be set by sequence below
+int sequence_length = 20;
+int sequence_pitches[20] = { mCs3, mFs3, mCs3, mA2, mCs3, mE3, mD3, mCs3, mB2, mA2, mCs3, mE3, mCs3, mA2, mCs3, mE3, mD3, mCs3, mB2, mA2 };
+int sequence_rhythms[20] = { 2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1 };
+int sequence_index = 0;
+int sixteenth_length = 125;
+int note_length = 100;
+
+EventDelay note_off_timer;
+int note_off_number;
+bool note_active = false;
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -65,13 +75,26 @@ void updateControl() {
   meap.readInputs();  // reads DIP switches, potentiometers and touch inputs
 
   // ---------- YOUR updateControl CODE BELOW ----------
+  if (metro1.ready()) {
+    metro1.start(sequence_rhythms[sequence_index] * sixteenth_length);
+    MIDI.sendNoteOn(sequence_pitches[sequence_index], 127, 1);  // note, velocity, channel
+    note_off_number = sequence_pitches[sequence_index]; // MIDI number of note we need to turn off
+    note_off_timer.start(note_length); // set timer to turn note off in 100ms
+    note_active = true; // tells us that a note is on/needs too be turned off
+    sequence_index = (sequence_index + 1) % sequence_length;
+  }
+
+  if (note_active && note_off_timer.ready()) {
+    MIDI.sendNoteOn(note_off_number, 0, 1);  // note, velocity, channel
+    note_active = false;
+  }
 }
 
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
   int64_t out_sample = 0;
-  return StereoOutput::fromNBit(8, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
+  return StereoOutput::fromNBit(8, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
 
@@ -85,7 +108,6 @@ void updateTouch(int number, bool pressed) {
   if (pressed) {  // Any pad pressed
 
   } else {  // Any pad released
-
   }
   switch (number) {
     case 0:
@@ -157,7 +179,6 @@ void updateDip(int number, bool up) {
   if (up) {  // Any DIP toggled up
 
   } else {  //Any DIP toggled down
-
   }
   switch (number) {
     case 0:

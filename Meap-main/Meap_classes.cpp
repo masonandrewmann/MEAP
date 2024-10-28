@@ -103,9 +103,9 @@ long Meap::irand(long howsmall, long howbig)
   return (xorshift96() % diff) + howsmall;
 }
 
-float Meap::frand() // generates a random float between 0 and 1 with 4 decimals of precision
+float Meap::frand() // generates a random float between 0 and 1
 {
-  return (xorshift96() % 10000 / 10000.f);
+  return ((float)xorshift96() / 0xFFFFFFFF);
 }
 
 void Meap::readInputsFast()
@@ -381,14 +381,12 @@ bool Meap::sgtlInit()
   SGwrite(CHIP_SHORT_CTRL, 0x4446);    // allow up to 125mA
   SGwrite(CHIP_ANA_CTRL, 0x0137);      // enable zero cross detectors
 
-  int extMCLK = 0; // SETTING THIS MANUALLY RIGHT NOW TO BYPASS THIS IF STATEMENT BC WE ARE DOING ESP32 CLOCK!
-
   SGwrite(CHIP_ANA_POWER, 0x40FF); // power up: lineout, hp, adc, dac
 
   SGwrite(CHIP_DIG_POWER, 0x0073); // power up all digital stuff
   delay(400);
-  SGwrite(CHIP_LINE_OUT_VOL, 0x1F1F); // default approx 1.3 volts peak-to-peak
-  // SGwrite(CHIP_LINE_OUT_VOL, 0x1414); // default approx 1.3 volts peak-to-peak
+  SGwrite(CHIP_LINE_OUT_VOL, 0x1F1F); // max volume output (clips in speakers)
+  // SGwrite(CHIP_LINE_OUT_VOL, 0x1414); // lower volume output
 
   SGwrite(CHIP_CLK_CTRL, 0x0000); // 32 kHz, 256*Fs
   SGwrite(CHIP_I2S_CTRL, 0x0030); // SCLK=64*Fs, 16bit, I2S format

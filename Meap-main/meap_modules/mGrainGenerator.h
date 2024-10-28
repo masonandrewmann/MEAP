@@ -2,7 +2,6 @@
 #define MGRAINGENERATOR_H_
 
 #include <tables/sin8192_int8.h> // table for Oscils to play
-#include <tables/m_sin1024_uint8.h>
 
 template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, uint32_t mAUDIO_RATE = AUDIO_RATE, class T = int8_t>
 class mGrainGenerator
@@ -13,9 +12,8 @@ public:
         init(TABLE_NAME);
     };
 
-    mGrainGenerator()
-    {
-        init(SIN8192_DATA);
+    mGrainGenerator() {
+        // init(SIN8192_DATA);
     };
 
     void init(const T *TABLE_NAME)
@@ -31,6 +29,15 @@ public:
 
         env_.setADLevels(255, 0);
         env_.setTimes(grain_duration_ / 2, grain_duration_ / 2, 1, 1);
+
+        if (sizeof(T) == sizeof(int16_t))
+        {
+            shift_val_ = 8;
+        }
+        else
+        {
+            shift_val_ = 0;
+        }
     }
 
     void setTable(const T *TABLE_NAME)
@@ -73,11 +80,11 @@ public:
         env_.noteOn();
     }
 
-    // to be called in audio loop
+    // to be called in audio loop, always outputs 16 bits
     int32_t next()
     {
         env_.update();
-        int64_t output_sample = osc_.next() * grain_amplitude_ * env_.next() >> 8; // 24 bits
+        int64_t output_sample = osc_.next() * grain_amplitude_ * env_.next() >> shift_val_; // 24 bits
         // int64_t output_sample = osc_.next() * env_.next(); // 24 bits
 
         // l_sample_ = (m_sin1024_uint_DATA[255 - grain_pan_] * output_sample) >> 16; // down to 16 bits
@@ -88,7 +95,7 @@ public:
 
 protected:
     ADSR<mAUDIO_RATE, mAUDIO_RATE> env_;
-    Oscil<mNUM_CELLS, mAUDIO_RATE> osc_;
+    mOscil<mNUM_CELLS, mAUDIO_RATE, T> osc_;
 
     int32_t l_sample_;
     int32_t r_sample_;
@@ -97,6 +104,8 @@ protected:
     int32_t grain_duration_;
     float grain_frequency_;
     int16_t grain_pan_;
+
+    int shift_val_;
 };
 
 #endif // MGRAINGENERATOR_H_

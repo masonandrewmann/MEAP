@@ -1,29 +1,34 @@
 /*
-  Extension of basic template to include a framework for handling midi messages.
-  Implements a basic 24 Pulse-Per-Quarter note clock (the MIDI standard that most 
-  devices use for synchronization) which can be generated internally or received 
-  from an external MIDI clock source.
+  Triggers notes from a major chord.
+  pot 0 controls tempo
+  pot 1 controls octave offset
 
+  touch pads control chord the notes are chosen from as follows:
+  C  F  G  C^
+  C# F# G# C#^
  */
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
-#include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
+#include <Meap.h>         // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
-enum ClockModes {
-  kINTERNAL,
-  kEXTERNAL
-} clock_mode;
-
-// MIDI clock timer
-uint32_t clock_timer = 0;
-uint32_t clock_period_micros = 10000;  // dummy value, gets overwritten in setup
-int clock_pulse_num = 0;
-float clock_bpm = 120;  // BPM when in internal clock mode
-
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
+#include <tables/tri8192_int16.h>
+
+#define POLYPHONY 8 // num of voices
+
+mOscil<tri8192_int16_NUM_CELLS, AUDIO_RATE, int16_t> osc_bank[POLYPHONY]; // bank of oscillators
+ADSR<AUDIO_RATE, AUDIO_RATE> env_bank[POLYPHONY]; // bank of envelopes
+int current_osc = 0; // current oscillator index to trigger (between 0 and POLYPHONY-1)
+
+int num_waits = 1;  // how many metronome ticks to wait in between notes
+
+EventDelay metro;
+int metro_period = 100; // period of metronome in ms
+int major_chord[7] = { 0, 4, 7, 12, 16, 19, 24 };  // two octaves of a major chord in semitone offsets from root
+int chord_root = 24; // MIDI note num of chord root
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -31,49 +36,57 @@ void setup() {
   startMozzi(CONTROL_RATE);                  // starts Mozzi engine with control rate defined above
   meap.begin();                              // sets up MEAP object
 
-  clock_mode = kINTERNAL;                                 // set the midi clock mode to internal, ignores incoming clock messages
-  clock_period_micros = meap.midiPulseMicros(clock_bpm);  // converts BPM into number of microseconds per 24 PPQ MIDI clock pulse
-
   // ---------- YOUR SETUP CODE BELOW ----------
+
+  for (int i = 0; i < POLYPHONY; i++) {
+    env_bank[i].setTimes(1, 500, 1, 1);
+    env_bank[i].setADLevels(255, 0);
+    osc_bank[i].setTable(tri8192_int16_DATA);
+  }
 }
 
 
 void loop() {
   audioHook();  // handles Mozzi audio generation behind the scenes
-
-  if (MIDI.read())  // Is there a MIDI message incoming ?
-  {
-    midiEventHandler();  // function that parses midi messages, be careful about doing too much processing
-                         // in here because it could disrupt audio generation
-  }
-
-  // handle generating midi clock if internal clock mode is selected
-  if (clock_mode == kINTERNAL) {
-    uint32_t t = micros();
-    if (t > clock_timer) {
-      clock_timer = t + clock_period_micros;
-      MIDI.sendRealTime(midi::Clock);  // sends clock message to MIDI output port
-      clockStep();
-    }
-  }
 }
 
 
 /** Called automatically at rate specified by CONTROL_RATE macro, most of your mode should live in here
 	*/
 void updateControl() {
-  meap.readInputs();  // reads DIP switches, potentiometers and touch inputs
-
+  meap.readInputs();
   // ---------- YOUR updateControl CODE BELOW ----------
+
+  if (metro.ready()) {
+    metro_period = map(meap.pot_vals[0], 0, 4095, 200, 10);
+    num_waits--;
+    metro.start(metro_period);
+    if (num_waits <= 0) {
+      num_waits = meap.irand(2, 8);                       // choose how long to wait until next note
+      int template_index = max(meap.irand(0, 6), meap.irand(0, 6)); // choose note from 2-octave major chord, with a greater chance of a higher note
+      int decay_val = map(template_index, 0, 6, 1000, 200);  // map scale degree to note length, high notes will be shorter
+      int octave = map(meap.pot_vals[1], 0, 4095, 0, 7)*12;
+      osc_bank[current_osc].setFreq(mtof(octave + chord_root + major_chord[template_index]));
+      // env_bank[current_osc].setDecayTime(decay_val);
+      env_bank[current_osc].noteOn();
+      current_osc = (current_osc + 1) % POLYPHONY;
+    }
+  }
 }
 
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
   int64_t out_sample = 0;
-  return StereoOutput::fromNBit(8, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
-}
 
+  // 8 voices of 16*8=24bits each so 26 bits total
+  for(int i = 0; i < POLYPHONY; i++){
+    env_bank[i].update();
+    out_sample += osc_bank[i].next() * env_bank[i].next();
+  }
+
+  return StereoOutput::fromNBit(26, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
+}
 
 /**
    * Runs whenever a touch pad is pressed or released
@@ -85,12 +98,12 @@ void updateTouch(int number, bool pressed) {
   if (pressed) {  // Any pad pressed
 
   } else {  // Any pad released
-
   }
   switch (number) {
     case 0:
       if (pressed) {  // Pad 0 pressed
         Serial.println("t0 pressed ");
+        chord_root = 24;
       } else {  // Pad 0 released
         Serial.println("t0 released");
       }
@@ -98,6 +111,7 @@ void updateTouch(int number, bool pressed) {
     case 1:
       if (pressed) {  // Pad 1 pressed
         Serial.println("t1 pressed");
+        chord_root = 29;
       } else {  // Pad 1 released
         Serial.println("t1 released");
       }
@@ -105,6 +119,7 @@ void updateTouch(int number, bool pressed) {
     case 2:
       if (pressed) {  // Pad 2 pressed
         Serial.println("t2 pressed");
+        chord_root = 31;
       } else {  // Pad 2 released
         Serial.println("t2 released");
       }
@@ -112,6 +127,8 @@ void updateTouch(int number, bool pressed) {
     case 3:
       if (pressed) {  // Pad 3 pressed
         Serial.println("t3 pressed");
+        chord_root = 36;
+        // chord_root = 25;
       } else {  // Pad 3 released
         Serial.println("t3 released");
       }
@@ -119,6 +136,7 @@ void updateTouch(int number, bool pressed) {
     case 4:
       if (pressed) {  // Pad 4 pressed
         Serial.println("t4 pressed");
+        chord_root = 25;
       } else {  // Pad 4 released
         Serial.println("t4 released");
       }
@@ -126,6 +144,7 @@ void updateTouch(int number, bool pressed) {
     case 5:
       if (pressed) {  // Pad 5 pressed
         Serial.println("t5 pressed");
+        chord_root = 30;
       } else {  // Pad 5 released
         Serial.println("t5 released");
       }
@@ -133,6 +152,7 @@ void updateTouch(int number, bool pressed) {
     case 6:
       if (pressed) {  // Pad 6 pressed
         Serial.println("t6 pressed");
+        chord_root = 32;
       } else {  // Pad 6 released
         Serial.println("t6 released");
       }
@@ -140,6 +160,7 @@ void updateTouch(int number, bool pressed) {
     case 7:
       if (pressed) {  // Pad 7 pressed
         Serial.println("t7 pressed");
+        chord_root = 37;
       } else {  // Pad 7 released
         Serial.println("t7 released");
       }
@@ -157,7 +178,6 @@ void updateDip(int number, bool up) {
   if (up) {  // Any DIP toggled up
 
   } else {  //Any DIP toggled down
-
   }
   switch (number) {
     case 0:
@@ -217,59 +237,4 @@ void updateDip(int number, bool up) {
       }
       break;
   }
-}
-
-/**
-* Called whenever a MIDI message is recieved.
-*/
-void midiEventHandler() {
-  int channel = MIDI.getChannel();
-  int data1 = MIDI.getData1();
-  int data2 = MIDI.getData2();
-  switch (MIDI.getType())  // Get the type of the message we received
-  {
-    case midi::NoteOn:  // ---------- MIDI NOTE ON RECEIVED ----------
-      break;
-    case midi::NoteOff:  // ---------- MIDI NOTE OFF RECEIVED ----------
-      break;
-    case midi::ProgramChange:  // ---------- MIDI PROGRAM CHANGE RECEIVED ----------
-      break;
-    case midi::ControlChange:  // ---------- MIDI CONTROL CHANGE RECEIVED ----------
-      break;
-    case midi::PitchBend:  // ---------- MIDI PITCH BEND RECEIVED ----------
-      break;
-    case midi::Clock:  // ---------- MIDI CLOCK PULSE RECEIVED ----------
-      if (clock_mode == kEXTERNAL) {
-        clockStep();
-      }
-      break;
-    case midi::Start:  // ---------- MIDI START MESSAGE RECEIVED ----------
-      break;
-    case midi::Stop:  // ---------- MIDI STOP MESSAGE RECEIVED ----------
-      break;
-    case midi::Continue:  // ---------- MIDI CONTINUE MESSAGE RECEIVED ----------
-      break;
-  }
-}
-
-
-// Executes when a clock step is received. Each "if" statement represents a musical division of a quarter note.
-// For example, if you want an event to occur every eigth note, place the code for this event within the
-// second if statement. If you want events to happen at different subdivisions of a quarter note add more if
-// statements checking the value of clock_pulse_num.
-void clockStep() {
-
-  if (clock_pulse_num % 24 == 0) {  // quarter note
-  }
-
-  if (clock_pulse_num % 12 == 0) {  // eighth note
-  }
-
-  if (clock_pulse_num % 6 == 0) {  // sixteenth note
-  }
-
-  if (clock_pulse_num % 3 == 0) {  // thirtysecond notex
-  }
-
-  clock_pulse_num = (clock_pulse_num + 1) % 24;
 }

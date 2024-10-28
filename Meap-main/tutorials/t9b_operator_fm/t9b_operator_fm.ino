@@ -23,6 +23,8 @@ mOperator<SIN8192_NUM_CELLS> oscC(SIN8192_DATA);
 
 int maj_scale[8] = {0, 2, 4, 5, 7, 9, 11, 12};
 
+int64_t feedback_term = 0;
+
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
   Serial1.begin(31250, SERIAL_8N1, 43, 44);  // sets up MIDI: baud rate, serial mode, rx pin, tx pin
@@ -35,7 +37,7 @@ void setup() {
   oscA.setADLevels(255, 200);
   oscA.setGain(255);
 
-  oscB.setFreqRatio(1);
+  oscB.setFreqRatio(3);
   oscB.setTimes(1000, 300, 99999999, 1000);
   oscB.setADLevels(255, 255);
 
@@ -68,8 +70,8 @@ void updateControl() {
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
-  int64_t out_sample = oscA.next(oscB.next() + oscC.next());
-
+  int64_t out_sample = oscA.next(oscB.next() + oscC.next() + feedback_term);
+  feedback_term = out_sample * 0.7;
 
   return StereoOutput::fromNBit(16, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
 }

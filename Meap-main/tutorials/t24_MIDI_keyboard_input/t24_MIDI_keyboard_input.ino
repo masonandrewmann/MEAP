@@ -6,7 +6,7 @@
 
  */
 
-#define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
+#define CONTROL_RATE 64  // Hz, powers of 2 are most reliable
 #include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
@@ -24,6 +24,11 @@ int clock_pulse_num = 0;
 float clock_bpm = 120;  // BPM when in internal clock mode
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
+#include <tables/sin8192_int16.h>
+mOscil<sin8192_int16_NUM_CELLS, AUDIO_RATE, int16_t> osc(sin8192_int16_DATA);
+ADSR<AUDIO_RATE, AUDIO_RATE> env;
+
+int current_note = 0;
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -35,6 +40,8 @@ void setup() {
   clock_period_micros = meap.midiPulseMicros(clock_bpm);  // converts BPM into number of microseconds per 24 PPQ MIDI clock pulse
 
   // ---------- YOUR SETUP CODE BELOW ----------
+  env.setADLevels(255, 200);
+  env.setTimes(1, 250, 100000000, 500);
 }
 
 
@@ -71,7 +78,9 @@ void updateControl() {
 	*/
 AudioOutput_t updateAudio() {
   int64_t out_sample = 0;
-  return StereoOutput::fromNBit(8, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
+  env.update();
+  out_sample = osc.next() * env.next();
+  return StereoOutput::fromNBit(24, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
 
@@ -85,7 +94,6 @@ void updateTouch(int number, bool pressed) {
   if (pressed) {  // Any pad pressed
 
   } else {  // Any pad released
-
   }
   switch (number) {
     case 0:
@@ -157,7 +165,6 @@ void updateDip(int number, bool up) {
   if (up) {  // Any DIP toggled up
 
   } else {  //Any DIP toggled down
-
   }
   switch (number) {
     case 0:
@@ -229,8 +236,15 @@ void midiEventHandler() {
   switch (MIDI.getType())  // Get the type of the message we received
   {
     case midi::NoteOn:  // ---------- MIDI NOTE ON RECEIVED ----------
+      current_note = data1;
+      osc.setFreq(mtof(data1));
+      env.noteOn();
       break;
     case midi::NoteOff:  // ---------- MIDI NOTE OFF RECEIVED ----------
+      if (data1 == current_note) {
+        env.noteOff();
+      }
+
       break;
     case midi::ProgramChange:  // ---------- MIDI PROGRAM CHANGE RECEIVED ----------
       break;

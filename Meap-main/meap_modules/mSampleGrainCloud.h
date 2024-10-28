@@ -1,7 +1,7 @@
 #ifndef MSAMPLEGRAINCLOUD_H_
 #define MSAMPLEGRAINCLOUD_H_
 
-template <uint32_t mSAMPLE_LENGTH, uint32_t mAUDIO_RATE = AUDIO_RATE, uint32_t mCONTROL_RATE = CONTROL_RATE, uint16_t mPOLYPHONY = 8, class T = int8_t>
+template <uint32_t mSAMPLE_LENGTH, uint16_t mPOLYPHONY = 8, class T = int8_t>
 class mSampleGrainCloud
 {
 public:
@@ -67,8 +67,8 @@ public:
     // takes in densities in terms of grains per second, and converts them to thresholds to be used internally
     void setDensities(uint16_t starting_density, uint16_t ending_density)
     {
-        grain_density_[0] = (float)starting_density / (float)mCONTROL_RATE * 1000;
-        grain_density_[1] = (float)ending_density / (float)mCONTROL_RATE * 1000;
+        grain_density_[0] = (float)starting_density / (float)CONTROL_RATE * 1000;
+        grain_density_[1] = (float)ending_density / (float)CONTROL_RATE * 1000;
         density_difference_ = grain_density_[1] - grain_density_[0];
     }
 
@@ -185,7 +185,7 @@ public:
 
                 uint64_t curr_time = millis();
                 uint64_t elapsed = curr_time - start_time_;
-                uint64_t samples_elapsed = ((float)elapsed / 1000.0) * mAUDIO_RATE; // rlly inefficient!
+                uint64_t samples_elapsed = ((float)elapsed / 1000.0) * AUDIO_RATE; // rlly inefficient!
                 float elapsed_over_cloud_length = (float)elapsed / (float)cloud_length_;
                 // update density
                 int32_t curr_density = grain_density_[0] + elapsed_over_cloud_length * density_difference_;
@@ -239,7 +239,7 @@ public:
     int32_t r_sample;
 
 protected:
-    mSampleGrainGenerator<mSAMPLE_LENGTH, mAUDIO_RATE, T> grains[mPOLYPHONY];
+    mSampleGrainGenerator<mSAMPLE_LENGTH, AUDIO_RATE, T> grains[mPOLYPHONY];
 
     uint64_t cloud_end_time_;
     bool cloud_active_;
