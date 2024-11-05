@@ -56,9 +56,6 @@ public:
     }
 
 protected:
-    // Metronome accesses these
-    //  unsigned long deadline;
-    //  unsigned long ticks;
     uint64_t deadline;
     uint64_t delay_time;
 };
