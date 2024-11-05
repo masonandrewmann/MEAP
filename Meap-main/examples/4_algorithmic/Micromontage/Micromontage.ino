@@ -1,29 +1,40 @@
 /*
-  Basic FM example. 
-
-  Carrier oscillator always plays 110 Hz
-  Modulation oscillator plays frequency determined by pot 0
-  Modulation amount determined by pot 1
-
+  Basic template for working with a stock MEAP board.
  */
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
-#include <Meap.h>        // MEAP library, includes all dependent libraries, including all Mozzi modules
+#include <Meap.h>         // MEAP library, includes all dependent libraries, including all Mozzi modules
 
 Meap meap;                                            // creates MEAP object to handle inputs and other MEAP library functions
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
-#include <tables/sin8192_int8.h>
+#include "sample_includes.h"
 
-// C -> B -> A -> output
-mOperator<SIN8192_NUM_CELLS> oscA(SIN8192_DATA);
-mOperator<SIN8192_NUM_CELLS> oscB(SIN8192_DATA);
-mOperator<SIN8192_NUM_CELLS> oscC(SIN8192_DATA);
+#define MAX_SAMPLE_LENGTH 300000
+mSample<MAX_SAMPLE_LENGTH, AUDIO_RATE, int8_t> sample_rack[MICRO_NUM_SAMPLES];
+float default_freq;
 
-int maj_scale[8] = {0, 2, 4, 5, 7, 9, 11, 12};
 
-int64_t feedback_term = 0;
+int row_length = 7;
+int tone_row[] = { 0, 6, 19, 3, 5, 20, 25 };
+int row_index = 0;
+int row_transpose = 0;
+
+EventDelay metro;
+int metro_period = 200;
+int tempo_mult = 1;
+
+
+// int time_mult = 1;
+float mult_vals[] = { 1, 2, 1, 0.5, 0.25, 0.125 };
+int num_repeats = 0;
+float pitch_transpose = 1.0;
+
+Smooth<int16_t> envelope_detector(0.999);
+int input_envelope = 0;
+bool listen_enable = false;
+
 
 void setup() {
   Serial.begin(115200);                      // begins Serial communication with computer
@@ -32,18 +43,13 @@ void setup() {
   meap.begin();                              // sets up MEAP object
 
   // ---------- YOUR SETUP CODE BELOW ----------
-  oscA.setFreqRatio(1);
-  oscA.setTimes(1, 300, 99999999, 1000);
-  oscA.setADLevels(255, 200);
-  oscA.setGain(255);
+  default_freq = (float)AUDIO_RATE / (float)MAX_SAMPLE_LENGTH;
 
-  oscB.setFreqRatio(3);
-  oscB.setTimes(1000, 300, 99999999, 1000);
-  oscB.setADLevels(255, 255);
-
-  oscC.setFreqRatio(11);
-  oscC.setTimes(1, 100, 1, 500);
-  oscC.setADLevels(255, 50);
+  for (int i = 0; i < MICRO_NUM_SAMPLES; i++) {
+    sample_rack[i].setFreq(default_freq);
+    sample_rack[i].setTable(micro_list[i]);
+    sample_rack[i].setEnd(micro_lengths[i]);
+  }
 }
 
 
@@ -57,23 +63,61 @@ void loop() {
 void updateControl() {
   meap.readInputs();
   // ---------- YOUR updateControl CODE BELOW ----------
-  oscB.setGain(map(meap.pot_vals[0], 0, 4095, 0, 255));
-  oscC.setGain(map(meap.pot_vals[1], 0, 4095, 0, 255));
+  metro_period = map(meap.pot_vals[0], 0, 4095, 10, 1000);
+  // pitch_transpose = (((float)meap.pot_vals[1]) / 400.f) + 0.25;
+  pitch_transpose = (float)map(meap.pot_vals[1], 0, 4095, 250, 10000) / 1000.f;
 
-  oscA.update();
-  oscB.update();
-  oscC.update();
+  if (metro.ready()) {
+    if (meap.dip_vals[3]) {
+      metro.start(metro_period * tempo_mult / ((float)row_index + 1));
+    } else {
+      metro.start(metro_period * tempo_mult);
+    }
 
-  // Serial.println(oscA.mod_shift_val_);
+    if(!meap.dip_vals[4] || input_envelope > (meap.volume_val << 3)){
+      int sample_num = (tone_row[row_index] + row_transpose) % MICRO_NUM_SAMPLES;
+      sample_rack[sample_num].setFreq(default_freq * meap.irand(1, 3) * pitch_transpose);
+      sample_rack[sample_num].start();
+      row_index++;
+      if (row_index > row_length) {
+        if (meap.dip_vals[0]) {  // DIP 0 - randomize row transpose
+          row_transpose = meap.irand(1, 15);
+        } else {
+          row_transpose = 0;
+        }
+
+        if (meap.dip_vals[1]) {  // DIP 1 - randomize row tempo
+          tempo_mult = meap.irand(1, 5);
+        } else {
+          tempo_mult = 1;
+        }
+
+        row_index = 0;
+      }
+    }
+  }
 }
 
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
-  int64_t out_sample = oscA.next(oscB.next() + oscC.next() + feedback_term);
-  feedback_term = out_sample * 0.7;
+  int64_t out_sample = 0;
+  int64_t l_sample = meap_input_frame[0];  // line in left channel
+  int64_t r_sample = meap_input_frame[1];  // line in right channel
 
-  return StereoOutput::fromNBit(16, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
+  if (meap.dip_vals[4]) {  // detect volume of input
+    input_envelope = envelope_detector.next(abs(l_sample));
+  }
+
+  for (int i = 0; i < MICRO_NUM_SAMPLES; i++) {  // attach samples to output
+    out_sample += sample_rack[i].next();
+  }
+
+  out_sample  = out_sample << 8; // samples up to 16bit
+  l_sample += out_sample;  // add samples to line input signal
+  r_sample += out_sample;
+
+  return StereoOutput::fromNBit(18, l_sample, r_sample);  // send to output with no volume control
 }
 
 /**
@@ -84,13 +128,8 @@ AudioOutput_t updateAudio() {
    */
 void updateTouch(int number, bool pressed) {
   if (pressed) {  // Any pad pressed
-    oscA.noteOn(52+maj_scale[number], 127);
-    oscB.noteOn(52+maj_scale[number], 127);
-    oscC.noteOn(52+maj_scale[number], 127);
+
   } else {  // Any pad released
-    oscA.noteOff();
-    oscB.noteOff();
-    oscC.noteOff();
   }
   switch (number) {
     case 0:
@@ -162,7 +201,6 @@ void updateDip(int number, bool up) {
   if (up) {  // Any DIP toggled up
 
   } else {  //Any DIP toggled down
-
   }
   switch (number) {
     case 0:

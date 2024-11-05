@@ -395,6 +395,7 @@ bool Meap::sgtlInit()
   SGwrite(CHIP_SSS_CTRL, 0x0010);    // ADC->I2S, I2S->DAC
   SGwrite(CHIP_ADCDAC_CTRL, 0x0000); // disable dac mute
   SGwrite(CHIP_DAC_VOL, 0x3C3C);     // digital gain, 0dB
+  SGwrite(CHIP_ANA_ADC_CTRL, 0xFF);  // adc input gain
 
   // SGwrite(CHIP_ANA_HP_CTRL, 0x0000); // set output volume to +12dB
   SGwrite(CHIP_ANA_HP_CTRL, 0x1818); // set output volume to 0dB

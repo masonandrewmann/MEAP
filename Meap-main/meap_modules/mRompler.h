@@ -17,6 +17,11 @@ public:
     mRompler() {
     };
 
+    // mRompler(const T **sample_list, uint64_t *sample_lengths)
+    // {
+    //     init(sample_list, sample_lengths);
+    // };
+
     void init(const T **sample_list, uint64_t *sample_lengths)
     {
         sample_list_ = sample_list;
