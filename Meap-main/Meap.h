@@ -157,6 +157,8 @@
 
 #include <meap_modules/mRandomDistribution.h>
 
+#include <meap_modules/mEventDelayMicros.h>
+
 // meap effects
 
 #ifndef MEAP_LEGACY
