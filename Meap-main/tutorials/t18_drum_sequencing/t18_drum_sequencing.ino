@@ -1,5 +1,11 @@
 /*
-  Basic template for working with a stock MEAP board.
+  32-step drum pattern with 8 drums
+
+  pot 0 controls tempo
+
+  pot 1 controls randomness; random steps will be played
+
+  dip switches bring in/out each drum; up is enabled, down is disabled
  */
 
 #define CONTROL_RATE 128  // Hz, powers of 2 are most reliable
@@ -20,21 +26,21 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out por
 
 
 #define NUM_DRUMS 8
-mSample<16715, AUDIO_RATE> drum_bank[NUM_DRUMS];  //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
-int sample_gains[NUM_DRUMS] = { 150, 127, 80, 60, 80, 127, 240, 127 };  // manually setting volume of each drum ~8-bit maximum
+mSample<16715, AUDIO_RATE> drum_bank[NUM_DRUMS];                      //maybe change the MAX_SAMPLE_LENGTH? calc how it corresponds to seconds etc
+int drum_gains[NUM_DRUMS] = { 150, 127, 80, 60, 80, 127, 240, 127 };  // manually setting volume of each drum ~8-bit maximum
+bool drum_enable[NUM_DRUMS] = { true, true, true, true, true, true, true, true };
 float default_freq;
-
 
 #define PATTERN_LENGTH 32
 int sample_pattern[NUM_DRUMS][PATTERN_LENGTH] = {
-  { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1 }, // kick
-  { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 }, // snare
-  { 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // hi-hat closed
-  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // hi-hat open
-  { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0 }, // shaker
-  { 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0 }, // clave
-  { 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // snare 2
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, // snare 3
+  { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1 },  // kick
+  { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 },  // snare
+  { 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // hi-hat closed
+  { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // hi-hat open
+  { 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0 },  // shaker
+  { 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0 },  // clave
+  { 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // snare 2
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // snare 3
 };
 int pattern_index = 0;
 
@@ -76,10 +82,10 @@ void setup() {
   drum_bank[7].setTable(snare3_DATA);
   drum_bank[7].setEnd(snare3_NUM_CELLS);
 
-  int drum_glitch_pitches = true; 
-  // while writing this patch I made a mistake initializing the pitch of my drums 
+  int drum_glitch_pitches = true;
+  // while writing this patch I made a mistake initializing the pitch of my drums
   // but I thought it sounded nice so I left it in
-  // if you want to play your drums at the pitch they were recorded at, look at the "else" block below
+  // if you want to play your drums at the pitch they were recorded at, set drum_glitch_pitches to false and look at the "else" block below 
   if (drum_glitch_pitches) {
     drum_bank[0].setFreq(((float)kick_SAMPLERATE / (float)kick_NUM_CELLS) / 6);
     drum_bank[1].setFreq(((float)snare1_SAMPLERATE / (float)snare1_NUM_CELLS) / 4);
@@ -109,8 +115,9 @@ void updateControl() {
   // ---------- YOUR updateControl CODE BELOW ----------
 
   if (metro.ready()) {
+    metro_period = map(meap.pot_vals[0], 0, 4095, 300, 50); // pot 0 controls tempo
     metro.start(metro_period);
-    int curr_step = pattern_index;                 // what step to we play next?
+    int curr_step = pattern_index;  // what step to we play next?
 
     if (meap.irand(0, 4095) < meap.pot_vals[1]) {  // if entropy event occurs, we play a random step instead
       curr_step = meap.irand(0, 31);
@@ -118,7 +125,9 @@ void updateControl() {
 
     for (int i = 0; i < NUM_DRUMS; i++) {  // check which drums play on current step and trigger them
       if (sample_pattern[i][curr_step] == 1) {
-        drum_bank[i].start();
+        if (drum_enable[i]) {
+          drum_bank[i].start();
+        }
       }
     }
 
@@ -131,7 +140,7 @@ void updateControl() {
 AudioOutput_t updateAudio() {
   int64_t out_sample = 0;
   for (int i = 0; i < NUM_DRUMS; i++) {
-    out_sample += drum_bank[i].next() * sample_gains[i];
+    out_sample += drum_bank[i].next() * drum_gains[i];
   }
   return StereoOutput::fromNBit(17, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
@@ -152,4 +161,9 @@ void updateTouch(int number, bool pressed) {
    * bool up: true indicated switch was toggled up, false indicates switch was toggled
    */
 void updateDip(int number, bool up) {
+  if (up) {
+    drum_enable[number] = true;
+  } else {
+    drum_enable[number] = false;
+  }
 }
