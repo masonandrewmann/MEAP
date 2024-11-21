@@ -42,7 +42,7 @@ public:
       maxDelay must be greater than zero
       delay must be greater than or equal to zero and less than maxDelay
      */
-    MEAP_Delay_Allpass(float delay = 0.5, int max_delay = 4095)
+    MEAP_Delay_Allpass(float delay = 1, int max_delay = 4095)
     {
         max_delay_samples_ = max_delay;
         write_pos_ = 0;
@@ -207,8 +207,8 @@ protected:
     float alpha_;
     float coeff_;
 
-    T last_output_;
-    T ap_input_;
+    float last_output_;
+    float ap_input_;
 };
 
 #endif // MEAP_DELAY_ALLPASS_H

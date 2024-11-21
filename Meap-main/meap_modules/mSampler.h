@@ -49,6 +49,16 @@ public:
         adsr_.noteOn();
     }
 
+    void setReverseOn()
+    {
+        sample_.setReverseOn();
+    }
+
+    void setReverseOff()
+    {
+        sample_.setReverseOff();
+    }
+
     //! Stop a note with the given amplitude (speed of decay).
     void noteOff(uint8_t amplitude)
     {

@@ -61,7 +61,9 @@ public:
     mSample(const T *TABLE_NAME) : table(TABLE_NAME), endpos_fractional((uint64_t)NUM_TABLE_CELLS << SAMPLE_F_BITS) // so isPlaying() will work
     {
         setLoopingOff();
+        setReverseOff();
         phase_fractional = endpos_fractional;
+        startpos_fractional = 0;
         // rangeWholeSample();
     }
 
@@ -72,7 +74,9 @@ public:
     mSample() : endpos_fractional((uint64_t)NUM_TABLE_CELLS << SAMPLE_F_BITS)
     {
         setLoopingOff();
+        setReverseOff();
         phase_fractional = endpos_fractional;
+        startpos_fractional = 0;
         // rangeWholeSample();
     }
 
@@ -96,14 +100,28 @@ public:
      */
     inline void start()
     {
-        phase_fractional = startpos_fractional;
+        if (forwards)
+        {
+            phase_fractional = startpos_fractional;
+        }
+        else
+        {
+            phase_fractional = endpos_fractional;
+        }
     }
 
     /** Stops the sample by jumping to the end (won't stop samples that are looping)
      */
     inline void stop()
     {
-        phase_fractional = endpos_fractional;
+        if (forwards)
+        {
+            phase_fractional = endpos_fractional;
+        }
+        else
+        {
+            phase_fractional = startpos_fractional;
+        }
     }
 
     /** Sets a new start position plays the sample from that position.
@@ -155,12 +173,24 @@ public:
     inline T next()
     { // 4us
 
-        if (phase_fractional > endpos_fractional)
+        if ((phase_fractional >= endpos_fractional) && forwards)
         {
             if (looping)
             {
                 // phase_fractional = startpos_fractional + (phase_fractional - endpos_fractional);
                 phase_fractional = startpos_fractional;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else if ((phase_fractional <= startpos_fractional) && !forwards)
+        {
+            if (looping)
+            {
+                // phase_fractional = startpos_fractional + (phase_fractional - endpos_fractional);
+                phase_fractional = endpos_fractional;
             }
             else
             {
@@ -290,6 +320,16 @@ public:
         phase_increment_fractional = phaseinc_fractional;
     }
 
+    inline void setReverseOn()
+    {
+        forwards = false;
+    }
+
+    inline void setReverseOff()
+    {
+        forwards = true;
+    }
+
 private:
     /** Used for shift arithmetic in setFreq() and its variations.
      */
@@ -299,14 +339,22 @@ private:
      */
     inline void incrementPhase()
     {
-        phase_fractional += phase_increment_fractional;
+        if (forwards)
+        {
+            phase_fractional += phase_increment_fractional;
+        }
+        else
+        {
+            phase_fractional -= phase_increment_fractional;
+        }
     }
 
-    volatile uint64_t phase_fractional;
-    volatile uint64_t phase_increment_fractional;
+    volatile int64_t phase_fractional;
+    volatile int64_t phase_increment_fractional;
     const T *table;
     bool looping;
-    uint64_t startpos_fractional, endpos_fractional;
+    bool forwards;
+    int64_t startpos_fractional, endpos_fractional;
 };
 
 /**

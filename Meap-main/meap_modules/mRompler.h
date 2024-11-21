@@ -61,6 +61,11 @@ public:
         release_time_ = rt;
     }
 
+    void setEnd(int16_t program_num, uint64_t end_val)
+    {
+        sample_lengths_[program_num] = end_val;
+    }
+
     void setADSR(uint32_t at, uint32_t dt, uint32_t sl, uint32_t rt)
     {
         attack_time_ = at;
@@ -82,6 +87,22 @@ public:
         for (uint8_t j = 0; j < mPOLYPHONY; j++)
         {
             sample_bank_[j].setLoopingOff();
+        }
+    }
+
+    void setReverseOn()
+    {
+        for (uint8_t j = 0; j < mPOLYPHONY; j++)
+        {
+            sample_bank_[j].setReverseOn();
+        }
+    }
+
+    void setReverseOff()
+    {
+        for (uint8_t j = 0; j < mPOLYPHONY; j++)
+        {
+            sample_bank_[j].setReverseOff();
         }
     }
 

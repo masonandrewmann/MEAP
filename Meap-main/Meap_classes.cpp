@@ -397,9 +397,12 @@ bool Meap::sgtlInit()
   SGwrite(CHIP_DAC_VOL, 0x3C3C);     // digital gain, 0dB
   SGwrite(CHIP_ANA_ADC_CTRL, 0xFF);  // adc input gain
 
+  SGwrite(CHIP_MIC_CTRL, 0x141); // +20dB gain, 2.25v bias, 2kOhm pullup
+
   // SGwrite(CHIP_ANA_HP_CTRL, 0x0000); // set output volume to +12dB
   SGwrite(CHIP_ANA_HP_CTRL, 0x1818); // set output volume to 0dB
-  SGwrite(CHIP_ANA_CTRL, 0x0026);    // enable zero cross detectors -- was 36 but i think that mutes headphones??
+  SGwrite(CHIP_ANA_CTRL, 0x0026);    // enable zero cross detectors / line input
+  // SGwrite(CHIP_ANA_CTRL, 0x0022); // enable zero cross detectors / mic input
 
   return true;
 }
@@ -408,6 +411,16 @@ void Meap::setCodecGain(uint16_t volume)
 {
   uint16_t register_volume = (volume << 8) + volume;
   SGwrite(CHIP_DAC_VOL, register_volume); // digital gain, 0dB
+}
+
+void Meap::setCodecInputMic()
+{
+  SGwrite(CHIP_ANA_CTRL, 0x0022); // enable zero cross detectors / mic input
+}
+
+void Meap::setCodecInputLine()
+{
+  SGwrite(CHIP_ANA_CTRL, 0x0026); // enable zero cross detectors / mic input
 }
 
 void Meap::codecInit()

@@ -32,6 +32,7 @@ bool drum_enable[NUM_DRUMS] = { true, true, true, true, true, true, true, true }
 float default_freq;
 
 #define PATTERN_LENGTH 32
+
 int sample_pattern[NUM_DRUMS][PATTERN_LENGTH] = {
   { 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1 },  // kick
   { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 },  // snare
@@ -42,6 +43,7 @@ int sample_pattern[NUM_DRUMS][PATTERN_LENGTH] = {
   { 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // snare 2
   { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },  // snare 3
 };
+
 int pattern_index = 0;
 
 EventDelay metro;
@@ -133,15 +135,20 @@ void updateControl() {
 
     pattern_index = (pattern_index + 1) % 32;  // move to next step and cycle to beginning if at end
   }
+
+
 }
 
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
   int64_t out_sample = 0;
+
   for (int i = 0; i < NUM_DRUMS; i++) {
     out_sample += drum_bank[i].next() * drum_gains[i];
   }
+
+
   return StereoOutput::fromNBit(17, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 

@@ -109,6 +109,9 @@ public:
    */
   void readInputs();
 
+  void setAuxMuxAnalog();
+  void setAuxMuxDigital();
+
   /**
    * @brief A stereo equal power panner
    *
@@ -148,6 +151,9 @@ public:
    * @param gain between 60 and 252, 60 being maximum gain
    */
   static void setCodecGain(uint16_t gain);
+
+  static void setCodecInputMic();
+  static void setCodecInputLine();
 
   /**
    * @brief Sets channel (0-7) on multiplexer A, B, C control pins
