@@ -323,13 +323,13 @@ public:
     inline void setReverseOn()
     {
         forwards = false;
-        phase_fractional = endpos_fractional;
+        phase_fractional = startpos_fractional;
     }
 
     inline void setReverseOff()
     {
         forwards = true;
-        phase_fractional = startpos_fractional;
+        phase_fractional = endpos_fractional;
     }
 
 private:
