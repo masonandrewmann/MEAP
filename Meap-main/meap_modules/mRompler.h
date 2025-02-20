@@ -216,6 +216,22 @@ public:
         curr_program_ = p;
     }
 
+    void setStart(uint64_t start)
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            sample_bank_[i].setStart(start);
+        }
+    }
+
+    void setEnd(uint64_t end)
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            sample_bank_[i].setEnd(end);
+        }
+    }
+
     int32_t next()
     {
         uint32_t output_sample = 0;

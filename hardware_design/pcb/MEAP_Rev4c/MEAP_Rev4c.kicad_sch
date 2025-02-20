@@ -11920,7 +11920,7 @@
 	)
 	(text "AUDIO CODEC"
 		(exclude_from_sim no)
-		(at 221.488 69.85 0)
+		(at 221.234 65.024 0)
 		(effects
 			(font
 				(size 3 3)
@@ -15307,7 +15307,6 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "09ec4236-7f41-4ea0-abc0-2b09c3c5938c")
 		(property "Reference" "U10"
 			(at 266.7 27.94 0)
@@ -15318,7 +15317,7 @@
 			)
 		)
 		(property "Value" "TLV75733PDRV"
-			(at 266.7 30.48 0)
+			(at 267.716 30.988 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15956,7 +15955,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "LED_THT:LED_D3.0mm_Clear"
+		(property "Footprint" "Inductor_SMD:L_0805_2012Metric_Pad1.05x1.20mm_HandSolder"
 			(at 39.37 59.69 0)
 			(effects
 				(font
@@ -28861,17 +28860,16 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "fb1b9ee6-6f49-44a7-a614-a7823e14f6bb")
 		(property "Reference" "U7"
-			(at 237.49 69.85 0)
+			(at 237.49 69.088 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Value" "~"
+		(property "Value" "AP7313-18A-7"
 			(at 237.49 71.12 0)
 			(effects
 				(font

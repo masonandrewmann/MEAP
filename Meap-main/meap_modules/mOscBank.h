@@ -3,12 +3,14 @@
 
 #include <dependencies/LinkedList/LinkedList.h>
 
-template <uint32_t mNUM_CELLS, uint32_t mAUDIO_RATE, uint16_t mCONTROL_RATE, uint8_t mPOLYPHONY>
+template <uint32_t mNUM_CELLS, uint32_t mAUDIO_RATE, uint16_t mCONTROL_RATE, uint8_t mPOLYPHONY, class T = int8_t>
 class mOscBank
 {
 public:
-    mOscBank(const int8_t *TABLE_NAME, uint8_t *base_address = NULL)
+    mOscBank(const T *TABLE_NAME, uint8_t *base_address = NULL)
     {
+        pitch_mul_ = 1.0;
+
         a_ = 1;
         d_ = 100;
         s_ = 4294967295;
@@ -29,7 +31,7 @@ public:
             osc_[i].setTable(table_);
             osc_detune_[i].setTable(table_);
             freq_[i] = 220.0;
-            osc_[i].setFreq(freq_[i]);
+            osc_[i].setFreq(freq_[i] * pitch_mul_);
             adsr_[i].setTimes(a_, d_, s_, r_);
             adsr_[i].setADLevels(a_l_, d_l_);
             gain_[i] = 0;
@@ -45,6 +47,15 @@ public:
         time_ = 0;
 
         pulse_counter_ = 0;
+
+        if (sizeof(T) == sizeof(int16_t))
+        {
+            shift_val_ = 8;
+        }
+        else
+        {
+            shift_val_ = 0; // just 7 bits down for velocity
+        }
     };
 
     void setTimes(uint64_t a, uint64_t d, uint64_t s, uint64_t r)
@@ -93,9 +104,19 @@ public:
         detune_amount_ = detune_amount;
     }
 
-    void setTable(const int8_t table)
+    void setTable(const T *TABLE_NAME)
     {
-        table_ = table;
+        table_ = TABLE_NAME;
+    }
+
+    void setPitchMul(float mul)
+    {
+        pitch_mul_ = mul;
+
+        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        {
+            osc_[i].setFreq(freq_[i] * pitch_mul_);
+        }
     }
 
     void begin()
@@ -163,7 +184,14 @@ public:
         }
         else
         {
-            return; // no free voices, move along...
+            // steal a voice
+            uint8_t voice_num = pressed_queue_.get(0)->voice_num; // voice num of note to turn off
+            adsr_[voice_num].noteOff();                           // turn note off
+            free_queue_.add(voice_num);                           // re-add voice to free queue
+            delete (pressed_queue_.get(0));                       // delete voice from pressed queue
+            pressed_queue_.remove(0);                             // remove freed voice from pressed queue
+
+            curr_voice = free_queue_.shift(); // remove head element
         }
 
         // store note in pressed notes queue
@@ -173,6 +201,9 @@ public:
         pressed_queue_.add(my_note);
 
         // update parameters?
+
+        osc_[curr_voice].setPhase(0);
+        osc_detune_[curr_voice].setPhase(0);
         osc_[curr_voice].setTable(table_);
         osc_detune_[curr_voice].setTable(table_);
         // osc_[curr_voice].setFrame(frame_num_);
@@ -180,7 +211,7 @@ public:
 
         // start the note
         freq_[curr_voice] = mtof(note_num);
-        osc_[curr_voice].setFreq(freq_[curr_voice]);
+        osc_[curr_voice].setFreq(freq_[curr_voice] * pitch_mul_);
         adsr_[curr_voice].noteOn();
     }
 
@@ -205,10 +236,10 @@ public:
         }
     }
 
-    void setTable(const int16_t *TABLE_NAME)
-    {
-        table_ = TABLE_NAME;
-    }
+    // void setTable(const int16_t *TABLE_NAME)
+    // {
+    //     table_ = TABLE_NAME;
+    // }
 
     void flush()
     {
@@ -239,13 +270,13 @@ public:
         for (int8_t i = 0; i < mPOLYPHONY; i++)
         {
             adsr_[i].update();
-            detune_freq_[i] = freq_[i] * detune_amount_;
+            detune_freq_[i] = freq_[i] * detune_amount_ * pitch_mul_;
         }
     }
 
     int32_t next()
     {
-        int32_t output_sample = 0;
+        int64_t output_sample = 0;
 
         for (uint8_t i = 0; i < mPOLYPHONY; i++)
         {
@@ -264,12 +295,12 @@ public:
             // }
         }
 
-        return output_sample;
+        return output_sample >> shift_val_;
     }
 
 protected:
-    Oscil<mNUM_CELLS, mAUDIO_RATE> osc_[mPOLYPHONY];
-    Oscil<mNUM_CELLS, mAUDIO_RATE> osc_detune_[mPOLYPHONY];
+    mOscil<mNUM_CELLS, mAUDIO_RATE, T> osc_[mPOLYPHONY];
+    mOscil<mNUM_CELLS, mAUDIO_RATE, T> osc_detune_[mPOLYPHONY];
 
     float detune_amount_;
     bool detune_enable_;
@@ -285,7 +316,7 @@ protected:
     int8_t transpose_;
 
     // uint16_t frame_num_;
-    const int8_t *table_;
+    const T *table_;
 
     // voice queue
     LinkedList<int16_t> free_queue_;
@@ -303,6 +334,10 @@ protected:
     uint8_t data1_;
     uint8_t data2_;
     uint16_t time_;
+
+    uint8_t shift_val_;
+
+    float pitch_mul_;
 };
 
 #endif // MEAP_OSCBANK_H

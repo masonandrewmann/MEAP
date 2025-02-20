@@ -90,6 +90,9 @@ void Meap::begin()
 #ifndef MEAP_LEGACY
   codecInit();
 #endif
+
+  randomSeed(10); // initializes random number generator
+  xorshiftSeed((long)random(1000));
 }
 
 long Meap::irand(long howsmall, long howbig)
@@ -397,7 +400,7 @@ bool Meap::sgtlInit()
   SGwrite(CHIP_DAC_VOL, 0x3C3C);     // digital gain, 0dB
   SGwrite(CHIP_ANA_ADC_CTRL, 0xFF);  // adc input gain
 
-  SGwrite(CHIP_MIC_CTRL, 0x141); // +20dB gain, 2.25v bias, 2kOhm pullup
+  SGwrite(CHIP_MIC_CTRL, 0x142); // +40dB gain, 2.25v bias, 2kOhm pullup
 
   // SGwrite(CHIP_ANA_HP_CTRL, 0x0000); // set output volume to +12dB
   SGwrite(CHIP_ANA_HP_CTRL, 0x1818); // set output volume to 0dB
@@ -411,6 +414,11 @@ void Meap::setCodecGain(uint16_t volume)
 {
   uint16_t register_volume = (volume << 8) + volume;
   SGwrite(CHIP_DAC_VOL, register_volume); // digital gain, 0dB
+}
+
+void Meap::setCodecMicGain(int gain)
+{
+  SGwrite(CHIP_MIC_CTRL, gain);
 }
 
 void Meap::setCodecInputMic()

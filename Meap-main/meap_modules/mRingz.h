@@ -1,12 +1,10 @@
-#ifndef MRESONZ_H_
-#define MRESONZ_H_
+#ifndef MRINGZ_H_
+#define MRINGZ_H_
 
-#include <Meap_classes.h>
-
-class mResonz
+class mRingz
 {
 public:
-    mResonz()
+    mRingz()
     {
         init();
     };
@@ -17,21 +15,17 @@ public:
         m_b2 = 0.f;
         m_y1 = 0;
         m_y2 = 0;
-        m_x1 = 0;
-        m_x2 = 0;
         m_freq = 1000;
-        // m_decay_time = 0.f;
-        m_rq = 0;
+        m_decay_time = 0.f;
 
         radians_per_sample = 6.28318530717958 / AUDIO_RATE;
     }
 
-    // center freq and rq = bandwidth / centerFreq (reciprocal of Q)
-    void updateParameters(float freq, float rq)
+    // center frequency and decay time (RT60) in seconds
+    void updateParameters(float freq, float decay_time)
     {
-        float ffreq = freq * radians_per_sample; // 2pi/AUDIORATE
-        float B = ffreq * rq;
-        float R = 1.f - B * 0.5f;
+        float ffreq = freq * radians_per_sample;                                                  // 2pi/AUDIORATE
+        float R = decay_time == 0.f ? 0.f : exp(-6.907755278982137f / (decay_time * AUDIO_RATE)); // .... log001 = ln(0.001)
         float twoR = 2.f * R;
         float R2 = R * R;
         float cost = (twoR * cos(ffreq)) / (1.f + R2);
@@ -39,21 +33,17 @@ public:
         m_b2 = -R2;
 
         m_freq = freq;
-        m_rq = rq;
+        m_decay_time = decay_time;
     }
 
     int32_t next(int32_t in_sample)
     {
         int32_t out_sample;
 
-        // maybe update parameters her
-        out_sample = in_sample - m_x2 + m_b1 * m_y1 + m_b2 * m_y2;
+        out_sample = in_sample + m_b1 * m_y1 + m_b2 * m_y2;
 
         m_y2 = m_y1;
         m_y1 = out_sample;
-
-        m_x2 = m_x1;
-        m_x1 = in_sample;
 
         return out_sample;
     }
@@ -61,13 +51,9 @@ public:
 protected:
     float m_freq;
     float m_decay_time;
-    float m_rq;
 
     int32_t m_y1;
     int32_t m_y2;
-
-    int32_t m_x1;
-    int32_t m_x2;
 
     float m_b1;
     float m_b2;
@@ -75,4 +61,4 @@ protected:
     float radians_per_sample;
 };
 
-#endif // MRESONZ_H_
+#endif // MRINGZ_H_

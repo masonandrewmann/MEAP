@@ -26,7 +26,7 @@ public:
     //! Return the last computed output value.
     int16_t lastOut(void) const { return last_output_; };
 
-    //! Compute and return one 8-bit signed (-128 to 127) output sample.
+    //! Compute and return one 16-bit signed (-32768 to 32767) output sample.
     int16_t next(void)
     {
         last_output_ = xorshift96() % 65535 - 32768;

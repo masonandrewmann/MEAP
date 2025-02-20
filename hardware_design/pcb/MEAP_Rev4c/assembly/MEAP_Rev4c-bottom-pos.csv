@@ -1,0 +1,12 @@
+Ref,Val,Package,PosX,PosY,Rot,Side
+"R3","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",52.290000,-40.170000,0.000000,bottom
+"R5","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",54.602498,-46.539999,0.000000,bottom
+"R6","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",54.597502,-52.940001,0.000000,bottom
+"R7","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",54.597502,-59.350001,0.000000,bottom
+"R10","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",46.557906,-45.337468,70.000000,bottom
+"R11","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",44.280985,-58.316544,-140.000000,bottom
+"R12","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",43.771364,-52.338454,-170.000000,bottom
+"R13","100k","R_0603_1608Metric_Pad0.98x0.95mm_HandSolder",43.692499,-50.500000,180.000000,bottom
+"U1","~","SOIC-14_3.9x8.7mm_P1.27mm",50.105003,-81.050000,0.000000,bottom
+"U4","4051","SOIC-16_3.9x9.9mm_P1.27mm",45.695000,-34.960000,-90.000000,bottom
+"U11","4051","SOIC-16_3.9x9.9mm_P1.27mm",46.525479,-92.161993,130.000000,bottom

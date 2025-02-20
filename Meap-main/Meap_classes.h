@@ -156,6 +156,13 @@ public:
   static void setCodecInputLine();
 
   /**
+   * @brief Sets gain (0-3) of codec microphoen input
+   *
+   * @param gain 0-3 corresponding to 0dB, +20dB, +30dB, +40dB
+   */
+  static void setCodecMicGain(int gain);
+
+  /**
    * @brief Sets channel (0-7) on multiplexer A, B, C control pins
    *
    * @param tempo in BPM

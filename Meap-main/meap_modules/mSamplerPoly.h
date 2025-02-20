@@ -33,6 +33,8 @@ public:
         data2_ = 0;
         time_ = 0;
 
+        transpose = 0;
+
         pulse_counter_ = 0;
 
         default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
@@ -82,6 +84,11 @@ public:
         }
     }
 
+    void setTranspose(int transpose_)
+    {
+        transpose = transpose_;
+    }
+
     void updateMidi()
     {
         if (playing_)
@@ -92,12 +99,12 @@ public:
                 switch (message_type_) // notes are indexed from 0 on sample_bank starting from C-1 (0)
                 {
                 case 0x80: // note off
-                    noteOff(data1_);
+                    noteOff(data1_ + transpose);
                     break;
                 case 0x90: // note on
                     if (data1_ != 127)
                     {
-                        noteOn(data1_, data2_);
+                        noteOn(data1_ + transpose, data2_);
                     }
                     break;
                 case 255: // end of file
@@ -128,7 +135,7 @@ public:
         if (free_voices_.size() > 0)
         {
             curr_voice_ = free_voices_.shift(); // remove head element and return it!
-            Serial.println(curr_voice_);
+            // Serial.println(curr_voice_);
         }
         else
         {
@@ -198,6 +205,8 @@ protected:
 
     uint16_t curr_voice_;
     int8_t shift_val_;
+
+    int transpose;
 
     float default_freq_;
     float m_freq_table[128];

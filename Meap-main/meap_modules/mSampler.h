@@ -112,6 +112,16 @@ public:
         adsr_.setADLevels(a_l_, d_l_);
     }
 
+    void setStart(uint64_t start)
+    {
+        sample_.setStart(start);
+    }
+
+    void setEnd(uint64_t end)
+    {
+        sample_.setEnd(end);
+    }
+
     void update()
     {
         adsr_.update();

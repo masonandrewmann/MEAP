@@ -161,6 +161,16 @@
 
 // meap effects
 
+#include <meap_modules/mRingz.h>
+#include <meap_modules/mResonz.h>
+
+#include <meap_modules/mDust.h>
+#include <meap_modules/mAnalogDelay.h>
+
+// MEAP DSP
+#include <meap_modules/building_blocks/mNaturalCombLinear.h>
+#include <meap_modules/building_blocks/mSchroederAllpass.h>
+
 #ifndef MEAP_LEGACY
 #include <meap_modules/mChopper.h>
 
