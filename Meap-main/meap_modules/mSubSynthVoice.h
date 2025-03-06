@@ -1,26 +1,24 @@
 #ifndef MSUBSYNTH_H_
 #define MSUBSYNTH_H_
 
-#include <tables/saw2048_int8.h> // table for Oscils to play
+#include <Meap.h>
 
-template <uint32_t mNUM_CELLS = SAW2048_NUM_CELLS, uint32_t mNUM_OSC = 1, class T = int8_t>
+template <uint32_t mNUM_CELLS, uint32_t mNUM_OSC = 1, class T = int8_t>
 class mSubSynthVoice
 {
 public:
+    mSubSynthVoice() {
+    };
+
     mSubSynthVoice(const T *TABLE_NAME)
     {
         init(TABLE_NAME);
     };
 
-    mSubSynthVoice()
-    {
-        init(SAW2048_DATA);
-    };
-
     void init(const T *TABLE_NAME)
     {
-        cutoff_ = 255;
-        resonance_ = 0;
+        cutoff_ = 64000;
+        resonance_ = 10;
 
         for (uint16_t i = 0; i < mNUM_OSC; i++)
         {
@@ -30,6 +28,7 @@ public:
             osc_semitones_[i] = 0;
         }
 
+        setNoiseGain(0);
         noise_gain_ = 0;
 
         amp_env_.setADLevels(255, 255);
@@ -38,8 +37,8 @@ public:
         filter_sustain_level_ = 255;
         filter_env_.setADLevels(filter_env_amount_, (filter_env_amount_ * filter_sustain_level_) >> 8);
         filter_env_.setTimes(1, 1, 4294967295, 1);
-        filter_.setCutoffFreq(255);
-        filter_.setResonance(0);
+        filter_.setCutoffFreq(cutoff_);
+        filter_.setResonance(resonance_);
         sustain_level_ = 255;
         filter_key_offset = 0;
 
@@ -53,16 +52,23 @@ public:
         {
             shift_val_ = 8;
             noise_upper_ = 255;
-            noise_sub_ = 128;
+            noise_sub_ = 127;
         }
 
         phase_sync_ = true;
     }
 
     // 0-255
-    void setFilterEnvAmount(uint16_t f_amt)
+    void setFilterEnvAmount(uint32_t f_amt)
     {
         filter_env_amount_ = f_amt;
+        filter_env_.setADLevels(filter_env_amount_, (filter_env_amount_ * filter_sustain_level_) >> 8);
+    }
+
+    // 0-255
+    void setFilterSustainLevel(uint32_t level)
+    {
+        filter_sustain_level_ = level;
         filter_env_.setADLevels(filter_env_amount_, (filter_env_amount_ * filter_sustain_level_) >> 8);
     }
 
@@ -87,18 +93,12 @@ public:
     }
 
     // 0-255
-    void setFilterSustainLevel(uint16_t level)
-    {
-        filter_sustain_level_ = level;
-        filter_env_.setADLevels(filter_env_amount_, (filter_env_amount_ * filter_sustain_level_) >> 8);
-    }
-
-    // 0-255
     void setOscGain(uint16_t osc_num, int16_t gain)
     {
         osc_gain_[osc_num] = gain;
     }
 
+    // 0-255
     void setNoiseGain(uint16_t noise_gain)
     {
         noise_gain_ = noise_gain;
@@ -178,23 +178,6 @@ public:
         resonance_ = resonance_val;
     }
 
-    // to be called in control loop
-    void update()
-    {
-        filter_env_.update();
-        int32_t cutoff_val = filter_env_.next() + cutoff_ + filter_key_offset;
-        if (cutoff_val > 255)
-        {
-            cutoff_val = 255;
-        }
-        else if (cutoff_val < 0)
-        {
-            cutoff_val = 0;
-        }
-        filter_.setCutoffFreqAndResonance(cutoff_val, resonance_);
-        amp_env_.update();
-    }
-
     void noteOn(uint16_t note, uint16_t vel)
     {
         for (uint16_t i = 0; i < mNUM_OSC; i++)
@@ -220,10 +203,30 @@ public:
         filter_env_.noteOff();
     }
 
+    // to be called in control loop
+    void update()
+    {
+        filter_env_.update();
+
+        // int32_t cutoff_val = cutoff_ + (filter_env_.next() << 8) + filter_key_offset; // 16bit  + offf,
+        int32_t cutoff_val = cutoff_ + (filter_env_.next() << 8); // 16bit  + offf,
+
+        if (cutoff_val > 64000)
+        {
+            cutoff_val = 64000;
+        }
+        else if (cutoff_val < 0)
+        {
+            cutoff_val = 0;
+        }
+        filter_.setCutoffFreqAndResonance(cutoff_val, resonance_);
+        amp_env_.update();
+    }
+
     // to be called in audio loop
     int32_t next()
     {
-        int32_t output_sample = 0;
+        int64_t output_sample = 0;
 
         for (uint16_t i = 0; i < mNUM_OSC; i++)
         {
@@ -231,7 +234,8 @@ public:
             output_sample += (osc_[i].next() * osc_gain_[i]);
         }
 
-        output_sample += ((xorshift96() % noise_upper_) - noise_sub_) * noise_gain_; // noise sample with same bitrate as osc
+        output_sample += Meap::irand(-32768, 32767) * noise_gain_; // noise sample with same bitrate as osc
+        // output_sample += (xorshift96() % noise_upper_) - noise_sub_;
 
         filter_.next(output_sample);
         output_sample = filter_.low();
@@ -242,9 +246,9 @@ public:
     }
 
 protected:
-    Oscil<mNUM_CELLS, AUDIO_RATE> osc_[mNUM_OSC];
+    mOscil<mNUM_CELLS, AUDIO_RATE, T, mINTERP_LINEAR> osc_[mNUM_OSC];
     ADSR<CONTROL_RATE, AUDIO_RATE> amp_env_;
-    MultiResonantFilter<uint8_t> filter_;
+    MultiResonantFilter<uint16_t> filter_;
     ADSR<CONTROL_RATE, CONTROL_RATE> filter_env_;
 
     int8_t filter_key_offset;

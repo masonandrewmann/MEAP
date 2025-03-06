@@ -53,7 +53,7 @@ The usage is:
 char2mozzi.py infilename outfilename tablename samplerate
 */
 // template <uint16_t NUM_TABLE_CELLS, uint16_t UPDATE_RATE, bool DITHER_PHASE=false>
-template <uint16_t NUM_TABLE_CELLS, uint32_t UPDATE_RATE, class T = int8_t>
+template <uint16_t NUM_TABLE_CELLS, uint32_t UPDATE_RATE, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
 class mOscil
 {
 
@@ -65,6 +65,7 @@ public:
     folder.*/
     mOscil(const T *TABLE_NAME) : table(TABLE_NAME)
     {
+        cells_1 = NUM_TABLE_CELLS - 1;
     }
 
     /** Constructor.
@@ -75,6 +76,7 @@ public:
     */
     mOscil()
     {
+        cells_1 = NUM_TABLE_CELLS - 1;
     }
 
     /** Updates the phase according to the current frequency and returns the sample at the new phase position.
@@ -324,17 +326,32 @@ private:
      */
     inline T readTable()
     {
-#ifdef OSCIL_DITHER_PHASE
-        return FLASH_OR_RAM_READ<const T>(table + (((phase_fractional + ((int)(xorshift96() >> 16))) >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
-#else
-        return FLASH_OR_RAM_READ<const T>(table + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
-        // return FLASH_OR_RAM_READ<int8_t>(table + (((phase_fractional >> OSCIL_F_BITS) | 1 ) & (NUM_TABLE_CELLS - 1))); odd phase, attempt to reduce frequency spurs in output
-#endif
+        // #ifdef OSCIL_DITHER_PHASE
+        //         return FLASH_OR_RAM_READ<const T>(table + (((phase_fractional + ((int)(xorshift96() >> 16))) >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+        // #else
+        //         return FLASH_OR_RAM_READ<const T>(table + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+        //         // return FLASH_OR_RAM_READ<int8_t>(table + (((phase_fractional >> OSCIL_F_BITS) | 1 ) & (NUM_TABLE_CELLS - 1))); odd phase, attempt to reduce frequency spurs in output
+        // #endif
+
+        if (INTERP == mINTERP_LINEAR)
+        {
+            // WARNNG this is hard coded for when SAMPLE_F_BITS is 16
+            uint64_t index = (phase_fractional >> OSCIL_F_BITS) & (cells_1);
+            uint64_t next_index = (index + 1) & (cells_1);
+            int64_t out = FLASH_OR_RAM_READ<const T>(table + index);
+            return (out + (((phase_fractional & 0b1111111111111111) >> 8) * ((FLASH_OR_RAM_READ<const T>(table + next_index) - out)) >> 8));
+        }
+        else
+        {
+            return FLASH_OR_RAM_READ<const T>(table + ((phase_fractional >> OSCIL_F_BITS) & (cells_1)));
+            // return FLASH_OR_RAM_READ<const T>(table + ((phase_fractional >> OSCIL_F_BITS) & (NUM_TABLE_CELLS - 1)));
+        }
     }
 
     uint32_t phase_fractional;
     uint32_t phase_increment_fractional;
     const T *table;
+    uint32_t cells_1;
 };
 
 /**

@@ -167,9 +167,23 @@
 #include <meap_modules/mDust.h>
 #include <meap_modules/mAnalogDelay.h>
 
-// MEAP DSP
+// -------------------- MEAP DSP --------------------
+
+// ---- BUILDING BLOCKS ----
+#include <meap_modules/building_blocks/mNaturalComb.h>
 #include <meap_modules/building_blocks/mNaturalCombLinear.h>
 #include <meap_modules/building_blocks/mSchroederAllpass.h>
+#include <meap_modules/building_blocks/mSchroederAllpassLinear.h>
+#include <meap_modules/building_blocks/mOnePoleLPF.h>
+#include <meap_modules/building_blocks/mDelayLine.h>
+
+// ---- EFFECTS ----
+#include <meap_modules/effects/mSchroederReverb.h>
+#include <meap_modules/effects/mDattorroPlate.h>
+
+// ---- GENERATORS ----
+#include <meap_modules/generators/mSineLFO.h>
+#include <meap_modules/generators/mOscilLinear.h>
 
 #ifndef MEAP_LEGACY
 #include <meap_modules/mChopper.h>

@@ -1,8 +1,6 @@
 #ifndef MRESONZ_H_
 #define MRESONZ_H_
 
-#include <Meap_classes.h>
-
 class mResonz
 {
 public:

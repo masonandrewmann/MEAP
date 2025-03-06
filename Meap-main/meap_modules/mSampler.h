@@ -1,7 +1,7 @@
 #ifndef MEAP_SAMPLER_H_
 #define MEAP_SAMPLER_H_
 
-template <uint32_t mSAMPLE_LENGTH, class T = int16_t>
+template <uint32_t mSAMPLE_LENGTH, class T = int16_t, uint8_t INTERP = mINTERP_NONE>
 class mSampler
 {
 public:
@@ -136,7 +136,7 @@ public:
 protected:
     uint16_t velocity_;
     float freq_;
-    mSample<mSAMPLE_LENGTH, AUDIO_RATE, T> sample_;
+    mSample<mSAMPLE_LENGTH, AUDIO_RATE, T, INTERP> sample_;
 
     uint8_t shift_val_;
 

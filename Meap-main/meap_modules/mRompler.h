@@ -10,7 +10,7 @@ struct RomplerNote
     uint16_t program_num;
 };
 
-template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mPOLYPHONY, class T = int8_t>
+template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mPOLYPHONY, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
 class mRompler
 {
 public:
@@ -244,7 +244,7 @@ public:
 
 protected:
     // sampler voices
-    mSampler<mMAX_SAMPLE_LENGTH, T> sample_bank_[mPOLYPHONY];
+    mSampler<mMAX_SAMPLE_LENGTH, T, INTERP> sample_bank_[mPOLYPHONY];
     const T **sample_list_;
     uint64_t *sample_lengths_;
     uint16_t velocity_[mPOLYPHONY];

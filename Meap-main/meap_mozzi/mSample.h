@@ -163,34 +163,14 @@ public:
         looping = false;
     }
 
-    /**
-    Returns the sample at the current phase position, or 0 if looping is off
-    and the phase overshoots the end of the sample. Updates the phase
-    according to the current frequency.
-    @return the next sample value from the table, or 0 if it's finished playing.
-    @todo in next(), incrementPhase() happens in a different position than for Oscil - check if it can be standardised
-    */
     inline T next()
     { // 4us
 
-        if ((phase_fractional >= endpos_fractional) && forwards)
+        if (phase_fractional > endpos_fractional)
         {
             if (looping)
             {
-                // phase_fractional = startpos_fractional + (phase_fractional - endpos_fractional);
-                phase_fractional = startpos_fractional;
-            }
-            else
-            {
-                return 0;
-            }
-        }
-        else if ((phase_fractional <= startpos_fractional) && !forwards)
-        {
-            if (looping)
-            {
-                // phase_fractional = startpos_fractional + (phase_fractional - endpos_fractional);
-                phase_fractional = endpos_fractional;
+                phase_fractional = startpos_fractional + (phase_fractional - endpos_fractional);
             }
             else
             {
@@ -202,17 +182,14 @@ public:
         {
             // WARNNG this is hard coded for when SAMPLE_F_BITS is 16
             uint64_t index = phase_fractional >> SAMPLE_F_BITS;
-
+            uint64_t next_index = (index + 1) % NUM_TABLE_CELLS;
             out = FLASH_OR_RAM_READ<const T>(table + index);
-            T difference = FLASH_OR_RAM_READ<const T>((table + 1) + index) - out;
-            T diff_fraction = (T)(((((uint64_t)phase_fractional) >> 8) * difference) >> 8); // (unsigned int) phase_fractional keeps low word, then>> for only 8 bit precision
-            out += diff_fraction;
+            out = out + (((phase_fractional & 0b1111111111111111) >> 8) * ((FLASH_OR_RAM_READ<const T>(table + next_index) - out)) >> 8);
         }
         else
         {
             out = FLASH_OR_RAM_READ<const T>(table + (phase_fractional >> SAMPLE_F_BITS));
         }
-        // Serial.println(phase_fractional);
         incrementPhase();
         return out;
     }
