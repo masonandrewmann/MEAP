@@ -63,7 +63,7 @@
 #include <PDResonant.h>
 #include <Phasor.h>
 #include <Portamento.h>
-#include <RCPoll.h>
+#include <RCpoll.h>
 #include <ReverbTank.h>
 #include <RollingAverage.h>
 #include <Sample.h>
