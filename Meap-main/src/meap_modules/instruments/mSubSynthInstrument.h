@@ -5,6 +5,8 @@
 #include "mInstrument.h"
 #include "mSubSynthVoice.h"
 
+// Polyphonic subtractive synthesizer
+
 template <uint32_t mNUM_CELLS, uint32_t mNUM_OSC = 1, uint16_t mPOLYPHONY = 4, class T = int8_t>
 class mSubSynthInstrument : public mInstrument<mPOLYPHONY>
 {

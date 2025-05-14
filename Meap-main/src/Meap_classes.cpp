@@ -454,15 +454,31 @@ void Meap::codecInit()
   i2s_new_channel(&chan_cfg, &tx_handle, &rx_handle);
 
   /* Set the configurations for BOTH TWO channels, since TX and RX channel have to be same in full-duplex mode */
+  // i2s_std_config_t std_cfg = {
+  //     .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(MOZZI_AUDIO_RATE * MOZZI_PDM_RESOLUTION), // 32000 sample rate... eek i want 32768 orrr do i want 32768*8
+  //     .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO),
+  //     .gpio_cfg = {
+  //         .mclk = GPIO_NUM_40,
+  //         .bclk = GPIO_NUM_35,
+  //         .ws = GPIO_NUM_39,
+  //         .dout = GPIO_NUM_47,
+  //         .din = GPIO_NUM_48,
+  //         .invert_flags = {
+  //             .mclk_inv = false,
+  //             .bclk_inv = false,
+  //             .ws_inv = false,
+  //         },
+  //     },
+  // };
   i2s_std_config_t std_cfg = {
       .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(MOZZI_AUDIO_RATE * MOZZI_PDM_RESOLUTION), // 32000 sample rate... eek i want 32768 orrr do i want 32768*8
       .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO),
       .gpio_cfg = {
-          .mclk = GPIO_NUM_40,
-          .bclk = GPIO_NUM_35,
-          .ws = GPIO_NUM_39,
-          .dout = GPIO_NUM_47,
-          .din = GPIO_NUM_48,
+          .mclk = (gpio_num_t)MEAP_I2S_MCLK,
+          .bclk = (gpio_num_t)MEAP_I2S_BCLK,
+          .ws = (gpio_num_t)MEAP_I2S_WS,
+          .dout = (gpio_num_t)MEAP_I2S_DOUT,
+          .din = (gpio_num_t)MEAP_I2S_DIN,
           .invert_flags = {
               .mclk_inv = false,
               .bclk_inv = false,

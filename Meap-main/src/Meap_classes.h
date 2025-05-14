@@ -5,28 +5,27 @@
 #ifndef MEAP_CLASSES_H_1
 #define MEAP_CLASSES_H_1
 
-#define MEAP_MUX_CONTROL_PIN_A 38
-#define MEAP_MUX_CONTROL_PIN_B 45
-#define MEAP_MUX_CONTROL_PIN_C 46
-#define MEAP_MUX_DIP_PIN 12
-#define MEAP_MUX_AUX_PIN 11
+#include "hardware_support/meap_config_vals.h"
+// #ifndef MEAP_HARDWARE_VERSION
+// #define MEAP_HARDWARE_VERSION MEAP_V4B
+// #endif
 
-#define MEAP_I2C_SDA_PIN 21
-#define MEAP_I2C_SCL_PIN 14
+// #if MEAP_HARDWARE_VERSION == 1 // version 4B
+// #include "hardware_support/meap_v4b.h"
+// #elif MEAP_HARDWARE_VERSION == 2 // version 4C
+// #include "hardware_support/meap_v4c.h"
+// #endif
+// #include "hardware_support/meap_v4c.h"
 
-#define MEAP_MIDI_IN_PIN 43
-#define MEAP_MIDI_OUT_PIN 44
+// #if defined(MEAPV4B)
+// #include "hardware_support/meap_v4b.h"
+// #elif defined(MEAPV4C)
+// #include "hardware_support/meap_v4c.h"
+// #else
+// #error No valid hardware version defined
+// #endif
 
-#define MEAP_CV1_PIN 41
-#define MEAP_CV2_PIN 42
-
-#define MEAP_LED_0_PIN 36
-#define MEAP_LED_1_PIN 37
-
-#define MEAP_POT_0_PIN 10
-#define MEAP_POT_1_PIN 9
-
-#define MEAP_VOLUME_POT_PIN 17
+#include "hardware_support/meap_v4b.h"
 
 #include <Wire.h>
 #include <hal/adc_hal.h>
@@ -63,6 +62,12 @@ enum AdcModes
 {
   kWAITING,
   kREADY
+};
+
+enum MEAP_VERSIONS
+{
+  mmMEAPV4B,
+  mmMEAPV4C
 };
 
 // GLOBAL VARIABLES SO THEY CAN BE SHARED WITH MOZZI FUNCTIONS

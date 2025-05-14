@@ -5,6 +5,8 @@
 #include "mPopVoice.h"
 #include <dependencies/LinkedList/LinkedList.h>
 
+// polyphonic recreation of fors pop max for live device
+
 template <uint16_t mPOLYPHONY = 4, class T = int32_t>
 class mPopInstrument : public mInstrument<mPOLYPHONY>
 {

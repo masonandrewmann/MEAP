@@ -1,21 +1,21 @@
-#ifndef MSTRING_INSTRUMENT_H_
-#define MSTRING_INSTRUMENT_H_
+#ifndef MSAMPLER_INSTRUMENT_H_
+#define MSAMPLER_INSTRUMENT_H_
 
 #include <dependencies/LinkedList/LinkedList.h>
 #include "mInstrument.h"
-#include <meap_modules/instruments/mString.h>
+#include <meap_modules/clutter/mSampler.h>
 
-// A polyphonic karplus-strong instrument
+// A polyphonic sampler instrument
 
-template <uint16_t mPOLYPHONY = 4, class T = int8_t>
-class mStringInstrument : public mInstrument<mPOLYPHONY>
+template <uint64_t TABLE_SIZE, class T = int8_t, uint16_t mPOLYPHONY = 4, uint8_t INTERP = mINTERP_NONE>
+class mSamplerInstrument : public mInstrument<mPOLYPHONY>
 {
 public:
-    mStringInstrument(float lowest_freq = 50, uint8_t *midi_table_name = NULL) : mInstrument<mPOLYPHONY>(midi_table_name)
+    mSamplerInstrument(const T *TABLE_NAME, uint8_t *midi_table_name = NULL) : mInstrument<mPOLYPHONY>(midi_table_name)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i].init(lowest_freq, lowest_freq);
+            voices[i].init(TABLE_NAME);
         }
     };
 
@@ -37,10 +37,10 @@ public:
     void noteOff(uint16_t note)
     {
         int16_t off_voice = mInstrument<mPOLYPHONY>::noteOffVoiceHandler(note);
-        // if (off_voice != -1)
-        // {
-        //     voices[off_voice].noteOff();
-        // }
+        if (off_voice != -1)
+        {
+            voices[off_voice].noteOff();
+        }
     }
 
     void flush()
@@ -49,14 +49,6 @@ public:
         for (uint8_t i = 0; i < mPOLYPHONY; i++)
         {
             voices[i].noteOff();
-        }
-    }
-
-    void setLoopGain(float loop_gain)
-    {
-        for (int i = mPOLYPHONY; --i >= 0;)
-        {
-            voices[i].setLoopGain(loop_gain);
         }
     }
 
@@ -71,7 +63,7 @@ public:
     }
 
     // CLASS VARIABLES
-    mString<int32_t> voices[mPOLYPHONY];
+    mSampler<TABLE_SIZE, T, INTERP> voices[mPOLYPHONY];
 };
 
-#endif // MSTRING_INSTRUMENT_H_
+#endif // MSAMPLER_INSTRUMENT_H_

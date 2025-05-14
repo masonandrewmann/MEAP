@@ -6,6 +6,8 @@
 #include "mInstrument.h"
 #include "mStringSynthVoice.h"
 
+// Polyphic string synth, inspired by ARP Solina
+
 template <uint16_t mPOLYPHONY = 4, class T = int8_t>
 class mStringSynthInstrument : public mInstrument<mPOLYPHONY>
 {

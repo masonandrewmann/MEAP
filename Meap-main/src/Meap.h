@@ -20,9 +20,17 @@
 #define MOZZI_AUDIO_CHANNELS MOZZI_STEREO
 #endif
 
+// #if defined(MEAPV4B)
+// #include "hardware_support/meap_v4b.h"
+// #elif defined(MEAPV4C)
+// #include "hardware_support/meap_v4c.h"
+// #else
+// #error No valid hardware version defined
+// #endif
+
 // #define ESP_SAMPLE_SIZE (2 * sizeof(int16_t))
 // #define ESP_SAMPLE_SIZE 4 // 2 * sizeof(int16_t)
-
+#include "Arduino.h"
 #include <Mozzi.h>
 
 #include "driver/i2s_std.h"
@@ -134,6 +142,8 @@
 
 #include <meap_modules/clutter/mChopper.h>
 
+#include <meap_modules/clutter/mMML.h>
+
 // -------------------- MEAP DSP --------------------
 
 // ---- BUILDING BLOCKS ----
@@ -169,6 +179,7 @@
 #include <meap_modules/generators/mOperator.h>
 #include <meap_modules/generators/mDust.h>
 #include <meap_modules/generators/mWavetable.h>
+#include <meap_modules/generators/mNoise.h>
 
 // ---- INSTRUMENTS ----
 #include <meap_modules/instruments/mString.h>
@@ -183,6 +194,10 @@
 #include <meap_modules/instruments/mStringSynthInstrument.h>
 #include <meap_modules/instruments/mStringInstrument.h>
 #include <meap_modules/instruments/mSubSynthInstrument.h>
+#include <meap_modules/instruments/mSamplerInstrument.h>
+
+#include <meap_modules/instruments/mMarimbaVoice.h>
+#include <meap_modules/instruments/mMarimbaInstrument.h>
 
 #include <meap_modules/instruments/mRompler.h>
 

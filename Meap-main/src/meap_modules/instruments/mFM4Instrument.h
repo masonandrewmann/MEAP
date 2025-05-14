@@ -6,6 +6,8 @@
 #include "mFM4Voice.h"
 #include "mInstrument.h"
 
+// polyphonic 4 operator FM instrument
+
 template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, uint16_t mPOLYPHONY = 4, class T = int8_t>
 class mFM4Instrument : public mInstrument<mPOLYPHONY>
 {

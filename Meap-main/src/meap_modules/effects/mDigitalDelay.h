@@ -14,10 +14,6 @@ public:
         init(delay, max_delay, feedback, mix);
     };
 
-    mDigitalDelay() {
-
-    };
-
     void init(float delay = 0, uint32_t max_delay = 4095, float feedback = 0.5, float mix = 0.5)
     {
         max_delay_samples_ = max_delay;
@@ -44,6 +40,19 @@ public:
         }
     }
 
+    // // sets delay as a number of milliseconds
+    // void setDelayMS(float ms){
+
+    // }
+
+    // sets tempo as a number of sixteenth notes at a tempo
+    // returns delay time in samples
+    int32_t setDelaySixteenths(uint8_t num_sixteenths, uint16_t bpm)
+    {
+        setDelay(num_sixteenths * (15.f / (float)bpm) * (AUDIO_RATE));
+        return delay_samples_;
+    }
+
     void setFeedback(float feedback)
     {
         feedback_ = feedback;
@@ -60,12 +69,10 @@ public:
         float frac_component = modf(read_pointer_, &fake_int);
         int int_component = (int)fake_int;
         int next_index = int_component + 1;
-        if (next_index > max_delay_samples_)
+        if (next_index >= max_delay_samples_)
         {
             next_index -= max_delay_samples_;
         }
-
-        // T out_sample = frac_component * delay_buffer_[next_index] + (1 - frac_component) * delay_buffer_[int_component];
         T out_sample = delay_buffer_[int_component] + frac_component * (delay_buffer_[next_index] + delay_buffer_[int_component]);
 
         // delay_buffer_[write_pointer_] = (out_sample * feedback_) * lpf_in_ + lpf_mem_ * lpf_fb_; // lowpassed feedback

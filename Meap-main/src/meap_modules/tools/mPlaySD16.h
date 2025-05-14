@@ -31,8 +31,8 @@ public:
     {
         if (file.available())
         {
-            low_byte;
-            high_byte;
+            // low_byte;
+            // high_byte;
             low_byte = file.read();
             high_byte = file.read();
             return low_byte + (high_byte << 8);

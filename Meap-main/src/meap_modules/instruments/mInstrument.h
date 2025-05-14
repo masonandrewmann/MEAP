@@ -3,6 +3,8 @@
 
 #include <dependencies/LinkedList/LinkedList.h>
 
+// parent class of mInstruments
+
 struct MidiMessage
 {
     uint8_t message_type;

@@ -3,12 +3,14 @@
 #ifndef MSCHROEDER_REVERB
 #define MSCHROEDER_REVERB
 
-template <class T = int16_t>
+template <class T = int32_t>
 class mSchroederReverb
 {
 public:
-    mSchroederReverb(float feedback = 0.5, float damping = 0.5)
+    mSchroederReverb(float feedback = 0.5, float damping = 0.5, float mix = 0.5)
     {
+        mix = mix_;
+
         ap1_.init(167, 0.5);       // 225
         ap2_.init(413, 0.5);       // 556
         c1_.init(1157, 0.97, 0.5); // 1557
@@ -26,6 +28,11 @@ public:
         c3_.setDamping(damping);
         c4_.setDamping(damping);
     };
+
+    void setMix(float mix)
+    {
+        mix_ = mix;
+    }
 
     void setFeedback(float feedback)
     {
@@ -46,11 +53,14 @@ public:
     T next(T in_sample)
     {
         T out_sample = c1_.next(in_sample) + c2_.next(in_sample) + c3_.next(in_sample) + c4_.next(in_sample);
-        out_sample = ap1_.next(out_sample);
-        return ap2_.next(out_sample);
+        out_sample = ap2_.next(ap1_.next(out_sample));
+        out_sample = mix_ * out_sample + (1.0 - mix_) * in_sample;
+        return out_sample;
     };
 
     // CLASS VARIABLES
+
+    float mix_;
 
     mSchroederAllpass<T> ap1_;
     mSchroederAllpass<T> ap2_;

@@ -8,12 +8,9 @@ template <class T = int32_t>
 class mDattorroPlate
 {
 public:
-    mDattorroPlate() {
-    };
-
-    mDattorroPlate(float g5, float damping, float bandwidth)
+    mDattorroPlate(float g5, float damping, float bandwidth, float mix)
     {
-        init(g5, damping, bandwidth);
+        init(g5, damping, bandwidth, mix);
     };
 
     void setDamping(float d)
@@ -32,9 +29,15 @@ public:
         g5_ = g;
     }
 
-    void init(float g5, float damping, float bandwidth)
+    void setMix(float mix)
+    {
+        mix_ = mix;
+    }
+
+    void init(float g5, float damping, float bandwidth, float mix)
     {
         g5_ = g5;
+        mix_ = mix;
 
         pre_delay.init(372); // 500
         lpf1.init(1 - bandwidth);
@@ -77,6 +80,10 @@ public:
 
         l_sample = delay1.at(293) + delay1.at(3270) - apf5.at(2103) + delay2.at(2195) - delay3.at(2188) - apf6.at(206) - delay4.at(792);
         r_sample = delay3.at(388) + delay3.at(3989) - apf6.at(1350) + delay4.at(2939) - delay1.at(2321) - apf5.at(369) - delay2.at(133);
+
+        l_sample = l_sample * mix_ + (1 - mix_) * in_sample;
+        r_sample = r_sample * mix_ + (1 - mix_) * in_sample;
+
         return l_sample;
     };
 
@@ -91,6 +98,7 @@ public:
     float g5_;
     float damping_;
     float bandwidth_;
+    float mix_;
 
     mDelayLine<int32_t> pre_delay;
     mOnePoleLPF<int32_t> lpf1;

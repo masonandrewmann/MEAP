@@ -5,13 +5,7 @@ template <uint32_t UPDATE_RATE = CONTROL_RATE>
 class mDust
 {
 public:
-    mDust()
-    {
-        sample_dur = 1.f / (float)UPDATE_RATE;
-        setDensity(1);
-    };
-
-    mDust(float density_)
+    mDust(float density_ = 1)
     {
         sample_dur = 1.f / (float)UPDATE_RATE;
         setDensity(density_);
