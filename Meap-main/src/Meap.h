@@ -52,7 +52,7 @@
 #include <CapPoll.h>
 // #include <CircularBuffer.h> // not included because it causes a redeclaration error, should have an #ifdef clause like rest of modules
 #include <ControlDelay.h>
-#include <DCFilter.h>
+#include <DCfilter.h>
 #include <Ead.h>
 #include <EventDelay.h>
 #include <IntMap.h>
