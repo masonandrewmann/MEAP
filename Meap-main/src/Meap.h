@@ -60,7 +60,7 @@
 #include <Metronome.h>
 #include <ResonantFilter.h>
 #include <Oscil.h>
-#include <PdResonant.h>
+#include <PDResonant.h>
 #include <Phasor.h>
 #include <Portamento.h>
 #include <RCPoll.h>
