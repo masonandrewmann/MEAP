@@ -27,7 +27,7 @@ public:
         sample_list_ = sample_list;
         sample_lengths_ = sample_lengths;
 
-        default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
+        // default_freq_ = (float)AUDIO_RATE / (float)mMAX_SAMPLE_LENGTH;
         curr_program_ = 0;
 
         attack_time_ = 1;
@@ -38,6 +38,8 @@ public:
         for (int16_t i = mPOLYPHONY; --i >= 0;)
         {
             velocity_[i] = 127;
+            // sample_bank_[i].init(sample_list_[curr_program_]);
+            // sample_bank_[i].setEnd(sample_lengths[curr_program_]);
             sample_bank_[i].setTable(sample_list_[curr_program_], sample_lengths[curr_program_]);
             free_voices_.unshift(i); // add all voices to voice queue
             sample_bank_[i].setAttackTime(attack_time_);
@@ -47,7 +49,7 @@ public:
         for (uint16_t i = 0; i < 127; i++)
         {
 
-            sample_frequencies[i] = default_freq_ * pow(2.f, ((float)(i - 60)) / 12.f);
+            sample_frequencies[i] = sample_bank_[0].default_freq_ * pow(2.f, ((float)(i - 60)) / 12.f);
         }
     }
 
@@ -106,7 +108,7 @@ public:
         }
     }
 
-    void noteOn(uint16_t note, float vel)
+    void noteOn(uint16_t note, uint16_t vel)
     {
         int16_t curr_voice_;
         if (free_voices_.size() > 0)
@@ -131,7 +133,7 @@ public:
         nonfree_voices_.add(my_note);
     }
 
-    void noteOn(uint16_t note, float vel, int16_t program_override)
+    void noteOn(uint16_t note, uint16_t vel, int16_t program_override)
     {
         int16_t curr_voice_;
         if (free_voices_.size() > 0)
@@ -203,14 +205,6 @@ public:
         }
     }
 
-    void update()
-    {
-        for (int16_t i = mPOLYPHONY; --i >= 0;)
-        {
-            sample_bank_[i].update();
-        }
-    }
-
     void setProgram(int16_t p)
     {
         curr_program_ = p;
@@ -229,6 +223,14 @@ public:
         for (int16_t i = mPOLYPHONY; --i >= 0;)
         {
             sample_bank_[i].setEnd(end);
+        }
+    }
+
+    void update()
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            sample_bank_[i].update();
         }
     }
 
@@ -256,7 +258,7 @@ public:
 
     float sample_frequencies[127];
 
-    float default_freq_;
+    // float default_freq_;
 
     LinkedList<int16_t> free_voices_;
     LinkedList<RomplerNote *> nonfree_voices_;

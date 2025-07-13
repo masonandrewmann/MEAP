@@ -3,7 +3,7 @@
 
 #include <dependencies/LinkedList/LinkedList.h>
 #include "mInstrument.h"
-#include <meap_modules/instruments/mString.h>
+#include "mStringVoice.h"
 
 // A polyphonic karplus-strong instrument
 

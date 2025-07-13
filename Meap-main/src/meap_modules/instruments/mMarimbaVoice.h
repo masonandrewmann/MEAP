@@ -1,9 +1,9 @@
 #ifndef MMARIMBAVOICE_H_
 #define MMARIMBAVOICE_H_
 
-#include <meap_modules/filters/mRingz.h>
-#include <meap_modules/generators/mNoise.h>
-#include <meap_modules/building_blocks/mEnvelope.h>
+#include "../dsp/mRingz.h"
+#include "../generators/mNoise.h"
+#include "../generators/mEnvelope.h"
 
 class mMarimbaVoice
 {

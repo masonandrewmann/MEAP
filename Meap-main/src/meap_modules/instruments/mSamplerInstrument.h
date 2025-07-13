@@ -17,6 +17,12 @@ public:
         {
             voices[i].init(TABLE_NAME);
         }
+
+        for (uint16_t i = 0; i < 127; i++)
+        {
+
+            sample_frequencies[i] = voices[0].default_freq_ * pow(2.f, ((float)(i - 60)) / 12.f);
+        }
     };
 
     void midiStop()
@@ -31,7 +37,7 @@ public:
     void noteOn(uint16_t note, uint16_t vel)
     {
         mInstrument<mPOLYPHONY>::noteOnVoiceHandler(note, vel);
-        voices[this->_curr_voice].noteOn(note, vel);
+        voices[this->_curr_voice].noteOn(sample_frequencies[note], vel);
     }
 
     void noteOff(uint16_t note)
@@ -52,6 +58,31 @@ public:
         }
     }
 
+    void setADSR(uint32_t attack_time, uint32_t decay_time, uint32_t sustain_level, uint32_t release_time)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setADLevels(255, sustain_level);
+            voices[i].setTimes(attack_time, decay_time, 100000000, release_time);
+        }
+    }
+
+    void setStart(uint64_t start_sample)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setStart(start_sample);
+        }
+    }
+
+    void update()
+    {
+        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        {
+            voices[i].update();
+        }
+    }
+
     int32_t next()
     {
         int32_t out_sample = 0;
@@ -64,6 +95,7 @@ public:
 
     // CLASS VARIABLES
     mSampler<TABLE_SIZE, T, INTERP> voices[mPOLYPHONY];
+    float sample_frequencies[127];
 };
 
 #endif // MSAMPLER_INSTRUMENT_H_

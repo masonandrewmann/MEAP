@@ -3,7 +3,7 @@
 
 #include "mEnvSection.h"
 
-template <uint32_t UPDATE_RATE = CONTROL_RATE>
+template <uint32_t UPDATE_RATE = CONTROL_RATE, MEAP_ENV_CURVES curve_type = mCURVE_EXPONENTIAL>
 class mEnvelope
 {
 public:
@@ -17,7 +17,7 @@ public:
         _last_out = _starting_level;
         for (int i = 0; i < _num_sections; i++)
         {
-            _env_sections[i] = new mEnvSection<UPDATE_RATE>(times[i], levels[i], levels[i + 1], mCURVE_EXPONENTIAL);
+            _env_sections[i] = new mEnvSection<UPDATE_RATE>(times[i], levels[i], levels[i + 1], curve_type);
         }
     };
 

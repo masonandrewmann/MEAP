@@ -70,7 +70,8 @@ public:
     {
         // send noteoffs to everything
         playing_ = false;
-        sample.noteOff(255);
+        // sample.noteOff(255);
+        sample.noteOff();
     }
 
     void updateMidi()
@@ -84,7 +85,8 @@ public:
                 {
                 case 0x80: // note off
                     // sample_bank_[data1_].noteOff(255);
-                    sample.noteOff(255);
+                    // sample.noteOff(255);
+                    sample.noteOff();
                     break;
                 case 0x90: // note on
                     sample.noteOn(m_freq_table[data1_ + transpose_], 255);

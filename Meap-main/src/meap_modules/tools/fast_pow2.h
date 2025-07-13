@@ -1,3 +1,6 @@
+#ifndef M_FASTPOW2_H_
+#define M_FASTPOW2_H_
+
 // adapted from amy https://github.com/shorepine/amy/blob/main/src/log2_exp2.c
 
 #include <math.h>
@@ -291,3 +294,5 @@ float exp2_lut(float x)
     else
         return mSHIFTR(unnorm, -offset);
 }
+
+#endif // M_FASTPOW2_H_

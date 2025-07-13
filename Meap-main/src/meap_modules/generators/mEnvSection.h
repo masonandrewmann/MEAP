@@ -1,7 +1,7 @@
 #ifndef MENV_SECTION_H_
 #define MENV_SECTION_H_
 
-#include "fast_pow2.h"
+#include "../tools/fast_pow2.h"
 
 enum MEAP_ENV_CURVES
 {

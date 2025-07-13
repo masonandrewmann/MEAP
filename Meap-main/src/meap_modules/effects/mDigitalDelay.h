@@ -1,4 +1,4 @@
-// an IIR comb filter with a linearly interpolated delay line and a 1st order lowpass filter in the feedback loop
+// an IIR comb filter with a linearly interpolated delay line
 
 #ifndef MDIGITALDELAY_H_
 #define MDIGITALDELAY_H_
@@ -40,16 +40,18 @@ public:
         }
     }
 
-    // // sets delay as a number of milliseconds
-    // void setDelayMS(float ms){
-
-    // }
-
-    // sets tempo as a number of sixteenth notes at a tempo
-    // returns delay time in samples
-    int32_t setDelaySixteenths(uint8_t num_sixteenths, uint16_t bpm)
+    // sets delay as a number of milliseconds
+    int32_t setDelayMS(float ms)
     {
-        setDelay(num_sixteenths * (15.f / (float)bpm) * (AUDIO_RATE));
+        setDelay(ms * (float)AUDIO_RATE * 0.001);
+        return delay_samples_;
+    }
+
+    // sets delay as a number of sixteenth notes at a tempo
+    // returns delay time in samples
+    int32_t setDelaySixteenths(uint16_t num_sixteenths, uint16_t bpm)
+    {
+        setDelay(num_sixteenths * (15.f / (float)bpm) * ((float)AUDIO_RATE));
         return delay_samples_;
     }
 
@@ -61,6 +63,14 @@ public:
     void setMix(float mix)
     {
         mix_ = mix;
+    }
+
+    void clear()
+    {
+        for (int i = max_delay_samples_; --i >= 0;)
+        {
+            delay_buffer_[i] = 0;
+        }
     }
 
     T next(T in_sample)

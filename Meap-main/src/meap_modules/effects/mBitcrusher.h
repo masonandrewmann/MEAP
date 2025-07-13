@@ -29,17 +29,17 @@ public:
         // shift bits
         in_sample = (in_sample >> bit_reduction_) << bit_reduction_;
 
-        // shift sample rate
-        sample_index_ = sample_index_ + sample_step_;
-        if (sample_index_ >= 1)
-        {
-            while (sample_index_ > 1)
-            {
-                sample_index_--;
-            }
-            last_sample_ = in_sample;
-        }
-        return last_sample_;
+        // shift sample rate: !IMPLEMENT
+        // sample_index_ = sample_index_ + sample_step_;
+        // if (sample_index_ >= 1)
+        // {
+        //     while (sample_index_ > 1)
+        //     {
+        //         sample_index_--;
+        //     }
+        //     last_sample_ = in_sample;
+        // }
+        return in_sample;
     }
 
     // CLASS VARIABLES

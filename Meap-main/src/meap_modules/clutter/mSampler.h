@@ -9,6 +9,7 @@ public:
 
     mSampler()
     {
+        init(NULL);
     }
 
     mSampler(const T *TABLE_NAME)
@@ -36,12 +37,7 @@ public:
         {
             shift_val_ = 7; // just 7 bits down for velocity
         }
-        float default_freq_ = (float)AUDIO_RATE / (float)mSAMPLE_LENGTH;
-        for (uint16_t i = 0; i < 127; i++)
-        {
-
-            sample_frequencies[i] = default_freq_ * pow(2.f, ((float)(i - 60)) / 12.f);
-        }
+        default_freq_ = (float)AUDIO_RATE / (float)mSAMPLE_LENGTH;
     }
 
     void setTable(const T *TABLE_NAME, uint64_t TABLE_SIZE)
@@ -57,10 +53,11 @@ public:
     }
 
     //! Start a note with the given frequency and amplitude.
-    void noteOn(int note_number, uint8_t v_)
+    void noteOn(float frequency, uint8_t v_)
     {
         velocity_ = v_;
-        sample_.setFreq(sample_frequencies[note_number]);
+        sample_.setFreq(frequency);
+        // sample_.setFreq(sample_frequencies[note_number]);
         sample_.start();
         adsr_.noteOn();
     }
@@ -132,9 +129,14 @@ public:
         sample_.setEnd(end);
     }
 
-    int32_t next()
+    void update()
     {
         adsr_.update();
+    }
+
+    int32_t next()
+    {
+
         return (sample_.next() * adsr_.next() * velocity_) >> shift_val_; // 8 bit gain * 8 bit sample = 16bit result * velocity >>7 = ~16bit result
     }
 
@@ -144,9 +146,9 @@ public:
     mSample<mSAMPLE_LENGTH, AUDIO_RATE, T, INTERP> sample_;
 
     uint8_t shift_val_;
-    float sample_frequencies[127];
+    float default_freq_;
 
-    ADSR<AUDIO_RATE, AUDIO_RATE> adsr_;
+    ADSR<CONTROL_RATE, AUDIO_RATE> adsr_;
 };
 
 #endif // MEAP_SAMPLER_H_

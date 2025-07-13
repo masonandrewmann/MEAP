@@ -8,25 +8,25 @@ template <class T = int32_t>
 class mDattorroPlate
 {
 public:
-    mDattorroPlate(float g5, float damping, float bandwidth, float mix)
+    mDattorroPlate(float decay = 0.6, float damping = 0.8, float bandwidth = 0.2, float mix = 0.5)
     {
-        init(g5, damping, bandwidth, mix);
+        init(decay, damping, bandwidth, mix);
     };
 
-    void setDamping(float d)
+    void setDecay(float decay)
     {
-        lpf2.setDamping(d);
-        lpf3.setDamping(d);
+        decay_ = decay;
     }
 
-    void setBandwidth(float bw)
+    void setDamping(float damping)
     {
-        lpf1.setDamping(1 - bw);
+        lpf2.setDamping(damping);
+        lpf3.setDamping(damping);
     }
 
-    void setDecay(float g)
+    void setBandwidth(float bandwidth)
     {
-        g5_ = g;
+        lpf1.setDamping(1 - bandwidth);
     }
 
     void setMix(float mix)
@@ -34,9 +34,9 @@ public:
         mix_ = mix;
     }
 
-    void init(float g5, float damping, float bandwidth, float mix)
+    void init(float decay, float damping, float bandwidth, float mix)
     {
-        g5_ = g5;
+        decay_ = decay;
         mix_ = mix;
 
         pre_delay.init(372); // 500
@@ -72,8 +72,8 @@ public:
 
         in_sample = apf4.next(apf3.next(apf2.next(apf1.next(lpf1.next(pre_delay.next(in_sample))))));
 
-        T one_input = in_sample + g5_ * two_output;
-        T two_input = in_sample + g5_ * one_output;
+        T one_input = in_sample + decay_ * two_output;
+        T two_input = in_sample + decay_ * one_output;
 
         one_output = delay2.next(apf5.next(lpf2.next(delay1.next(mapf1.next(one_input)))));
         two_output = delay4.next(apf6.next(lpf3.next(delay3.next(mapf2.next(two_input)))));
@@ -95,7 +95,7 @@ public:
     T one_output;
     T two_output;
 
-    float g5_;
+    float decay_;
     float damping_;
     float bandwidth_;
     float mix_;

@@ -7,7 +7,7 @@ template <class T = int32_t>
 class mSchroederReverb
 {
 public:
-    mSchroederReverb(float feedback = 0.5, float damping = 0.5, float mix = 0.5)
+    mSchroederReverb(float decay = 0.5, float damping = 0.5, float mix = 0.5)
     {
         mix = mix_;
 
@@ -18,10 +18,10 @@ public:
         c3_.init(1108, 0.97, 0.5); // 1491
         c4_.init(1057, 0.97, 0.5); // 1422
 
-        c1_.setFeedback(feedback);
-        c2_.setFeedback(feedback);
-        c3_.setFeedback(feedback);
-        c4_.setFeedback(feedback);
+        c1_.setFeedback(decay);
+        c2_.setFeedback(decay);
+        c3_.setFeedback(decay);
+        c4_.setFeedback(decay);
 
         c1_.setDamping(damping);
         c2_.setDamping(damping);
@@ -29,17 +29,12 @@ public:
         c4_.setDamping(damping);
     };
 
-    void setMix(float mix)
+    void setDecay(float decay)
     {
-        mix_ = mix;
-    }
-
-    void setFeedback(float feedback)
-    {
-        c1_.setFeedback(feedback);
-        c2_.setFeedback(feedback);
-        c3_.setFeedback(feedback);
-        c4_.setFeedback(feedback);
+        c1_.setFeedback(decay);
+        c2_.setFeedback(decay);
+        c3_.setFeedback(decay);
+        c4_.setFeedback(decay);
     }
 
     void setDamping(float damping)
@@ -48,6 +43,11 @@ public:
         c2_.setDamping(damping);
         c3_.setDamping(damping);
         c4_.setDamping(damping);
+    }
+
+    void setMix(float mix)
+    {
+        mix_ = mix;
     }
 
     T next(T in_sample)

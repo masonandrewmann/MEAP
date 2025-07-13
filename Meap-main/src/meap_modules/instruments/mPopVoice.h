@@ -47,16 +47,11 @@ public:
 
         spectrum = mPOP_WHOLE;
         setADSR(1, 400, 255, 400);
-        mod_env_.setADLevels(255, 100);
-        mod_env_.setTimes(1, 200, 4294967295, 1);
-        setModAttack(0);
-        setModDecay(400);
-        setModSustain(0);
+        mod_env_.setADLevels(255, 255);
+        mod_env_.setTimes(1, 200, 4294967295, 4294967295);
         setModAmount(0.1);
-        mod_env_.setReleaseTime(4294967295);
+        setFeedback(0.1);
         setSpectra(0);
-
-        feedback_amount_ = 0.1;
     }
 
     void setADSR(uint32_t attack_time, uint32_t decay_time, uint32_t sustain_level, uint32_t release_time)
@@ -115,6 +110,32 @@ public:
         mod2_ratio_ = MEAP_pop_spectra_[(int)spectrum][b_index];
     }
 
+    // sets timbre like the orignal max for live device: single paramter controls both modulation and feedback
+    void setTimbre(float timbre)
+    {
+        if (timbre > 0.4)
+        {
+            setModAmount(1.0);
+        }
+        else
+        { // linearly interpolate between 0 and 1:
+            setModAmount(2.5 * timbre);
+        }
+
+        if (timbre < 0.318)
+        {
+            setFeedback(0);
+        }
+        else if (timbre < 0.829)
+        { //  interpolate (0.318, 0) to (0.829, 0.467)
+            setFeedback((timbre - 0.318) * 0.9138943249f);
+        }
+        else
+        { //  interpolate (0.829, 0.467) to (1, 1)
+            setFeedback(0.467 + (timbre - 0.829) * 3.1169590643f);
+        }
+    }
+
     void noteOn(int8_t note, int8_t velocity)
     {
         float my_freq = mtof(note);
@@ -138,20 +159,20 @@ public:
         mod_env_.update();
 
         int32_t mod_env_val = mod_env_.next();
-        int32_t feedback_env_val = (mod_env_val * 0.75) + 64;
+        int32_t feedback_env_val = ((float)mod_env_val * 0.75) + 64;
 
         UFix<16, 16> mod1_dev = 1.0;
         UFix<16, 16> mod2_dev = 1.0;
 
-        auto mod1_val = mod1_dev * toSFraction((int16_t)(((feedback_val_1_ * feedback_env_val) >> 8) * feedback_amount_));
-        auto mod2_val = mod2_dev * toSFraction((int16_t)(((feedback_val_2_ * feedback_env_val) >> 8) * feedback_amount_));
+        auto mod1_val = mod1_dev * toSFraction((int16_t)(((float)((feedback_val_1_ * feedback_env_val) >> 8)) * feedback_amount_));
+        auto mod2_val = mod2_dev * toSFraction((int16_t)(((float)((feedback_val_2_ * feedback_env_val) >> 8)) * feedback_amount_));
 
-        feedback_val_1_ = mod1_.phMod(mod1_val); // envelope should control feedback amount here, may need to ditch the operators and do it manually
+        feedback_val_1_ = mod1_.phMod(mod1_val);
         feedback_val_2_ = mod2_.phMod(mod2_val);
 
         // T out_sample = carrier_.next(feedback_val_A_ + feedback_val_B_);
 
-        int32_t mod_input = (((feedback_val_1_ + feedback_val_2_) * mod_env_val) >> 8) * modulation_amount_;
+        int32_t mod_input = ((float)(((feedback_val_1_ + feedback_val_2_) * mod_env_val) >> 8)) * modulation_amount_;
 
         UFix<16, 16> deviation = 1.0;
         auto modulation = deviation * toSFraction((int16_t)(mod_input));

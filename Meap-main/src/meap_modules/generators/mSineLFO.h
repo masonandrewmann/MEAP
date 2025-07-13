@@ -9,7 +9,7 @@
 #include <Meap.h>
 
 // template for audio vs control rate
-template <uint32_t UPDATE_RATE>
+template <uint32_t UPDATE_RATE = CONTROL_RATE>
 class mSineLFO
 {
 public:

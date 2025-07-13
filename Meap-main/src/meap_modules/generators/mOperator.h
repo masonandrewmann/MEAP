@@ -294,27 +294,10 @@ public:
     }
 
     /** update
-     * MUST be called in updateAudio. Returns a 16-bit sample.
-     */
-    int32_t next()
-    {
-        if (drone_)
-        {
-            env_val_ = 255;
-        }
-        else
-        {
-            env_val_ = env_.next();
-        }
-        last_out_ = (osc_.next() * env_val_ * gain_) >> shift_val_;
-        return last_out_; // returns a 16 bit sample
-    }
-
-    /** update
      * MUST be called in updateAudio. Returns a 16-bit sample given a modulation input.
      @param mod_input phase modulation value. range is 16-bits
      */
-    int32_t next(int32_t mod_input)
+    int32_t next(int32_t mod_input = 0)
     {
         if (drone_)
         {

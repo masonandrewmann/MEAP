@@ -40,7 +40,7 @@
 
 #include <MIDI.h> // Arduino Midi library https://github.com/FortySevenEffects/arduino_midi_library
 
-// Attempts to include all Mozzi modules, though I may have missed them. Surely Mozzi has an option to include all modules in one line???
+// include all mozzi modules
 #include <mozzi_midi.h>
 #include <mozzi_fixmath.h>
 #include <mozzi_rand.h>
@@ -77,33 +77,33 @@
 
 #include <meap_modules/tools/midi_notes.h>
 
-#include <meap_stk/meap_delay.h>
-#include <meap_stk/meap_delay_linear.h>
-#include <meap_stk/meap_delay_allpass.h>
-#include <meap_stk/meap_fir.h>
-#include <meap_stk/meap_twang.h>
-#include <meap_stk/meap_one_pole.h>
-#include <meap_stk/meap_one_zero.h>
+// #include <meap_stk/meap_delay.h>
+// #include <meap_stk/meap_delay_linear.h>
+// #include <meap_stk/meap_delay_allpass.h>
+// #include <meap_stk/meap_fir.h>
+// #include <meap_stk/meap_twang.h>
+// #include <meap_stk/meap_one_pole.h>
+// #include <meap_stk/meap_one_zero.h>
 // #include <meap_stk/meap_plucked.h>
-#include <meap_stk/meap_guitar.h>
-#include <meap_stk/meap_effect.h>
-#include <meap_stk/meap_prc_rev.h>
-#include <meap_stk/meap_biquad.h>
-#include <meap_stk/meap_bowtable.h>
-#include <meap_stk/meap_adsr.h>
-#include <meap_stk/meap_banded_waveguide.h>
-#include <meap_stk/meap_iir.h>
-#include <meap_stk/meap_sinewave.h>
-#include <meap_stk/meap_chorus.h>
-#include <meap_stk/meap_polezero.h>
-#include <meap_stk/meap_brass.h>
-#include <meap_stk/meap_filter.h>
-#include <meap_stk/meap_bowed.h>
-#include <meap_stk/meap_twozero.h>
+// #include <meap_stk/meap_guitar.h>
+// #include <meap_stk/meap_effect.h>
+// #include <meap_stk/meap_prc_rev.h>
+// #include <meap_stk/meap_biquad.h>
+// #include <meap_stk/meap_bowtable.h>
+// #include <meap_stk/meap_adsr.h>
+// #include <meap_stk/meap_banded_waveguide.h>
+// #include <meap_stk/meap_iir.h>
+// #include <meap_stk/meap_sinewave.h>
+// #include <meap_stk/meap_chorus.h>
+// #include <meap_stk/meap_polezero.h>
+// #include <meap_stk/meap_brass.h>
+// #include <meap_stk/meap_filter.h>
+// #include <meap_stk/meap_bowed.h>
+// #include <meap_stk/meap_twozero.h>
 // #include <meap_stk/meap_lentpitshift.h>
 // #include <meap_stk/meap_recorder.h>
-#include <meap_stk/meap_freeverb.h>
-#include <meap_stk/meap_control_sine.h>
+// #include <meap_stk/meap_freeverb.h>
+// #include <meap_stk/meap_control_sine.h>
 
 // ---- dependencies ----
 #include <dependencies/LinkedList/LinkedList.h>
@@ -130,7 +130,7 @@
 #include <meap_modules/clutter/mSampleGrainGenerator.h>
 #include <meap_modules/clutter/mSampleGrainCloud.h>
 
-#include <meap_modules/clutter/mGuitarPoly.h>
+// #include <meap_modules/clutter/mGuitarPoly.h>
 
 #include <meap_modules/clutter/mFM2Voice.h>
 #include <meap_modules/clutter/mFM2Poly.h>
@@ -142,30 +142,25 @@
 
 #include <meap_modules/clutter/mChopper.h>
 
-#include <meap_modules/clutter/mMML.h>
-
 // -------------------- MEAP DSP --------------------
 
-// ---- BUILDING BLOCKS ----
-#include <meap_modules/building_blocks/mNaturalComb.h>
-#include <meap_modules/building_blocks/mNaturalCombLinear.h>
-#include <meap_modules/building_blocks/mSchroederAllpass.h>
-#include <meap_modules/building_blocks/mSchroederAllpassLinear.h>
-#include <meap_modules/building_blocks/mOnePoleLPF.h>
-#include <meap_modules/building_blocks/mDelayLine.h>
-#include <meap_modules/building_blocks/mEnvSection.h>
-#include <meap_modules/building_blocks/mEnvelope.h>
-
 // ---- TOOLS ----
+#include <meap_modules/tools/fast_pow2.h>
 #include <meap_modules/tools/mRandomDistribution.h>
 #include <meap_modules/tools/mEventDelayMicros.h>
 #include <meap_modules/tools/mSD.h>
 #include <meap_modules/tools/mPlaySD16.h>
 #include <meap_modules/tools/mPlaySD8.h>
 
-// ---- FILTERS ----
-#include <meap_modules/filters/mRingz.h>
-#include <meap_modules/filters/mResonz.h>
+// ---- DSP ----
+#include <meap_modules/dsp/mNaturalComb.h>
+#include <meap_modules/dsp/mNaturalCombLinear.h>
+#include <meap_modules/dsp/mSchroederAllpass.h>
+#include <meap_modules/dsp/mSchroederAllpassLinear.h>
+#include <meap_modules/dsp/mOnePoleLPF.h>
+#include <meap_modules/dsp/mDelayLine.h>
+#include <meap_modules/dsp/mRingz.h>
+#include <meap_modules/dsp/mResonz.h>
 
 // ---- EFFECTS ----
 #include <meap_modules/effects/mSchroederReverb.h>
@@ -180,35 +175,38 @@
 #include <meap_modules/generators/mDust.h>
 #include <meap_modules/generators/mWavetable.h>
 #include <meap_modules/generators/mNoise.h>
+#include <meap_modules/generators/mEnvSection.h>
+#include <meap_modules/generators/mEnvelope.h>
 
 // ---- INSTRUMENTS ----
-#include <meap_modules/instruments/mString.h>
-#include <meap_modules/instruments/mFM4Voice.h>
-#include <meap_modules/instruments/mSubSynthVoice.h>
-#include <meap_modules/instruments/mStringSynthVoice.h>
-#include <meap_modules/instruments/mPopVoice.h>
 
 #include <meap_modules/instruments/mInstrument.h>
-#include <meap_modules/instruments/mPopInstrument.h>
+
+#include <meap_modules/instruments/mFM4Voice.h>
 #include <meap_modules/instruments/mFM4Instrument.h>
-#include <meap_modules/instruments/mStringSynthInstrument.h>
-#include <meap_modules/instruments/mStringInstrument.h>
+
+#include <meap_modules/instruments/mSubSynthVoice.h>
 #include <meap_modules/instruments/mSubSynthInstrument.h>
-#include <meap_modules/instruments/mSamplerInstrument.h>
+
+#include <meap_modules/instruments/mStringSynthVoice.h>
+#include <meap_modules/instruments/mStringSynthInstrument.h>
+
+#include <meap_modules/instruments/mStringVoice.h>
+#include <meap_modules/instruments/mStringInstrument.h>
+
+#include <meap_modules/instruments/mPopVoice.h>
+#include <meap_modules/instruments/mPopInstrument.h>
 
 #include <meap_modules/instruments/mMarimbaVoice.h>
 #include <meap_modules/instruments/mMarimbaInstrument.h>
 
+#include <meap_modules/instruments/mSamplerInstrument.h>
+
 #include <meap_modules/instruments/mRompler.h>
 
-// ---- SUNSET ----
-#include <meap_modules/sunset/mStringPoly.h>
-#include <meap_modules/sunset/mSubSynthPoly.h>
-#include <meap_modules/sunset/mStringSynthPoly.h>
-#include <meap_modules/sunset/mPopPoly.h>
-#include <meap_modules/sunset/mFM4Poly.h>
+// ---- COMPOSITION ----
 
-// ---- ETC ----
+#include <meap_modules/composition/mMML.h>
 
 i2s_chan_handle_t tx_handle;
 i2s_chan_handle_t rx_handle;

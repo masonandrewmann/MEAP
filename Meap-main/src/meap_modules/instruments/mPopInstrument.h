@@ -75,6 +75,14 @@ public:
         }
     }
 
+    void setTimbre(float timbre)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setTimbre(timbre);
+        }
+    }
+
     void setSpectraMap(int index)
     {
         for (int i = mPOLYPHONY; --i >= 0;)

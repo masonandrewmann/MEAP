@@ -27,18 +27,13 @@ public:
 
     int32_t next()
     {
-        int32_t out_sample;
+        int32_t out_sample = 0;
         float sample = Meap::frand(); // 0 to 1
 
         if (sample < thresh)
         {
             out_sample = sample * scale;
         }
-        else
-        {
-            out_sample = 0;
-        }
-
         return out_sample;
     }
 

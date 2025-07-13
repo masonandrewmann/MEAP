@@ -152,7 +152,7 @@ public:
         sample_bank_[sample_num].stop();
     }
 
-    void setSampleVolume(uint8_t sample_num, float volume)
+    void setSampleVolume(uint16_t sample_num, uint16_t volume)
     {
         sample_gain_[sample_num] = volume;
     }

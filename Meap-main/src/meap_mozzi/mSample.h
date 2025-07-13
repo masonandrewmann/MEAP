@@ -47,7 +47,7 @@ There is a python script called int8_t2mozzi.py in the Mozzi/python folder.
 The script converts raw sound data saved from a program like Audacity.
 Instructions are in the int8_t2mozzi.py file.
 */
-template <uint64_t NUM_TABLE_CELLS, unsigned int UPDATE_RATE, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
+template <uint32_t NUM_TABLE_CELLS, uint32_t UPDATE_RATE, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
 class mSample
 {
 
@@ -58,7 +58,7 @@ public:
     Mozzi by the int8_t2mozzi.py python script in Mozzi's python
     folder.  Sound tables can be of arbitrary lengths for Sample().
     */
-    mSample(const T *TABLE_NAME) : table(TABLE_NAME), endpos_fractional((uint64_t)NUM_TABLE_CELLS << SAMPLE_F_BITS) // so isPlaying() will work
+    mSample(const T *TABLE_NAME) : table(TABLE_NAME), endpos_fractional((uint32_t)NUM_TABLE_CELLS << SAMPLE_F_BITS) // so isPlaying() will work
     {
         setLoopingOff();
         setReverseOff();
@@ -71,7 +71,7 @@ public:
     Declare a Sample with template TABLE_NUM_CELLS and UPDATE_RATE parameters, without specifying a particular wave table for it to play.
     The table can be set or changed on the fly with setTable().
     */
-    mSample() : endpos_fractional((uint64_t)NUM_TABLE_CELLS << SAMPLE_F_BITS)
+    mSample() : endpos_fractional((uint32_t)NUM_TABLE_CELLS << SAMPLE_F_BITS)
     {
         setLoopingOff();
         setReverseOff();
@@ -91,9 +91,9 @@ public:
     /** Sets the starting position in samples.
     @param startpos offset position in samples.
     */
-    inline void setStart(uint64_t startpos)
+    inline void setStart(uint32_t startpos)
     {
-        startpos_fractional = (uint64_t)startpos << SAMPLE_F_BITS;
+        startpos_fractional = (uint32_t)startpos << SAMPLE_F_BITS;
     }
 
     /** Resets the phase (the playhead) to the start position, which will be 0 unless set to another value with setStart();
@@ -127,7 +127,7 @@ public:
     /** Sets a new start position plays the sample from that position.
     @param startpos position in samples from the beginning of the sound.
     */
-    inline void start(uint64_t startpos)
+    inline void start(uint32_t startpos)
     {
         setStart(startpos);
         start();
@@ -136,9 +136,9 @@ public:
     /** Sets the end position in samples from the beginning of the sound.
     @param end position in samples.
     */
-    inline void setEnd(uint64_t end)
+    inline void setEnd(uint32_t end)
     {
-        endpos_fractional = (uint64_t)end << SAMPLE_F_BITS;
+        endpos_fractional = (uint32_t)end << SAMPLE_F_BITS;
     }
 
     /** Sets the start and end points to include the range of the whole sound table.
@@ -146,7 +146,7 @@ public:
     inline void rangeWholeSample()
     {
         startpos_fractional = 0;
-        endpos_fractional = (uint64_t)NUM_TABLE_CELLS << SAMPLE_F_BITS;
+        endpos_fractional = (uint32_t)NUM_TABLE_CELLS << SAMPLE_F_BITS;
     }
 
     /** Turns looping on.
@@ -181,8 +181,8 @@ public:
         if (INTERP == mINTERP_LINEAR)
         {
             // WARNNG this is hard coded for when SAMPLE_F_BITS is 16
-            uint64_t index = phase_fractional >> SAMPLE_F_BITS;
-            uint64_t next_index = (index + 1) % NUM_TABLE_CELLS;
+            uint32_t index = phase_fractional >> SAMPLE_F_BITS;
+            uint32_t next_index = (index + 1) % NUM_TABLE_CELLS;
             out = FLASH_OR_RAM_READ<const T>(table + index);
             out = out + (((phase_fractional & 0b1111111111111111) >> 8) * ((FLASH_OR_RAM_READ<const T>(table + next_index) - out)) >> 8);
         }
@@ -227,7 +227,7 @@ public:
     */
     inline void setFreq(int frequency)
     {
-        phase_increment_fractional = ((((uint64_t)NUM_TABLE_CELLS << ADJUST_FOR_NUM_TABLE_CELLS) * frequency) / UPDATE_RATE) << (SAMPLE_F_BITS - ADJUST_FOR_NUM_TABLE_CELLS);
+        phase_increment_fractional = ((((uint32_t)NUM_TABLE_CELLS << ADJUST_FOR_NUM_TABLE_CELLS) * frequency) / UPDATE_RATE) << (SAMPLE_F_BITS - ADJUST_FOR_NUM_TABLE_CELLS);
     }
 
     /** Set the sample frequency with a float. Using a float is the most reliable
@@ -237,7 +237,7 @@ public:
     */
     inline void setFreq(float frequency)
     { // 1 us - using float doesn't seem to incur measurable overhead with the oscilloscope
-        phase_increment_fractional = (uint64_t)((((float)NUM_TABLE_CELLS * frequency) / UPDATE_RATE) * SAMPLE_F_BITS_AS_MULTIPLIER);
+        phase_increment_fractional = (uint32_t)((((float)NUM_TABLE_CELLS * frequency) / UPDATE_RATE) * SAMPLE_F_BITS_AS_MULTIPLIER);
     }
 
     /** Set the sample frequency with a float. Using a float is the most reliable
@@ -247,7 +247,7 @@ public:
     */
     inline void setFreq(double frequency)
     { // 1 us - using float doesn't seem to incur measurable overhead with the oscilloscope
-        phase_increment_fractional = (uint64_t)((((float)NUM_TABLE_CELLS * (float)frequency) / UPDATE_RATE) * SAMPLE_F_BITS_AS_MULTIPLIER);
+        phase_increment_fractional = (uint32_t)((((float)NUM_TABLE_CELLS * (float)frequency) / UPDATE_RATE) * SAMPLE_F_BITS_AS_MULTIPLIER);
     }
 
     /** Set the frequency using Q24n8 fixed-point number format.
@@ -261,7 +261,7 @@ public:
     inline void setFreq_Q24n8(Q24n8 frequency)
     {
         // phase_increment_fractional = (frequency* (NUM_TABLE_CELLS>>3)/(UPDATE_RATE>>6)) << (F_BITS-(8-3+6));
-        phase_increment_fractional = (((((uint64_t)NUM_TABLE_CELLS << ADJUST_FOR_NUM_TABLE_CELLS) >> 3) * frequency) / (UPDATE_RATE >> 6))
+        phase_increment_fractional = (((((uint32_t)NUM_TABLE_CELLS << ADJUST_FOR_NUM_TABLE_CELLS) >> 3) * frequency) / (UPDATE_RATE >> 6))
                                      << (SAMPLE_F_BITS - ADJUST_FOR_NUM_TABLE_CELLS - (8 - 3 + 6));
     }
 
@@ -269,9 +269,24 @@ public:
     @param index between 0 and the table size.
     @return the sample at the given table index.
     */
-    inline T atIndex(uint64_t index)
+    inline T atIndex(uint32_t index)
     {
         return FLASH_OR_RAM_READ<const T>(table + index);
+    }
+
+    /**  Returns the sample at the given table index.
+    @param index between 0 and the table size.
+    @return the sample at the given table index.
+    */
+    inline T atIndex(float index)
+    {
+        float fake_int;
+        float frac_component = modf(index, &fake_int);
+        int int_component = (int)fake_int;
+        int_component = int_component % NUM_TABLE_CELLS;
+        int32_t next_sample = (int_component + 1) % NUM_TABLE_CELLS;
+
+        return table[int_component] + frac_component * (table[next_sample] - table[int_component]);
     }
 
     /** phaseIncFromFreq() and setPhaseInc() are for saving processor time when sliding between frequencies.
@@ -284,15 +299,15 @@ public:
     @param frequency for which you want to calculate a phase increment value.
     @return the phase increment value which will produce a given frequency.
     */
-    inline uint64_t phaseIncFromFreq(unsigned int frequency)
+    inline uint32_t phaseIncFromFreq(unsigned int frequency)
     {
-        return (((uint64_t)frequency * NUM_TABLE_CELLS) / UPDATE_RATE) << SAMPLE_F_BITS;
+        return (((uint32_t)frequency * NUM_TABLE_CELLS) / UPDATE_RATE) << SAMPLE_F_BITS;
     }
 
     /** Set a specific phase increment.  See phaseIncFromFreq().
     @param phaseinc_fractional a phase increment value as calculated by phaseIncFromFreq().
      */
-    inline void setPhaseInc(uint64_t phaseinc_fractional)
+    inline void setPhaseInc(uint32_t phaseinc_fractional)
     {
         phase_increment_fractional = phaseinc_fractional;
     }
@@ -327,12 +342,12 @@ public:
         }
     }
 
-    volatile int64_t phase_fractional;
-    volatile int64_t phase_increment_fractional;
+    volatile int32_t phase_fractional;
+    volatile int32_t phase_increment_fractional;
     const T *table;
     bool looping;
     bool forwards;
-    int64_t startpos_fractional, endpos_fractional;
+    int32_t startpos_fractional, endpos_fractional;
 };
 
 /**
