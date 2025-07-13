@@ -9,11 +9,12 @@
 class mMML
 {
 public:
-    mMML(mInstrument<4> *instrument_, String mml_string_)
+    mMML(void (*noteOn_)(uint16_t note, uint16_t vel), void (*noteOff_)(uint16_t note), String mml_string_)
     {
+        noteOn = noteOn_;
+        noteOff = noteOff_;
         timer = 0;
         switcher = false;
-        instrument = instrument_;
         mml_string = mml_string_;
         string_pointer = 0;
         using_instrument = true;
@@ -90,7 +91,8 @@ public:
             {
                 int note_length = default_length;
                 float dot_modifier = 1;
-                instrument->noteOff(prev_note);
+                // instrument->noteOff(prev_note);
+                noteOff(prev_note);
                 switch (my_char)
                 {
                 case 'c':
@@ -145,7 +147,8 @@ public:
 
                     my_char = mml_string.charAt(string_pointer);
                 }
-                instrument->noteOn(prev_note, velocity);
+                // instrument->noteOn(prev_note, velocity);
+                noteOn(prev_note, velocity);
                 timer = micros() + dot_modifier * (period_micros / (note_length));
                 break;
             }
@@ -196,14 +199,16 @@ public:
     }
 
     bool using_instrument;
-    mInstrument<4> *instrument;
+
     String mml_string;
     int16_t string_pointer;
     int8_t octave;
     int8_t velocity;
     int32_t default_length = 4;
-    // noteon pointer
-    // noteoff pointer
+
+    void (*noteOn)(uint16_t note, uint16_t vel); // pointer to user-supplied noteOn function
+    void (*noteOff)(uint16_t note);              // pointer to user-supplied noteOff function
+
     // string
     uint64_t timer;
     uint32_t period_micros;

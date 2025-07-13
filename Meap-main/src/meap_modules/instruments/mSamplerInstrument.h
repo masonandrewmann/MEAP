@@ -3,7 +3,7 @@
 
 #include <dependencies/LinkedList/LinkedList.h>
 #include "mInstrument.h"
-#include <meap_modules/clutter/mSampler.h>
+#include "../clutter/mSampler.h"
 
 // A polyphonic sampler instrument
 
