@@ -34,6 +34,10 @@ public:
     {
     }
 
+    void pause()
+    {
+    }
+
     // sets number of microseconds in one measure
     void setTempo(int32_t tempo)
     {
@@ -121,7 +125,6 @@ public:
                 my_char = mml_string.charAt(string_pointer);
                 while (!isStartCommand(my_char))
                 {
-                    string_pointer++;
                     switch (my_char)
                     {
                     case '-': // flat
@@ -137,15 +140,15 @@ public:
                         prev_note -= 12;
                         break;
                     case '0' ... '9': // note length
-                        string_pointer--;
                         note_length = parseNumber();
+                        string_pointer--;
                         break;
                     case '.': // dotted note length
                         dot_modifier *= 1.5;
                         break;
                     }
 
-                    my_char = mml_string.charAt(string_pointer);
+                    my_char = mml_string.charAt(++string_pointer);
                 }
                 // instrument->noteOn(prev_note, velocity);
                 noteOn(prev_note, velocity);
@@ -166,8 +169,30 @@ public:
                 setTempo(parseNumber());
                 break;
             case 'r': // **** REST COMMAND ****
-                timer = micros() + period_micros / default_length;
+            {
+                int note_length = default_length;
+                float dot_modifier = 1;
+
+                my_char = mml_string.charAt(string_pointer);
+                while (!isStartCommand(my_char))
+                {
+                    switch (my_char)
+                    {
+                    case '0' ... '9': // note length
+                        note_length = parseNumber();
+                        string_pointer--;
+                        break;
+                    case '.': // dotted note length
+                        dot_modifier *= 1.5;
+                        break;
+                    }
+
+                    my_char = mml_string.charAt(++string_pointer);
+                }
+                Serial.println(dot_modifier);
+                timer = micros() + dot_modifier * (period_micros / (note_length));
                 break;
+            }
             case 'l': // **** NOTE LENGTH COMMAND ****
                 setNoteLength(parseNumber());
                 break;
@@ -195,6 +220,7 @@ public:
             my_char = mml_string.charAt(string_pointer);
         }
         end_index = string_pointer;
+        // string_pointer--;
         return (mml_string.substring(start_index, end_index).toInt());
     }
 

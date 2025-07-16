@@ -4,12 +4,12 @@
 class mResonz
 {
 public:
-    mResonz()
+    mResonz(float freq, float rq)
     {
-        init();
+        init(freq, rq);
     };
 
-    void init()
+    void init(float freq, float rq)
     {
         m_b1 = 0.f;
         m_b2 = 0.f;
@@ -22,6 +22,8 @@ public:
         m_rq = 0;
 
         radians_per_sample = 6.28318530717958 / AUDIO_RATE;
+
+        updateParameters(freq, rq);
     }
 
     // center freq and rq = bandwidth / centerFreq (reciprocal of Q)

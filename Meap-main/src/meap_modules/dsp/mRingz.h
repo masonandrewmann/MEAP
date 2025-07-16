@@ -4,12 +4,12 @@
 class mRingz
 {
 public:
-    mRingz()
+    mRingz(float freq, float decay_time)
     {
-        init();
+        init(freq, decay_time);
     };
 
-    void init()
+    void init(float freq, float decay_time)
     {
         m_b1 = 0.f;
         m_b2 = 0.f;
@@ -19,6 +19,7 @@ public:
         m_decay_time = 0.f;
 
         radians_per_sample = 6.28318530717958 / AUDIO_RATE;
+        updateParameters(freq, decay_time);
     }
 
     // center frequency and decay time (RT60) in seconds
