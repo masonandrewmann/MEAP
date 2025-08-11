@@ -42,8 +42,7 @@
   will be read. It's really just a quick and convenient way of swapping between tables as you might do manually with mOscil. By default, these vital wavetables
   have 256 frames so you can easily connect the output of an 8-bit oscillator or envelope to the setFrame function to sweep through frames.
 */
-// template <uint16_t FRAME_SIZE, uint16_t UPDATE_RATE, bool DITHER_PHASE=false>
-template <uint32_t FRAME_SIZE, uint32_t NUM_FRAMES, uint16_t UPDATE_RATE>
+template <uint32_t FRAME_SIZE, uint32_t NUM_FRAMES, uint16_t UPDATE_RATE, class T = int16_t, uint8_t INTERP = mINTERP_NONE>
 class mWavetable
 {
 
@@ -53,9 +52,10 @@ public:
     can be found in the table ".h" file if you are using a table made for
     Mozzi by the int8_t2mozzi.py python script in Mozzi's python
     folder.*/
-  mWavetable(const int16_t *TABLE_NAME)
+  mWavetable(const T *TABLE_NAME)
       : table(TABLE_NAME)
   {
+    cells_1 = FRAME_SIZE - 1;
   }
 
   /** Constructor.
@@ -66,27 +66,30 @@ public:
     */
   mWavetable()
   {
+    cells_1 = FRAME_SIZE - 1;
   }
 
   /** Updates the phase according to the current frequency and returns the sample at the new phase position.
     @return the next sample.
     */
-  inline int16_t next()
+  inline T next()
   {
 
     incrementPhase();
 
-    uint64_t index = frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (FRAME_SIZE - 1));
+    if (INTERP == mINTERP_LINEAR)
+    {
+      // WARNNG this is hard coded for when OSCIL_F_BITS is 16
+      uint64_t index = ((phase_fractional >> OSCIL_F_BITS) & (cells_1));
+      uint64_t next_index = ((index + 1) & (cells_1));
 
-    int64_t out = FLASH_OR_RAM_READ<const int16_t>(table + index);
-    int64_t difference = FLASH_OR_RAM_READ<const int16_t>((table + 1) + index) - out;
-
-    int64_t fractional = phase_fractional & 65535; // remove integer component leaving only fraction, maybe i could just cast to uint16_t
-
-    int64_t diff_fraction = (difference * fractional) >> 16;
-    out += diff_fraction;
-
-    return out;
+      int64_t out = FLASH_OR_RAM_READ<const T>(table + frame_offset + index);
+      return (out + (((phase_fractional & 0b1111111111111111) >> 8) * ((FLASH_OR_RAM_READ<const T>(table + frame_offset + next_index) - out)) >> 8));
+    }
+    else
+    {
+      return FLASH_OR_RAM_READ<const T>(table + frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (cells_1)));
+    }
   }
 
   /** Sets frame of wavetable.
@@ -103,7 +106,7 @@ public:
   /** Change the sound table which will be played by the Oscil.
     @param TABLE_NAME is the name of the array in the table ".h" file you're using.
     */
-  void setTable(const int16_t *TABLE_NAME)
+  void setTable(const T *TABLE_NAME)
   {
     table = TABLE_NAME;
   }
@@ -240,19 +243,13 @@ private:
     phase_fractional += phase_increment_fractional;
   }
 
-  /** Returns the current sample.
-   */
-  inline int16_t readTable()
-  {
-    return FLASH_OR_RAM_READ<const int16_t>(table + frame_offset + ((phase_fractional >> OSCIL_F_BITS) & (FRAME_SIZE - 1)));
-  }
-
   // CLASS VARIABLES
   uint64_t phase_fractional;
   uint64_t phase_increment_fractional;
   uint64_t startpos_fractional, endpos_fractional;
   uint64_t frame_offset;
-  const int16_t *table;
+  const T *table;
+  int32_t cells_1;
 };
 
 #endif /* MEAP_WAVETABLE_H */

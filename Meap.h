@@ -20,16 +20,6 @@
 #define MOZZI_AUDIO_CHANNELS MOZZI_STEREO
 #endif
 
-// #if defined(MEAPV4B)
-// #include "hardware_support/meap_v4b.h"
-// #elif defined(MEAPV4C)
-// #include "hardware_support/meap_v4c.h"
-// #else
-// #error No valid hardware version defined
-// #endif
-
-// #define ESP_SAMPLE_SIZE (2 * sizeof(int16_t))
-// #define ESP_SAMPLE_SIZE 4 // 2 * sizeof(int16_t)
 #include "Arduino.h"
 #include <Mozzi.h>
 
@@ -135,7 +125,7 @@
 
 // ---- EFFECTS ----
 #include <meap_modules/effects/mSchroederReverb.h>
-#include <meap_modules/effects/mDattorroPlate.h>
+#include <meap_modules/effects/mPlateReverb.h>
 #include <meap_modules/effects/mDigitalDelay.h>
 #include <meap_modules/effects/mBitcrusher.h>
 // #include <meap_modules/effects/mAnalogDelay.h>
@@ -189,8 +179,6 @@ bool _esp32_can_buffer_next = true; // initialize to true
 int16_t _esp32_prev_sample[2];
 
 int16_t meap_input_frame[2];
-
-// #define ESP_SAMPLE_SIZE (2 * sizeof(int16_t))
 
 inline bool esp32_tryWriteSample()
 {

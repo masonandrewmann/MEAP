@@ -1,14 +1,14 @@
 // implements the plate reverb described by Jon Dattorro in his paper "Effect Design Part 1: Reverberator and Other Filters"
-#ifndef MDATTORRO_PLATE_H_
-#define MDATTORRO_PLATE_H_
+#ifndef MPLATE_REVERB_H_
+#define MPLATE_REVERB_H_
 
 #include <meap_modules/generators/mSineLFO.h>
 
 template <class T = int32_t>
-class mDattorroPlate
+class mPlateReverb
 {
 public:
-    mDattorroPlate(float decay = 0.6, float damping = 0.8, float bandwidth = 0.2, float mix = 0.5)
+    mPlateReverb(float decay = 0.6, float damping = 0.8, float bandwidth = 0.2, float mix = 0.5)
     {
         init(decay, damping, bandwidth, mix);
     };
@@ -123,4 +123,4 @@ public:
     mSineLFO<AUDIO_RATE> lfo2;
 };
 
-#endif // MDATTORRO_PLATE_H_
+#endif // MPLATE_REVERB_H_
