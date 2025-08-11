@@ -9,8 +9,8 @@ Meap meap;                                            // creates MEAP object to 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);  // defines MIDI in/out ports
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
-#include <tables/sin8192_int8.h>  // loads sine wavetable
-mOscil<8192, AUDIO_RATE> my_sine(SIN8192_DATA);
+#include <tables/sin8192_int16.h>  // loads sine wavetable
+mOscil<8192, AUDIO_RATE, int16_t> my_sine(sin8192_int16_DATA);
 ADSR<CONTROL_RATE, AUDIO_RATE> my_envelope;
 
 void setup() {
@@ -42,8 +42,8 @@ void updateControl() {
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output
 	*/
 AudioOutput_t updateAudio() {
-  int64_t out_sample = my_sine.next() * my_envelope.next() >> 8;
-  return StereoOutput::fromNBit(8, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
+  int32_t out_sample = (my_sine.next() * my_envelope.next()) >> 8;
+  return StereoOutput::fromNBit(16, (out_sample * meap.volume_val)>>12, (out_sample * meap.volume_val)>>12);
 }
 
 /**

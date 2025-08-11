@@ -1,6 +1,8 @@
 #ifndef MEAP_CHOPPER_H_
 #define MEAP_CHOPPER_H_
 
+#include <Meap_classes.h>
+
 template <uint32_t mAUDIO_RATE>
 
 class mChopper

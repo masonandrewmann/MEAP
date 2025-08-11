@@ -1,6 +1,7 @@
 #ifndef MEAP_OSCBANK_H
 #define MEAP_OSCBANK_H
 
+#include <Meap.h>
 #include <dependencies/LinkedList/LinkedList.h>
 
 template <uint32_t mNUM_CELLS, uint32_t mAUDIO_RATE, uint16_t mCONTROL_RATE, uint8_t mPOLYPHONY, class T = int8_t>

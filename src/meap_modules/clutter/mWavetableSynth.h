@@ -1,6 +1,7 @@
 #ifndef MEAP_WAVETABLESYNTH_H_
 #define MEAP_WAVETABLESYNTH_H_
 
+#include <Meap.h>
 #include <dependencies/LinkedList/LinkedList.h>
 #include <meap_modules/generators/mWavetable.h>
 template <uint32_t mAUDIO_RATE, uint32_t mCONTROL_RATE, uint8_t mPOLYPHONY, uint32_t mFRAME_SIZE, uint32_t mNUM_FRAMES>

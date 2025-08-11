@@ -1,6 +1,8 @@
 #ifndef MEAP_RANDOM_DISTRIBUTION_H_
 #define MEAP_RANDOM_DISTRIBUTION_H_
 
+#include <Meap_classes.h>
+
 #define NV_MAGICCONST 1.7155277699214135 // 4 * _exp(-0.5)/_sqrt(2.0)
 
 class mRandomDistribution

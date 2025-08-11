@@ -1,6 +1,7 @@
 #ifndef mSAMPLERPOLY_H_
 #define mSAMPLERPOLY_H_
 
+#include <Meap.h>
 #include <dependencies/LinkedList/LinkedList.h>
 
 template <uint64_t mMAX_SAMPLE_LENGTH, uint16_t mPOLYPHONY = 4, class T = int8_t>

@@ -17,25 +17,30 @@ public:
         switcher = false;
         mml_string = mml_string_;
         string_pointer = 0;
-        using_instrument = true;
 
         prev_note = 0;
 
         setTempo(120);
         setVelocity(100);
         setOctave(3);
+        playing = false;
     }
 
     void start()
     {
+        playing = true;
+        timer = micros();
     }
 
     void stop()
     {
+        playing = false;
+        string_pointer = 0;
     }
 
     void pause()
     {
+        playing = false;
     }
 
     // sets number of microseconds in one measure
@@ -224,7 +229,7 @@ public:
         return (mml_string.substring(start_index, end_index).toInt());
     }
 
-    bool using_instrument;
+    bool playing;
 
     String mml_string;
     int16_t string_pointer;

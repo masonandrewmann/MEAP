@@ -1,6 +1,8 @@
 #ifndef MSAMPLEGRAINCLOUD_H_
 #define MSAMPLEGRAINCLOUD_H_
 
+#include <Meap_classes.h>
+
 template <uint32_t mSAMPLE_LENGTH, uint16_t mPOLYPHONY = 8, class T = int8_t>
 class mSampleGrainCloud
 {

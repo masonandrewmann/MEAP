@@ -14,6 +14,13 @@
 
 #include "driver/i2s_std.h"
 
+#include "esp_random.h"
+#include "bootloader_random.h"
+
+// #include <Meap.h>
+
+bool Meap::cap1280_touch_flag;
+
 extern i2s_chan_handle_t tx_handle;
 extern i2s_chan_handle_t rx_handle;
 
@@ -24,6 +31,80 @@ Meap::Meap()
 
 void Meap::begin()
 {
+  Meap::begin(mMEAP4C);
+}
+
+void Meap::begin(meap_hardware_versions hardware_version_)
+{
+  hardware_version = hardware_version_;
+  switch (hardware_version)
+  {
+  case mMEAP4B:
+    MEAP_MUX_CONTROL_PIN_A = 38;
+    MEAP_MUX_CONTROL_PIN_B = 45;
+    MEAP_MUX_CONTROL_PIN_C = 46;
+    MEAP_MUX_DIP_PIN = 12;
+    MEAP_MUX_AUX_PIN = 11;
+    MEAP_POT_0_PIN = 10;
+    MEAP_POT_1_PIN = 9;
+    MEAP_VOLUME_POT_PIN = 17;
+    MEAP_MIDI_IN_PIN = 43;
+    MEAP_MIDI_OUT_PIN = 44;
+    MEAP_CV1_PIN = 41;
+    MEAP_CV2_PIN = 42;
+    MEAP_LED_0_PIN = 36;
+    MEAP_LED_1_PIN = 37;
+    MEAP_I2C_SDA_PIN = 21;
+    MEAP_I2C_SCL_PIN = 14;
+    MEAP_I2S_MCLK = 40;
+    MEAP_I2S_BCLK = 35;
+    MEAP_I2S_WS = 39;
+    MEAP_I2S_DOUT = 47;
+    MEAP_I2S_DIN = 48;
+    touchSetCycles(1, 1);
+
+    break;
+  case mMEAP4C:
+    MEAP_MUX_CONTROL_PIN_A = 38;
+    MEAP_MUX_CONTROL_PIN_B = 45;
+    MEAP_MUX_CONTROL_PIN_C = 46;
+    MEAP_MUX_DIP_PIN = 12;
+    MEAP_MUX_AUX_PIN = 11;
+    MEAP_POT_0_PIN = 10;
+    MEAP_POT_1_PIN = 9;
+    MEAP_VOLUME_POT_PIN = 17;
+    MEAP_MIDI_IN_PIN = 44;
+    MEAP_MIDI_OUT_PIN = 43;
+    MEAP_CV1_PIN = 13;
+    MEAP_CV2_PIN = 18;
+    MEAP_LED_0_PIN = 42;
+    MEAP_LED_1_PIN = 42;
+    MEAP_I2C_SDA_PIN = 21;
+    MEAP_I2C_SCL_PIN = 14;
+    MEAP_I2S_MCLK = 40;
+    MEAP_I2S_BCLK = 41;
+    MEAP_I2S_WS = 39;
+    MEAP_I2S_DOUT = 47;
+    MEAP_I2S_DIN = 48;
+
+    MEAP_CAP_IRQ_PIN = 8;
+    cap1280_touch_flag = false;
+
+    Wire.begin(MEAP_I2C_SDA_PIN, MEAP_I2C_SCL_PIN); // need to specify address 0x0A when sending messages
+
+    cap1280_write_reg(0x0, 0b00000000);  // make sure we are in active state
+    cap1280_write_reg(0x24, 0b00000000); // set averaging and sampling
+    cap1280_write_reg(0x1F, 0b00001111); // set sensitivity (default 0 010 1111)
+    cap1280_write_reg(0x44, 0b01000000); // set interrupt on release
+    cap1280_write_reg(0x28, 0b00000000); // disable retriggering
+    cap1280_write_reg(0x27, 0b11111111); // enable all interrupts
+    cap1280_write_reg(0x26, 0b11111111); // force calibration routine
+    cap1280_write_reg(0x2A, 0b00001100); // turn off MTB
+
+    attachInterrupt(digitalPinToInterrupt(MEAP_CAP_IRQ_PIN), cap1280_interrupt, CHANGE);
+    break;
+  }
+
   pinMode(MEAP_MUX_CONTROL_PIN_A, OUTPUT); // mux a
   pinMode(MEAP_MUX_CONTROL_PIN_B, OUTPUT); // mux b
   pinMode(MEAP_MUX_CONTROL_PIN_C, OUTPUT); // mux c
@@ -62,12 +143,12 @@ void Meap::begin()
   // REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_FORCE, 1); // adc controlled by software
   // REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD_FORCE, 1); // channel select controlled by software
   // REG_WRITE(SENS_SAR_ATTEN1_REG, 0xFFFFFFFF); // set attenuation
-  analogRead(8); // rlly hacky, just let the API get ADC1 set up bc it seems like i was missing something
+  // analogRead(8); // rlly hacky, just let the API get ADC1 set up bc it seems like i was missing something
 
   // set up ADC2
   // REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_FORCE, 1); // adc controlled by software
   // REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_SAR2_EN_PAD_FORCE, 1); // channel select controlled by software
-  analogRead(11); // rlly hacky, just let the API get ADC2 set up bc it seems like i was missing something!
+  // analogRead(11); // rlly hacky, just let the API get ADC2 set up bc it seems like i was missing something!
 
   // set up touch FSM
   // REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL2_REG, RTC_CNTL_TOUCH_START_FORCE, 1); // software will start readings
@@ -83,15 +164,14 @@ void Meap::begin()
   // touchRead(8);
   // REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL1_REG, RTC_CNTL_TOUCH_MEAS_NUM, 1); // only one reading
   // REG_SET_FIELD(SENS_SAR_TOUCH_CONF_REG, SENS_TOUCH_OUTEN, 1 << 1);    // choose channel 1 to begin
-  touchSetCycles(1, 1);
 
   pinMode(18, INPUT); // for external multiplexer
 
-#ifndef MEAP_LEGACY
   codecInit();
-#endif
 
-  randomSeed(10); // initializes random number generator
+  bootloader_random_enable();
+  randomSeed(esp_random()); // initializes random number generator
+  bootloader_random_disable();
   xorshiftSeed((long)random(1000));
 }
 
@@ -111,155 +191,155 @@ float Meap::frand() // generates a random float between 0 and 1
   return ((float)xorshift96() / 0xFFFFFFFF);
 }
 
-void Meap::readInputsFast()
-{
-  uint64_t curr_time = millis();
+// void Meap::readInputsFast()
+// {
+//   uint64_t curr_time = millis();
 
-  // HANDLING DIP AND AUX MUX
-  if (curr_time > aux_mux_ready_time)
-  {
-    // ******** DIP INPUTS ********
-    dip_vals[dip_pins[aux_mux_read_channel]] = !digitalRead(MEAP_MUX_DIP_PIN); // read the DIP mux common pin
+//   // HANDLING DIP AND AUX MUX
+//   if (curr_time > aux_mux_ready_time)
+//   {
+//     // ******** DIP INPUTS ********
+//     dip_vals[dip_pins[aux_mux_read_channel]] = !digitalRead(MEAP_MUX_DIP_PIN); // read the DIP mux common pin
 
-    // check if dip switch changed states
-    if (dip_vals[dip_pins[aux_mux_read_channel]] != prev_dip_vals[dip_pins[aux_mux_read_channel]])
-    {
-      updateDip(dip_pins[aux_mux_read_channel], dip_vals[dip_pins[aux_mux_read_channel]]);
-      prev_dip_vals[dip_pins[aux_mux_read_channel]] = dip_vals[dip_pins[aux_mux_read_channel]];
-    }
+//     // check if dip switch changed states
+//     if (dip_vals[dip_pins[aux_mux_read_channel]] != prev_dip_vals[dip_pins[aux_mux_read_channel]])
+//     {
+//       updateDip(dip_pins[aux_mux_read_channel], dip_vals[dip_pins[aux_mux_read_channel]]);
+//       prev_dip_vals[dip_pins[aux_mux_read_channel]] = dip_vals[dip_pins[aux_mux_read_channel]];
+//     }
 
-    // ******** AUX MUX INPUTS ********
-    if (REG_GET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_DONE_SAR))
-    {
-      aux_mux_vals[aux_mux_read_channel] = REG_GET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_DATA_SAR);
-    }
+//     // ******** AUX MUX INPUTS ********
+//     if (REG_GET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_DONE_SAR))
+//     {
+//       aux_mux_vals[aux_mux_read_channel] = REG_GET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_DATA_SAR);
+//     }
 
-    // move to next channel
-    aux_mux_read_channel = (aux_mux_read_channel + 1) % 8;
-    setMuxChannel(aux_mux_read_channel);
+//     // move to next channel
+//     aux_mux_read_channel = (aux_mux_read_channel + 1) % 8;
+//     setMuxChannel(aux_mux_read_channel);
 
-    // start an adc conversion for aux mux
-    REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_SAR2_EN_PAD, 1);     // select channel. no bitshift for GPIO11 ADC2 Channel 0
-    REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_SAR, 0); // reset conversion register
-    REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_SAR, 1); // start a conversion
+//     // start an adc conversion for aux mux
+//     REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_SAR2_EN_PAD, 1);     // select channel. no bitshift for GPIO11 ADC2 Channel 0
+//     REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_SAR, 0); // reset conversion register
+//     REG_SET_FIELD(SENS_SAR_MEAS2_CTRL2_REG, SENS_MEAS2_START_SAR, 1); // start a conversion
 
-    // update timer
-    aux_mux_ready_time = millis() + mux_propogation_delay;
-  }
+//     // update timer
+//     aux_mux_ready_time = millis() + mux_propogation_delay;
+//   }
 
-  // reading built-in pot conversions
-  if (adc1_mode == kWAITING && REG_GET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_DONE_SAR))
-  {
-    pot_vals[pot_read_num] = REG_GET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_DATA_SAR);
-    pot_read_num = (pot_read_num + 1) % 2;
-    adc1_mode = kREADY;
-  }
+//   // reading built-in pot conversions
+//   if (adc1_mode == kWAITING && REG_GET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_DONE_SAR))
+//   {
+//     pot_vals[pot_read_num] = REG_GET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_DATA_SAR);
+//     pot_read_num = (pot_read_num + 1) % 2;
+//     adc1_mode = kREADY;
+//   }
 
-  // starting built-in pot conversions
-  if (adc1_mode == kREADY)
-  {
-    REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD, 1 << pot_pins[pot_read_num]); // select channel
-    REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 0);                       // reset conversion register
-    REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 1);                       // start a conversion
+//   // starting built-in pot conversions
+//   if (adc1_mode == kREADY)
+//   {
+//     REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_SAR1_EN_PAD, 1 << pot_pins[pot_read_num]); // select channel
+//     REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 0);                       // reset conversion register
+//     REG_SET_FIELD(SENS_SAR_MEAS1_CTRL2_REG, SENS_MEAS1_START_SAR, 1);                       // start a conversion
 
-    // pot_update_time = curr_time + pot_update_delay;
-    adc1_mode = kWAITING;
-  }
+//     // pot_update_time = curr_time + pot_update_delay;
+//     adc1_mode = kWAITING;
+//   }
 
-  // Starting touch conversion
-  if (curr_time > touch_update_time)
-  {
-    if (touch_mode == kREADY)
-    {
-      REG_SET_FIELD(SENS_SAR_TOUCH_CONF_REG, SENS_TOUCH_OUTEN, 1 << touch_pins[touch_read_channel]);
+//   // Starting touch conversion
+//   if (curr_time > touch_update_time)
+//   {
+//     if (touch_mode == kREADY)
+//     {
+//       REG_SET_FIELD(SENS_SAR_TOUCH_CONF_REG, SENS_TOUCH_OUTEN, 1 << touch_pins[touch_read_channel]);
 
-      REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL2_REG, RTC_CNTL_TOUCH_START_EN, 0); // clear reading start register
-      REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL2_REG, RTC_CNTL_TOUCH_START_EN, 1); // begin a reading
+//       REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL2_REG, RTC_CNTL_TOUCH_START_EN, 0); // clear reading start register
+//       REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL2_REG, RTC_CNTL_TOUCH_START_EN, 1); // begin a reading
 
-      touch_update_time = curr_time + touch_update_delay;
-      touch_mode = kWAITING;
-    }
-  }
+//       touch_update_time = curr_time + touch_update_delay;
+//       touch_mode = kWAITING;
+//     }
+//   }
 
-  int64_t temp_reading;
+//   int64_t temp_reading;
 
-  switch (touch_read_channel)
-  {
-  case 0:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS2_REG, SENS_TOUCH_PAD2_DATA);
-    break;
-  case 1:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS4_REG, SENS_TOUCH_PAD4_DATA);
-    break;
-  case 2:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS6_REG, SENS_TOUCH_PAD6_DATA);
-    break;
-  case 3:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS8_REG, SENS_TOUCH_PAD8_DATA);
-    break;
-  case 4:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS1_REG, SENS_TOUCH_PAD2_DATA);
-    break;
-  case 5:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS3_REG, SENS_TOUCH_PAD3_DATA);
-    break;
-  case 6:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS5_REG, SENS_TOUCH_PAD5_DATA);
-    break;
-  case 7:
-    temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS7_REG, SENS_TOUCH_PAD7_DATA);
-    break;
-  }
+//   switch (touch_read_channel)
+//   {
+//   case 0:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS2_REG, SENS_TOUCH_PAD2_DATA);
+//     break;
+//   case 1:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS4_REG, SENS_TOUCH_PAD4_DATA);
+//     break;
+//   case 2:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS6_REG, SENS_TOUCH_PAD6_DATA);
+//     break;
+//   case 3:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS8_REG, SENS_TOUCH_PAD8_DATA);
+//     break;
+//   case 4:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS1_REG, SENS_TOUCH_PAD2_DATA);
+//     break;
+//   case 5:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS3_REG, SENS_TOUCH_PAD3_DATA);
+//     break;
+//   case 6:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS5_REG, SENS_TOUCH_PAD5_DATA);
+//     break;
+//   case 7:
+//     temp_reading = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS7_REG, SENS_TOUCH_PAD7_DATA);
+//     break;
+//   }
 
-  // reading touch conversions
-  if (touch_mode == kWAITING && (REG_GET_FIELD(SENS_SAR_TOUCH_CHN_ST_REG, SENS_TOUCH_MEAS_DONE) || temp_reading < 2000))
-  {
-    switch (touch_read_channel)
-    {
-    case 0:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS2_REG, SENS_TOUCH_PAD2_DATA);
-      break;
-    case 1:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS4_REG, SENS_TOUCH_PAD4_DATA);
-      break;
-    case 2:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS6_REG, SENS_TOUCH_PAD6_DATA);
-      break;
-    case 3:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS8_REG, SENS_TOUCH_PAD8_DATA);
-      break;
-    case 4:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS1_REG, SENS_TOUCH_PAD2_DATA);
-      break;
-    case 5:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS3_REG, SENS_TOUCH_PAD3_DATA);
-      break;
-    case 6:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS5_REG, SENS_TOUCH_PAD5_DATA);
-      break;
-    case 7:
-      touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS7_REG, SENS_TOUCH_PAD7_DATA);
-      break;
-    }
+//   // reading touch conversions
+//   if (touch_mode == kWAITING && (REG_GET_FIELD(SENS_SAR_TOUCH_CHN_ST_REG, SENS_TOUCH_MEAS_DONE) || temp_reading < 2000))
+//   {
+//     switch (touch_read_channel)
+//     {
+//     case 0:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS2_REG, SENS_TOUCH_PAD2_DATA);
+//       break;
+//     case 1:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS4_REG, SENS_TOUCH_PAD4_DATA);
+//       break;
+//     case 2:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS6_REG, SENS_TOUCH_PAD6_DATA);
+//       break;
+//     case 3:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS8_REG, SENS_TOUCH_PAD8_DATA);
+//       break;
+//     case 4:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS1_REG, SENS_TOUCH_PAD2_DATA);
+//       break;
+//     case 5:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS3_REG, SENS_TOUCH_PAD3_DATA);
+//       break;
+//     case 6:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS5_REG, SENS_TOUCH_PAD5_DATA);
+//       break;
+//     case 7:
+//       touch_avgs[touch_read_channel] = REG_GET_FIELD(SENS_SAR_TOUCH_STATUS7_REG, SENS_TOUCH_PAD7_DATA);
+//       break;
+//     }
 
-    if (touch_avgs[touch_read_channel] > touch_threshold)
-    {
-      touch_vals[touch_read_channel] = 1;
-    }
-    else
-    {
-      touch_vals[touch_read_channel] = 0;
-    }
-    if (touch_vals[touch_read_channel] != prev_touch_vals[touch_read_channel])
-    {
-      updateTouch(touch_read_channel, touch_vals[touch_read_channel]);
-      prev_touch_vals[touch_read_channel] = touch_vals[touch_read_channel];
-    }
+//     if (touch_avgs[touch_read_channel] > touch_threshold)
+//     {
+//       touch_vals[touch_read_channel] = 1;
+//     }
+//     else
+//     {
+//       touch_vals[touch_read_channel] = 0;
+//     }
+//     if (touch_vals[touch_read_channel] != prev_touch_vals[touch_read_channel])
+//     {
+//       updateTouch(touch_read_channel, touch_vals[touch_read_channel]);
+//       prev_touch_vals[touch_read_channel] = touch_vals[touch_read_channel];
+//     }
 
-    touch_read_channel = (touch_read_channel + 1) % 8;
-    touch_mode = kREADY;
-  }
-}
+//     touch_read_channel = (touch_read_channel + 1) % 8;
+//     touch_mode = kREADY;
+//   }
+// }
 
 // Reads DIP inputs, touch pads and potentiometers using blocking functions. Not the most efficient way to read them but it works.
 // takes ~133us eek
@@ -272,14 +352,17 @@ void Meap::readInputs()
   for (int i = 8; --i >= 0;)
   {
     setMuxChannel(i); // repeated several times to allow address signals to propogate through multiplexers
-    touch_avgs[i] = touchRead(touch_pins[i]);
 
     // process the touch pads
-    touch_vals[i] = touch_avgs[i] > touch_threshold;
-    if (touch_vals[i] != prev_touch_vals[i])
+    if (hardware_version == mMEAP4B)
     {
-      updateTouch(i, touch_vals[i]);
-      prev_touch_vals[i] = touch_vals[i];
+      touch_avgs[i] = touchRead(touch_pins[i]);
+      touch_vals[i] = touch_avgs[i] > touch_threshold;
+      if (touch_vals[i] != prev_touch_vals[i])
+      {
+        updateTouch(i, touch_vals[i]);
+        prev_touch_vals[i] = touch_vals[i];
+      }
     }
 
     dip_vals[dip_pins[i]] = !digitalRead(MEAP_MUX_DIP_PIN); // read the DIP mux common pin
@@ -292,14 +375,71 @@ void Meap::readInputs()
     }
   }
 
+  if (hardware_version == mMEAP4C)
+  {
+    if (cap1280_touch_flag)
+    {
+      cap1280_get_touch_data(touch_vals);
+      for (int i = 8; --i >= 0;)
+      {
+        if (prev_touch_vals[i] != touch_vals[i])
+        {
+          updateTouch(i, touch_vals[i]);
+          prev_touch_vals[i] = touch_vals[i];
+        }
+      }
+
+      cap1280_touch_flag = false;
+    }
+  }
+
   // read builtin pots
   pot_vals[0] = (pot_vals[0] * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_POT_0_PIN));
   pot_vals[1] = (pot_vals[1] * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_POT_1_PIN));
   volume_val = (volume_val * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_VOLUME_POT_PIN));
+}
 
-  // pot_vals[0] = analogRead(MEAP_POT_0_PIN);
-  // pot_vals[1] = analogRead(MEAP_POT_1_PIN);
-  // volume_val = analogRead(MEAP_VOLUME_POT_PIN);
+uint8_t Meap::cap1280_read_reg(uint8_t reg)
+{
+  uint8_t val;
+  Wire.beginTransmission(0x28);
+  Wire.write(reg);
+  Wire.endTransmission(false);
+  Wire.requestFrom((uint8_t)0x28, 2);
+  val = Wire.read();
+  return val;
+}
+
+void Meap::cap1280_write_reg(uint8_t reg, uint8_t val)
+{
+  Wire.beginTransmission(0x28);
+  Wire.write(reg);
+  Wire.write(val);
+  Wire.endTransmission();
+}
+
+void Meap::cap1280_clear_interrupt()
+{
+  cap1280_write_reg(0x00, 0b00000000);
+}
+
+void Meap::cap1280_get_touch_data(int data[8])
+{
+  cap1280_clear_interrupt();
+  uint8_t my_reg = cap1280_read_reg(0x03);
+  data[3] = (my_reg >> 7) & 0x01;
+  data[7] = (my_reg >> 6) & 0x01;
+  data[2] = (my_reg >> 5) & 0x01;
+  data[6] = (my_reg >> 4) & 0x01;
+  data[1] = (my_reg >> 3) & 0x01;
+  data[5] = (my_reg >> 2) & 0x01;
+  data[0] = (my_reg >> 1) & 0x01;
+  data[4] = my_reg & 0x01;
+}
+
+void Meap::cap1280_interrupt()
+{
+  cap1280_touch_flag = true;
 }
 
 StereoSample Meap::pan2(int64_t sample, uint8_t pos)
@@ -332,7 +472,6 @@ void Meap::writeLED(uint8_t led_num, uint8_t led_level)
   digitalWrite(led_pins[led_num], led_level);
 }
 
-#ifndef MEAP_LEGACY
 uint32_t Meap::SGread(uint32_t reg)
 {
   uint32_t val;
@@ -371,41 +510,34 @@ uint32_t Meap::SGmodify(uint32_t reg, uint32_t val, uint32_t iMask)
 bool Meap::sgtlInit()
 {
   delay(5);
-  // Serial.print("chip ID = ");
-  // delay(5);
-  // unsigned int n = SGread(CHIP_ID);
-  // Serial.println(n, HEX);
-  int r = SGwrite(CHIP_ANA_POWER, 0x4060); // VDDD is externally driven with 1.8V
-  if (!r)
-    return false;
   SGwrite(CHIP_LINREG_CTRL, 0x006C);   // VDDA & VDDIO both over 3.1V
-  SGwrite(CHIP_REF_CTRL, 0x01F2);      // VAG=1.575, normal ramp, +12.5% bias current
-  SGwrite(CHIP_LINE_OUT_CTRL, 0x0F22); // LO_VAGCNTRL=1.65V, OUT_CURRENT=0.54mA
-  SGwrite(CHIP_SHORT_CTRL, 0x4446);    // allow up to 125mA
-  SGwrite(CHIP_ANA_CTRL, 0x0137);      // enable zero cross detectors
-
-  SGwrite(CHIP_ANA_POWER, 0x40FF); // power up: lineout, hp, adc, dac
-
-  SGwrite(CHIP_DIG_POWER, 0x0073); // power up all digital stuff
-  delay(400);
-  SGwrite(CHIP_LINE_OUT_VOL, 0x1F1F); // max volume output (clips in speakers)
-  // SGwrite(CHIP_LINE_OUT_VOL, 0x1414); // lower volume output
+  SGwrite(CHIP_REF_CTRL, 0x01FF);      // VAG=1.575, slow ramp, +12.5% bias current
+  SGwrite(CHIP_LINE_OUT_CTRL, 0x0322); // LO_VAGCNTRL=1.65V, OUT_CURRENT=0.36mA
+  SGwrite(CHIP_DIG_POWER, 0x0073);     // power up all digital stuff
+  SGwrite(CHIP_ANA_POWER, 0x42FB);     // 4afb
 
   SGwrite(CHIP_CLK_CTRL, 0x0000); // 32 kHz, 256*Fs
   SGwrite(CHIP_I2S_CTRL, 0x0030); // SCLK=64*Fs, 16bit, I2S format
 
-  // default signal routing is ok?
-  SGwrite(CHIP_SSS_CTRL, 0x0010);    // ADC->I2S, I2S->DAC
-  SGwrite(CHIP_ADCDAC_CTRL, 0x0000); // disable dac mute
+  SGwrite(CHIP_SSS_CTRL, 0x0010); // ADC->I2S, I2S->DAC
+
+  SGwrite(CHIP_ANA_ADC_CTRL, 0xFF); // adc input gain
+  SGwrite(CHIP_MIC_CTRL, 0x142);    // +40dB gain, 2.25v bias, 2kOhm pullup
+
+  SGwrite(CHIP_ANA_HP_CTRL, 0x7F7F); // set output volume to minumum
+
+  SGwrite(CHIP_ANA_CTRL, 0x0026); // enable zero cross detectors / line input, unmute
+
+  int vol = 0x7F;
+  while (vol > 0x18)
+  {
+    vol--;
+    SGwrite(CHIP_ANA_HP_CTRL, (vol << 8) | vol);
+    delay(10);
+  }
+
   SGwrite(CHIP_DAC_VOL, 0x3C3C);     // digital gain, 0dB
-  SGwrite(CHIP_ANA_ADC_CTRL, 0xFF);  // adc input gain
-
-  SGwrite(CHIP_MIC_CTRL, 0x142); // +40dB gain, 2.25v bias, 2kOhm pullup
-
-  // SGwrite(CHIP_ANA_HP_CTRL, 0x0000); // set output volume to +12dB
-  SGwrite(CHIP_ANA_HP_CTRL, 0x1818); // set output volume to 0dB
-  SGwrite(CHIP_ANA_CTRL, 0x0026);    // enable zero cross detectors / line input
-  // SGwrite(CHIP_ANA_CTRL, 0x0022); // enable zero cross detectors / mic input
+  SGwrite(CHIP_ADCDAC_CTRL, 0x0000); // disable dac mute
 
   return true;
 }
@@ -453,23 +585,6 @@ void Meap::codecInit()
   /* Allocate for TX and RX channel at the same time, then they will work in full-duplex mode */
   i2s_new_channel(&chan_cfg, &tx_handle, &rx_handle);
 
-  /* Set the configurations for BOTH TWO channels, since TX and RX channel have to be same in full-duplex mode */
-  // i2s_std_config_t std_cfg = {
-  //     .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(MOZZI_AUDIO_RATE * MOZZI_PDM_RESOLUTION), // 32000 sample rate... eek i want 32768 orrr do i want 32768*8
-  //     .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO),
-  //     .gpio_cfg = {
-  //         .mclk = GPIO_NUM_40,
-  //         .bclk = GPIO_NUM_35,
-  //         .ws = GPIO_NUM_39,
-  //         .dout = GPIO_NUM_47,
-  //         .din = GPIO_NUM_48,
-  //         .invert_flags = {
-  //             .mclk_inv = false,
-  //             .bclk_inv = false,
-  //             .ws_inv = false,
-  //         },
-  //     },
-  // };
   i2s_std_config_t std_cfg = {
       .clk_cfg = I2S_STD_CLK_DEFAULT_CONFIG(MOZZI_AUDIO_RATE * MOZZI_PDM_RESOLUTION), // 32000 sample rate... eek i want 32768 orrr do i want 32768*8
       .slot_cfg = I2S_STD_PHILIPS_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_STEREO),
@@ -494,7 +609,7 @@ void Meap::codecInit()
   i2s_channel_enable(rx_handle);
   delay(1);
   Wire.begin(MEAP_I2C_SDA_PIN, MEAP_I2C_SCL_PIN); // need to specify address 0x0A when sending messages
-  sgtlInit();                                     // initialize codec
-}
+  // i2s_channel_write(tx_handle, &_esp32_prev_sample, 4, &bytes_written, 0); // 4 = 2 * sizeof(int16_t)
 
-#endif
+  sgtlInit(); // initialize codec
+}

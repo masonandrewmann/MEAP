@@ -36,10 +36,9 @@
 #include "driver/i2s_std.h"
 // // I2S communication with SGTL5000 Audio Codec
 
-#include "Meap_classes.h"
-
 #include <MIDI.h> // Arduino Midi library https://github.com/FortySevenEffects/arduino_midi_library
 
+#include "Meap_classes.h"
 // include all mozzi modules
 #include <mozzi_midi.h>
 #include <mozzi_fixmath.h>
@@ -76,34 +75,6 @@
 #include <WaveShaper.h>
 
 #include <meap_modules/tools/midi_notes.h>
-
-// #include <meap_stk/meap_delay.h>
-// #include <meap_stk/meap_delay_linear.h>
-// #include <meap_stk/meap_delay_allpass.h>
-// #include <meap_stk/meap_fir.h>
-// #include <meap_stk/meap_twang.h>
-// #include <meap_stk/meap_one_pole.h>
-// #include <meap_stk/meap_one_zero.h>
-// #include <meap_stk/meap_plucked.h>
-// #include <meap_stk/meap_guitar.h>
-// #include <meap_stk/meap_effect.h>
-// #include <meap_stk/meap_prc_rev.h>
-// #include <meap_stk/meap_biquad.h>
-// #include <meap_stk/meap_bowtable.h>
-// #include <meap_stk/meap_adsr.h>
-// #include <meap_stk/meap_banded_waveguide.h>
-// #include <meap_stk/meap_iir.h>
-// #include <meap_stk/meap_sinewave.h>
-// #include <meap_stk/meap_chorus.h>
-// #include <meap_stk/meap_polezero.h>
-// #include <meap_stk/meap_brass.h>
-// #include <meap_stk/meap_filter.h>
-// #include <meap_stk/meap_bowed.h>
-// #include <meap_stk/meap_twozero.h>
-// #include <meap_stk/meap_lentpitshift.h>
-// #include <meap_stk/meap_recorder.h>
-// #include <meap_stk/meap_freeverb.h>
-// #include <meap_stk/meap_control_sine.h>
 
 // ---- dependencies ----
 #include <dependencies/LinkedList/LinkedList.h>
@@ -167,7 +138,9 @@
 #include <meap_modules/effects/mDattorroPlate.h>
 #include <meap_modules/effects/mDigitalDelay.h>
 #include <meap_modules/effects/mBitcrusher.h>
-#include <meap_modules/effects/mAnalogDelay.h>
+// #include <meap_modules/effects/mAnalogDelay.h>
+#include <meap_modules/effects/mFlanger.h>
+#include <meap_modules/effects/mChorus.h>
 
 // ---- GENERATORS ----
 #include <meap_modules/generators/mSineLFO.h>

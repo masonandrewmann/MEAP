@@ -1,6 +1,7 @@
 #ifndef MGRAINCLOUD_H_
 #define MGRAINCLOUD_H_
 
+#include <Meap_classes.h>
 #include <tables/sin8192_int8.h> // table for Oscils to play
 
 template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, uint16_t MAX_GRAINS = 8, class T = int8_t>

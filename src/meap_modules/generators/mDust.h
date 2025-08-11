@@ -1,6 +1,8 @@
 #ifndef MDUST_H_
 #define MDUST_H_
 
+#include <Meap.h>
+
 template <uint32_t UPDATE_RATE = CONTROL_RATE>
 class mDust
 {

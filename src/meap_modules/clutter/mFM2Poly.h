@@ -1,6 +1,7 @@
 #ifndef MFM2POLY_H_
 #define MFM2POLY_H_
 
+#include <Meap.h>
 #include <tables/sin8192_int8.h> // table for Oscils to play
 #include <dependencies/LinkedList/LinkedList.h>
 

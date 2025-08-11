@@ -2,30 +2,8 @@
   Meap.h - Library accompanying MEAP boards.
   Created by Mason Mann, January 24, 2024.
 */
-#ifndef MEAP_CLASSES_H_1
-#define MEAP_CLASSES_H_1
-
-#include "hardware_support/meap_config_vals.h"
-// #ifndef MEAP_HARDWARE_VERSION
-// #define MEAP_HARDWARE_VERSION MEAP_V4B
-// #endif
-
-// #if MEAP_HARDWARE_VERSION == 1 // version 4B
-// #include "hardware_support/meap_v4b.h"
-// #elif MEAP_HARDWARE_VERSION == 2 // version 4C
-// #include "hardware_support/meap_v4c.h"
-// #endif
-// #include "hardware_support/meap_v4c.h"
-
-// #if defined(MEAPV4B)
-// #include "hardware_support/meap_v4b.h"
-// #elif defined(MEAPV4C)
-// #include "hardware_support/meap_v4c.h"
-// #else
-// #error No valid hardware version defined
-// #endif
-
-#include "hardware_support/meap_v4b.h"
+#ifndef MEAP_CLASSES_MM_H_1
+#define MEAP_CLASSES_MM_H_1
 
 #include <Wire.h>
 #include <hal/adc_hal.h>
@@ -40,6 +18,12 @@
 
 #include <MozziHeadersOnly.h>
 #include <mozzi_rand.h>
+// #include "Meap.h"
+struct MeapNoteAndVoice
+{
+  uint16_t note_num;
+  uint16_t voice_num;
+};
 
 #define MEAP_PI 3.14159265358979;
 #define MEAP_2_PI 6.28318530717958;
@@ -52,22 +36,16 @@ struct StereoSample
   int32_t r;
 };
 
-struct MeapNoteAndVoice
-{
-  uint16_t note_num;
-  uint16_t voice_num;
-};
-
 enum AdcModes
 {
   kWAITING,
   kREADY
 };
 
-enum MEAP_VERSIONS
+enum meap_hardware_versions
 {
-  mmMEAPV4B,
-  mmMEAPV4C
+  mMEAP4B,
+  mMEAP4C
 };
 
 // GLOBAL VARIABLES SO THEY CAN BE SHARED WITH MOZZI FUNCTIONS
@@ -84,6 +62,12 @@ public:
    *
    */
   void begin();
+
+  /**
+   * @brief Sets up various processes for MEAP
+   *
+   */
+  void begin(meap_hardware_versions hardware_version_);
 
   /**
    * @brief Generates a random integer within a specified range, inclusive of the limit numbers.
@@ -210,6 +194,31 @@ public:
    */
   static uint32_t SGmodify(uint32_t reg, uint32_t val, uint32_t iMask);
 
+  /**
+   * @brief Read a 1-byte register on cap1280
+   */
+  uint8_t cap1280_read_reg(uint8_t reg);
+
+  /**
+   * @brief Write a 1-byte register on cap1280
+   */
+  void cap1280_write_reg(uint8_t reg, uint8_t val);
+
+  /**
+   * @brief Write a 1-byte register on cap1280
+   */
+  void cap1280_clear_interrupt();
+
+  /**
+   * @brief Write a 1-byte register on cap1280
+   */
+  void cap1280_get_touch_data(int data[8]);
+
+  /**
+   * @brief Interrupt callback for cap1280
+   */
+  static void cap1280_interrupt();
+
   // variables
   int8_t dip_pins[8] = {0, 1, 2, 3, 4, 7, 5, 6}; // previously {5, 6, 7, 4, 3, 0, 2, 1};
   int8_t dip_vals[8] = {2, 2, 2, 2, 2, 2, 2, 2};
@@ -247,10 +256,37 @@ public:
   uint64_t touch_update_time = 0;
   uint64_t touch_update_delay = 1;
   AdcModes touch_mode = kREADY;
+  static bool cap1280_touch_flag;
 
   // input smoothing
   float meap_alpha = 0.92;
   float meap_one_minus_alpha = 0.08;
+
+  // HARDWARE DEFINITIONS: DO NOT CHANGE
+  meap_hardware_versions hardware_version;
+
+  uint8_t MEAP_MUX_CONTROL_PIN_A;
+  uint8_t MEAP_MUX_CONTROL_PIN_B;
+  uint8_t MEAP_MUX_CONTROL_PIN_C;
+  uint8_t MEAP_MUX_DIP_PIN;
+  uint8_t MEAP_MUX_AUX_PIN;
+  uint8_t MEAP_POT_0_PIN;
+  uint8_t MEAP_POT_1_PIN;
+  uint8_t MEAP_VOLUME_POT_PIN;
+  uint8_t MEAP_MIDI_IN_PIN;
+  uint8_t MEAP_MIDI_OUT_PIN;
+  uint8_t MEAP_CV1_PIN;
+  uint8_t MEAP_CV2_PIN;
+  uint8_t MEAP_LED_0_PIN;
+  uint8_t MEAP_LED_1_PIN;
+  uint8_t MEAP_I2C_SDA_PIN;
+  uint8_t MEAP_I2C_SCL_PIN;
+  uint8_t MEAP_I2S_MCLK;
+  uint8_t MEAP_I2S_BCLK;
+  uint8_t MEAP_I2S_WS;
+  uint8_t MEAP_I2S_DOUT;
+  uint8_t MEAP_I2S_DIN;
+  uint8_t MEAP_CAP_IRQ_PIN;
 
   /**
    * @brief Initializes the SGTL5000 audio codec
@@ -284,4 +320,4 @@ void updateTouch(int number, bool pressed);
  */
 void updateDip(int number, bool up);
 
-#endif // MEAP_CLASSES_H_1
+#endif // MEAP_CLASSES_MM_H_1

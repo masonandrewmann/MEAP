@@ -18,8 +18,7 @@ public:
 
         for (int i = 0; i < 8; i++)
         {
-            modes[i].init();
-            modes[i].updateParameters(ratios[i], times[i]);
+            modes[i].init(ratios[i], times[i]);
         }
 
         env.setTimes(1, 50, 1, 1);

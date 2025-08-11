@@ -1,6 +1,7 @@
 #ifndef MREALSAMPLERPOLY_H_
 #define MREALSAMPLERPOLY_H_
 
+#include <Meap.h>
 #include <dependencies/LinkedList/LinkedList.h>
 
 template <uint32_t mNUM_CELLS, uint16_t mPOLYPHONY = 4, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
