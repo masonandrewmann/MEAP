@@ -30,7 +30,7 @@ public:
     int32_t next()
     {
         int32_t out_sample = 0;
-        float sample = Meap::frand(); // 0 to 1
+        float sample = Meap<MEAP_DEFAULT_VERSION>::frand(); // 0 to 1
 
         if (sample < thresh)
         {

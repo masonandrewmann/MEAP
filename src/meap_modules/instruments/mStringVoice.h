@@ -65,7 +65,7 @@ public:
         T last_sample = 0;
         for (int i = max_delay_length_; --i >= 0;)
         {
-            delay_buffer_[i] = 0.1 * Meap::irand(-velocity, velocity) + 0.9 * last_sample;
+            delay_buffer_[i] = 0.1 * Meap<MEAP_DEFAULT_VERSION>::irand(-velocity, velocity) + 0.9 * last_sample;
             last_sample = delay_buffer_[i];
         }
     }

@@ -20,7 +20,7 @@ public:
     */
     static float triangular(float lo, float hi, float mid)
     {
-        float val = Meap::frand();
+        float val = Meap<MEAP_DEFAULT_VERSION>::frand();
 
         float c = (mid - lo) / (hi - lo);
 
@@ -47,8 +47,8 @@ public:
 
         while (true)
         {
-            u1 = Meap::frand();
-            u2 = 1.0 - Meap::frand();
+            u1 = Meap<MEAP_DEFAULT_VERSION>::frand();
+            u2 = 1.0 - Meap<MEAP_DEFAULT_VERSION>::frand();
             z = NV_MAGICCONST * (u1 - 0.5) / u2;
             zz = z * z / 4.0;
             if (zz <= -log(u2))
@@ -73,7 +73,7 @@ public:
 
     // static int64_t linear(int64_t min, int64_t max)
     // {
-    //     return Meap::irand(min, max);
+    //     return Meap<MEAP_DEFAULT_VERSION>::irand(min, max);
     // }
 
     /** exponential.
@@ -83,7 +83,7 @@ public:
     */
     static float exponential(float lambd)
     {
-        return -log(1.0 - Meap::frand()) / lambd;
+        return -log(1.0 - Meap<MEAP_DEFAULT_VERSION>::frand()) / lambd;
     }
 
     /** linear.
@@ -93,7 +93,7 @@ public:
     */
     static float linear(float lo, float hi)
     {
-        return min(Meap::frand() * (hi - lo) + lo, Meap::frand() * (hi - lo) + lo);
+        return min(Meap<MEAP_DEFAULT_VERSION>::frand() * (hi - lo) + lo, Meap<MEAP_DEFAULT_VERSION>::frand() * (hi - lo) + lo);
     }
 
     /** gamma.
@@ -121,13 +121,13 @@ public:
             float u1, u2, v, x, z, r;
             while (true)
             {
-                u1 = Meap::frand();
+                u1 = Meap<MEAP_DEFAULT_VERSION>::frand();
                 if (u1 < 1e-7)
                     continue;
                 if (u1 > 0.9999999)
                     continue; //  needed?
 
-                u2 = 1.0 - Meap::frand();
+                u2 = 1.0 - Meap<MEAP_DEFAULT_VERSION>::frand();
                 v = log(u1 / (1.0 - u1)) / ainv;
                 x = alpha * exp(v);
                 z = u1 * u1 * u2;
@@ -141,7 +141,7 @@ public:
         }
         else if (alpha == 1.0)
         {
-            return -log(1.0 - Meap::frand()) * beta;
+            return -log(1.0 - Meap<MEAP_DEFAULT_VERSION>::frand()) * beta;
         }
         else //  alpha in 0..1
         {
@@ -150,14 +150,14 @@ public:
             float u, b, p, x, u1;
             while (true)
             {
-                u = Meap::frand();
+                u = Meap<MEAP_DEFAULT_VERSION>::frand();
                 b = (MEAP_EULER + alpha) / MEAP_EULER;
                 p = b * u;
                 if (p <= 1.0)
                     x = pow(p, (1.0 / alpha));
                 else
                     x = -log((b - p) / alpha);
-                u1 = Meap::frand();
+                u1 = Meap<MEAP_DEFAULT_VERSION>::frand();
                 if (p > 1.0)
                 {
                     if (u1 <= pow(x, (alpha - 1.0)))
@@ -189,12 +189,12 @@ public:
 
     // static int64_t gamma(int64_t min, int64_t max)
     // {
-    //     return Meap::irand(min, max);
+    //     return Meap<MEAP_DEFAULT_VERSION>::irand(min, max);
     // }
 
     // static int64_t beta(int64_t min, int64_t max)
     // {
-    //     return Meap::irand(min, max);
+    //     return Meap<MEAP_DEFAULT_VERSION>::irand(min, max);
     // }
 };
 

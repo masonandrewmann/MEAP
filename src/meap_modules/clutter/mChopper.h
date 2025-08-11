@@ -23,7 +23,7 @@ public:
 
     void trigger()
     {
-        sustain_ = Meap::irand(lower_, higher_);
+        sustain_ = Meap<MEAP_DEFAULT_VERSION>::irand(lower_, higher_);
         adsr_.setSustainTime(sustain_);
         // if (adsr_.playing())
         // {
@@ -31,7 +31,7 @@ public:
         // }
         adsr_.noteOn();
         end_time_ = millis() + sustain_;
-        pan_ = Meap::irand(0, 255);
+        pan_ = Meap<MEAP_DEFAULT_VERSION>::irand(0, 255);
     }
 
     void setLengthBounds(uint64_t lower, uint64_t higher)
@@ -61,7 +61,7 @@ public:
             adsr_.update();
             gain_ = adsr_.next();
             in_sample = (in_sample * gain_) >> 8;
-            pan_out_ = Meap::pan2(in_sample, pan_);
+            pan_out_ = Meap<MEAP_DEFAULT_VERSION>::pan2(in_sample, pan_);
             l_sample_ = pan_out_.l;
             r_sample_ = pan_out_.r;
 

@@ -75,8 +75,8 @@ public:
         osc_[0].setFreq(my_freq);
         float my_detune_freq = my_freq + (my_freq / 50) * detune / 127.0;
         osc_[1].setFreq(my_detune_freq);
-        phaser_lfo.setPhase(Meap::irand(0, 8191));
-        osc_[1].setPhase(Meap::irand(0, 8191));
+        phaser_lfo.setPhase(Meap<MEAP_DEFAULT_VERSION>::irand(0, 8191));
+        osc_[1].setPhase(Meap<MEAP_DEFAULT_VERSION>::irand(0, 8191));
 
         adsr_.noteOn();
     }

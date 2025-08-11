@@ -127,14 +127,14 @@ public:
                 // update density
                 int32_t curr_density = grain_density_[0] + elapsed_over_cloud_length * density_difference_;
 
-                if (Meap::irand(0, 1000) < curr_density)
+                if (Meap<MEAP_DEFAULT_VERSION>::irand(0, 1000) < curr_density)
                 {
                     // update other grain parameters
                     grains[curr_grain_].setAmplitude(grain_amplitude_[0] + elapsed_over_cloud_length * amplitude_difference_);
                     grains[curr_grain_].setDuration(grain_duration_[0] + elapsed_over_cloud_length * duration_difference_);
 
                     // trigger a grain
-                    grains[curr_grain_].noteOn(Meap::irand(grain_freq_min_[0] + elapsed_over_cloud_length * freq_min_difference_, grain_freq_max_[0] + elapsed_over_cloud_length * freq_max_difference_));
+                    grains[curr_grain_].noteOn(Meap<MEAP_DEFAULT_VERSION>::irand(grain_freq_min_[0] + elapsed_over_cloud_length * freq_min_difference_, grain_freq_max_[0] + elapsed_over_cloud_length * freq_max_difference_));
                     curr_grain_ = (curr_grain_ + 1) % MAX_GRAINS;
                 }
             }

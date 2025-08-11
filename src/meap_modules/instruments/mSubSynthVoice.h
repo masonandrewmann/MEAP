@@ -278,7 +278,7 @@ public:
             output_sample += (osc_[i].next() * osc_gain_[i]);
         }
 
-        output_sample += Meap::irand(-32768, 32767) * noise_gain_; // noise sample with same bitrate as osc
+        output_sample += Meap<MEAP_DEFAULT_VERSION>::irand(-32768, 32767) * noise_gain_; // noise sample with same bitrate as osc
 
         filter_.next(output_sample);
         output_sample = filter_.low();

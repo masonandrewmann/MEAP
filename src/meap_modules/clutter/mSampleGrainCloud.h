@@ -141,7 +141,7 @@ public:
             {
                 return;
             }
-            if (Meap::irand(0, 255) < cont_density_)
+            if (Meap<MEAP_DEFAULT_VERSION>::irand(0, 255) < cont_density_)
             {
                 // update other grain parameters
                 grains[curr_grain_].setAmplitude(cont_amplitude_);
@@ -152,10 +152,10 @@ public:
                 float curr_freq_min = cont_freq_min_;
                 float curr_freq_max = cont_freq_max_;
 
-                float my_freq = ((float)Meap::irand((int)(curr_freq_min * 10000), (int)(curr_freq_max * 10000))) / 10000.f; // this is so scuffed lmao
+                float my_freq = ((float)Meap<MEAP_DEFAULT_VERSION>::irand((int)(curr_freq_min * 10000), (int)(curr_freq_max * 10000))) / 10000.f; // this is so scuffed lmao
 
                 int table_num;
-                if (Meap::irand(0, 255) >= cont_table_fader)
+                if (Meap<MEAP_DEFAULT_VERSION>::irand(0, 255) >= cont_table_fader)
                 {
                     table_num = 0;
                 }
@@ -166,7 +166,7 @@ public:
 
                 grains[curr_grain_].setTableAndEnd(cont_tables[table_num], cont_ends[table_num]);
 
-                uint64_t grain_pos = map(cont_pos_, 0, 4095, 0, cont_ends[table_num]) + map(Meap::irand(0, cont_rand_), 0, 4095, 0, cont_ends[table_num] >> 1);
+                uint64_t grain_pos = map(cont_pos_, 0, 4095, 0, cont_ends[table_num]) + map(Meap<MEAP_DEFAULT_VERSION>::irand(0, cont_rand_), 0, 4095, 0, cont_ends[table_num] >> 1);
                 // Serial.println(grain_pos);
                 grains[curr_grain_].noteOn(my_freq, grain_pos); // moves through sample in real time
 
@@ -192,7 +192,7 @@ public:
                 // update density
                 int32_t curr_density = grain_density_[0] + elapsed_over_cloud_length * density_difference_;
 
-                if (Meap::irand(0, 1000) < curr_density)
+                if (Meap<MEAP_DEFAULT_VERSION>::irand(0, 1000) < curr_density)
                 {
                     // update other grain parameters
                     grains[curr_grain_].setAmplitude(grain_amplitude_[0] + elapsed_over_cloud_length * amplitude_difference_);
@@ -201,7 +201,7 @@ public:
                     float curr_freq_min = grain_freq_min_[0] + elapsed_over_cloud_length * freq_min_difference_;
                     float curr_freq_max = grain_freq_max_[0] + elapsed_over_cloud_length * freq_max_difference_;
 
-                    float my_freq = ((float)Meap::irand((int)(curr_freq_min * 10000), (int)(curr_freq_max * 10000))) / 10000.f; // this is so scuffed lmao
+                    float my_freq = ((float)Meap<MEAP_DEFAULT_VERSION>::irand((int)(curr_freq_min * 10000), (int)(curr_freq_max * 10000))) / 10000.f; // this is so scuffed lmao
                     // trigger a grain
                     grains[curr_grain_].noteOn(my_freq, samples_elapsed % mSAMPLE_LENGTH); // moves through sample in real time
                     curr_grain_ = (curr_grain_ + 1) % mPOLYPHONY;
