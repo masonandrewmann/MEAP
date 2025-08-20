@@ -10,7 +10,7 @@ struct RomplerNote
     uint16_t program_num;
 };
 
-template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mPOLYPHONY, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
+template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mPOLYPHONY, class T = int8_t, meap_interpolation INTERP = mINTERP_NONE>
 class mRompler
 {
 public:

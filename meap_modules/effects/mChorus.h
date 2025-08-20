@@ -5,7 +5,7 @@ template <class T = int32_t>
 class mChorus
 {
 public:
-    mChorus()
+    mChorus(float mod_freq = 0.2, float mod_depth = 0.05, float mix = 0.5)
     {
         delay_buffer1 = (T *)calloc(3200, sizeof(T));
         delay_buffer2 = (T *)calloc(3200, sizeof(T));
@@ -13,8 +13,9 @@ public:
         lfo1.init(0.2, 1.f);
         lfo2.init(0.22, 1.f);
 
-        mod_depth = 0.05;
-        mix = 0.5;
+        setModFreq(mod_freq);
+        setModDepth(mod_depth);
+
         write_index = 0;
     }
 
@@ -27,6 +28,11 @@ public:
     void setModDepth(float depth_)
     {
         mod_depth = depth_;
+    }
+
+    void setMix(float mix_)
+    {
+        mix = mix_;
     }
 
     T next(T in_sample)

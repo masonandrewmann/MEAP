@@ -39,24 +39,24 @@ public:
         decay_ = decay;
         mix_ = mix;
 
-        pre_delay.init(372); // 500
+        pre_delay.init(373, 372); // 500
         lpf1.init(1 - bandwidth);
-        apf1.init(156, 0.75);  // 210
-        apf2.init(117, 0.75);  // 158
-        apf3.init(417, 0.625); // 561
-        apf4.init(305, 0.625); // 410
+        apf1.init(156, 156, 0.75);  // 210
+        apf2.init(117, 117, 0.75);  // 158
+        apf3.init(417, 417, 0.625); // 561
+        apf4.init(305, 305, 0.625); // 410
 
-        mapf1.init(998, 1050, 0.7); // 1343
-        delay1.init(4637);          // 6241
+        mapf1.init(1050, 998, 0.7); // 1343
+        delay1.init(4638, 4637);    // 6241
         lpf2.init(damping);
-        apf5.init(2921, 0.5); // 3931
-        delay2.init(3478);    // 4681
+        apf5.init(2921, 2921, 0.5); // 3931
+        delay2.init(3479, 3478);    // 4681
 
-        mapf2.init(739, 1100, 0.7); // 995
-        delay3.init(4897);          // 6590 -------3989 doesnt fit!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        mapf2.init(1100, 739, 0.7); // 995
+        delay3.init(4898, 4897);    // 6590 -------3989 doesnt fit!!!!!!!!!!!!!!!!!!!!!!!!!!!
         lpf3.init(damping);
-        apf6.init(1797, 0.5); // 2664
-        delay4.init(4090);    // 5505
+        apf6.init(1797, 1797, 0.5); // 2664
+        delay4.init(4091, 4090);    // 5505
 
         lfo1.init(0.6, 12);
         lfo2.init(0.4, 12);
@@ -67,8 +67,8 @@ public:
         float l1val = lfo1.next();
         float l2val = lfo2.next();
 
-        mapf1.setDelayLength(998 + l1val);
-        mapf2.setDelayLength(739 + l2val);
+        mapf1.setDelay(998 + l1val);
+        mapf2.setDelay(739 + l2val);
 
         in_sample = apf4.next(apf3.next(apf2.next(apf1.next(lpf1.next(pre_delay.next(in_sample))))));
 
@@ -100,24 +100,24 @@ public:
     float bandwidth_;
     float mix_;
 
-    mDelayLine<int32_t> pre_delay;
+    mDelayLine<int32_t, mINTERP_NONE> pre_delay;
     mOnePoleLPF<int32_t> lpf1;
     mSchroederAllpass<int32_t> apf1;
     mSchroederAllpass<int32_t> apf2;
     mSchroederAllpass<int32_t> apf3;
     mSchroederAllpass<int32_t> apf4;
 
-    mSchroederAllpassLinear<int32_t> mapf1;
-    mDelayLine<int32_t> delay1;
+    mSchroederAllpass<int32_t, mINTERP_LINEAR> mapf1;
+    mDelayLine<int32_t, mINTERP_NONE> delay1;
     mOnePoleLPF<int32_t> lpf2;
     mSchroederAllpass<int32_t> apf5;
-    mDelayLine<int32_t> delay2;
+    mDelayLine<int32_t, mINTERP_NONE> delay2;
 
-    mSchroederAllpassLinear<int32_t> mapf2;
-    mDelayLine<int32_t> delay3;
+    mSchroederAllpass<int32_t, mINTERP_LINEAR> mapf2;
+    mDelayLine<int32_t, mINTERP_NONE> delay3;
     mOnePoleLPF<int32_t> lpf3;
     mSchroederAllpass<int32_t> apf6;
-    mDelayLine<int32_t> delay4;
+    mDelayLine<int32_t, mINTERP_NONE> delay4;
 
     mSineLFO<AUDIO_RATE> lfo1;
     mSineLFO<AUDIO_RATE> lfo2;

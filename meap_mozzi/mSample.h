@@ -23,12 +23,6 @@
 // the fractional part and the sign bit
 #define SAMPLE_PHMOD_BITS 16
 
-enum my_interpolation
-{
-    mINTERP_NONE,
-    mINTERP_LINEAR
-};
-
 /** Sample is like Oscil, it plays a wavetable.  However, Sample can be
 set to play once through only, with variable start and end points,
 or can loop, also with variable start and end points.
@@ -47,7 +41,7 @@ There is a python script called int8_t2mozzi.py in the Mozzi/python folder.
 The script converts raw sound data saved from a program like Audacity.
 Instructions are in the int8_t2mozzi.py file.
 */
-template <uint64_t NUM_TABLE_CELLS, unsigned int UPDATE_RATE, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
+template <uint64_t NUM_TABLE_CELLS, unsigned int UPDATE_RATE, class T = int8_t, meap_interpolation INTERP = mINTERP_NONE>
 class mSample
 {
 

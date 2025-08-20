@@ -65,6 +65,12 @@ enum meap_hardware_versions
   mMEAP4C
 };
 
+enum meap_interpolation
+{
+  mINTERP_NONE,
+  mINTERP_LINEAR
+};
+
 #define MEAP_DEFAULT_VERSION mMEAP4C
 
 bool cap1280_touch_flag;

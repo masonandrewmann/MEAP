@@ -7,7 +7,7 @@
 
 // A polyphonic karplus-strong instrument
 
-template <uint16_t mPOLYPHONY = 4, class T = int8_t>
+template <uint16_t mPOLYPHONY = 4>
 class mStringInstrument : public mInstrument<mPOLYPHONY>
 {
 public:
@@ -37,10 +37,6 @@ public:
     void noteOff(uint16_t note)
     {
         int16_t off_voice = mInstrument<mPOLYPHONY>::noteOffVoiceHandler(note);
-        // if (off_voice != -1)
-        // {
-        //     voices[off_voice].noteOff();
-        // }
     }
 
     void flush()
@@ -71,7 +67,7 @@ public:
     }
 
     // CLASS VARIABLES
-    mString<int32_t> voices[mPOLYPHONY];
+    mStringVoice voices[mPOLYPHONY];
 };
 
 #endif // MSTRING_INSTRUMENT_H_

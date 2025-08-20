@@ -1,7 +1,7 @@
 #ifndef MFM4VOICE_H_
 #define MFM4VOICE_H_
 
-#include <tables/sin8192_int8.h> // table for Oscils to play
+#include <tables/sin8192_int16.h> // table for Oscils to play
 
 // ALGORITHMS
 // 0: 3 -> 2 -> 1 -> 0
@@ -15,28 +15,16 @@
 // 8: (3 -> 2) + 1 + 0
 // 9: 3 + 2 + 1 + 0
 
-template <uint32_t mNUM_CELLS = SIN8192_NUM_CELLS, class T = int8_t>
+template <uint32_t mNUM_CELLS = sin8192_int16_NUM_CELLS, class T = int16_t>
 class mFM4Voice
 {
 public:
-    mFM4Voice()
-    {
-        for (uint16_t i = 0; i < 4; i++)
-        {
-            op[i].init(SIN8192_DATA);
-            last_output[i] = 0;
-        }
-        algorithm = 0;
+    mFM4Voice() {
     };
 
     mFM4Voice(const T *TABLE_NAME)
     {
-        for (uint16_t i = 0; i < 4; i++)
-        {
-            op[i].init(TABLE_NAME);
-            last_output[i] = 0;
-        }
-        algorithm = 0;
+        init(TABLE_NAME);
     };
 
     void init(const T *TABLE_NAME)
@@ -74,6 +62,46 @@ public:
             a = 10;
         }
         algorithm = a;
+    }
+
+    void setADSR(uint16_t operator_num, uint32_t attack_time, uint32_t decay_time, uint16_t sustain_level, uint32_t release_time)
+    {
+        op[operator_num].setADSR(attack_time, decay_time, sustain_level, release_time);
+    }
+
+    void setTable(uint16_t operator_num, const T *TABLE_NAME)
+    {
+        op[operator_num].setTable(TABLE_NAME);
+    }
+
+    void setFixedFreq(uint16_t operator_num, float fixed_freq)
+    {
+        op[operator_num].setFixedFreq(fixed_freq);
+    }
+
+    void setLoopingOn(uint16_t operator_num)
+    {
+        op[operator_num].setLoopingOn();
+    }
+
+    void setLoopingOff(uint16_t operator_num)
+    {
+        op[operator_num].setLoopingOff();
+    }
+
+    void setDroneOn(uint16_t operator_num)
+    {
+        op[operator_num].setDroneOn();
+    }
+
+    void setDroneOff(uint16_t operator_num)
+    {
+        op[operator_num].setDroneOff();
+    }
+
+    void setGain(uint16_t operator_num, uint16_t gain)
+    {
+        op[operator_num].setGain(gain);
     }
 
     void update()

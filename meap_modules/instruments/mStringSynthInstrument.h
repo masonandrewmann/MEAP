@@ -1,5 +1,5 @@
-#ifndef MSTRING_SYNTH_INTRUMENT_H_
-#define MSTRING_SYNTH_INTRUMENT_H_
+#ifndef MSTRING_SYNTH_INSTRUMENT_H_
+#define MSTRING_SYNTH_INSTRUMENT_H_
 
 #include <dependencies/LinkedList/LinkedList.h>
 
@@ -8,7 +8,7 @@
 
 // Polyphic string synth, inspired by ARP Solina
 
-template <uint16_t mPOLYPHONY = 4, class T = int8_t>
+template <uint16_t mPOLYPHONY = 4>
 class mStringSynthInstrument : public mInstrument<mPOLYPHONY>
 {
 public:
@@ -20,45 +20,45 @@ public:
         }
     }
 
-    void setADSR(uint32_t a_t, uint32_t d_t, uint16_t s_l, uint32_t r_t)
+    void setADSR(uint32_t attack_time, uint32_t decay_time, uint16_t sustain_level, uint32_t release_time)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i].setADSR(a_t, d_t, s_l, r_t);
+            voices[i].setADSR(attack_time, decay_time, sustain_level, release_time);
         }
     }
 
-    void setCutoffFreqAndResonance(uint32_t c, uint32_t r)
+    void setCutoffFreqAndResonance(uint8_t cutoff, uint8_t resonance)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i].setCutoffFreqAndResonance(c, r);
+            voices[i].setCutoffFreqAndResonance(cutoff, resonance);
         }
     }
 
-    void setDetune(uint32_t d_v)
+    void setDetune(float detune)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i].setDetune(d_v);
+            voices[i].setDetune(detune);
         }
     }
 
-    void setEnsembleMix(uint32_t e_v)
-    {
-        for (int i = mPOLYPHONY; --i >= 0;)
-        {
-            voices[i].setEnsembleMix(e_v);
-        }
-    }
+    // void setEnsembleMix(uint32_t mix)
+    // {
+    //     for (int i = mPOLYPHONY; --i >= 0;)
+    //     {
+    //         voices[i].setEnsembleMix(mix);
+    //     }
+    // }
 
-    void setPhaserFreq(float p_f)
-    {
-        for (int i = mPOLYPHONY; --i >= 0;)
-        {
-            voices[i].setPhaserFreq(p_f);
-        }
-    }
+    // void setPhaserFreq(float phaser_freq)
+    // {
+    //     for (int i = mPOLYPHONY; --i >= 0;)
+    //     {
+    //         voices[i].setPhaserFreq(phaser_freq);
+    //     }
+    // }
 
     void midiStop()
     {
@@ -113,7 +113,7 @@ public:
     }
 
     // CLASS VARIABLES
-    mStringSynthVoice<T> voices[mPOLYPHONY];
+    mStringSynthVoice voices[mPOLYPHONY];
 };
 
-#endif // MSTRING_SYNTH_INTRUMENT_H_
+#endif // MSTRING_SYNTH_INSTRUMENT_H_

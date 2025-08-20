@@ -72,36 +72,27 @@
 // ---- meap extensions to mozzi objects ----
 #include <meap_mozzi/mSample.h>
 #include <meap_mozzi/mOscil.h>
-#include <meap_mozzi/mEad.h>
 #include <meap_mozzi/mPortamento.h>
-#include <meap_mozzi/mStateVariable.h>
+#include <meap_mozzi/mEad.h>
 
 // clutter
 #include <meap_modules/clutter/mSampler.h>
-#include <meap_modules/clutter/mSamplerVoice.h>
-#include <meap_modules/clutter/mDrumRack.h>
 
-#include <meap_modules/clutter/mSamplerPoly.h>
-
-#include <meap_modules/clutter/mBasicFM.h>
-#include <meap_modules/clutter/mBasicFMPoly.h>
-
+// #include <meap_modules/clutter/mSamplerVoice.h>
+// #include <meap_modules/clutter/mSamplerPoly.h>
+// #include <meap_modules/clutter/mBasicFM.h>
+// #include <meap_modules/clutter/mBasicFMPoly.h>
 #include <meap_modules/clutter/mGrainGenerator.h>
 #include <meap_modules/clutter/mGrainCloud.h>
 #include <meap_modules/clutter/mSampleGrainGenerator.h>
 #include <meap_modules/clutter/mSampleGrainCloud.h>
-
 // #include <meap_modules/clutter/mGuitarPoly.h>
-
-#include <meap_modules/clutter/mFM2Voice.h>
-#include <meap_modules/clutter/mFM2Poly.h>
-
-#include <meap_modules/clutter/mWavetableSynth.h>
-#include <meap_modules/clutter/mOscBank.h>
-
-#include <meap_modules/clutter/mRealSamplerPoly.h>
-
-#include <meap_modules/clutter/mChopper.h>
+// #include <meap_modules/clutter/mFM2Voice.h>
+// #include <meap_modules/clutter/mFM2Poly.h>
+// #include <meap_modules/clutter/mWavetableSynth.h>
+// #include <meap_modules/clutter/mOscBank.h>
+// #include <meap_modules/clutter/mRealSamplerPoly.h>
+// #include <meap_modules/clutter/mChopper.h>
 
 // -------------------- MEAP DSP --------------------
 
@@ -109,16 +100,19 @@
 #include <meap_modules/tools/fast_pow2.h>
 #include <meap_modules/tools/mRandomDistribution.h>
 #include <meap_modules/tools/mEventDelayMicros.h>
-#include <meap_modules/tools/mSD.h>
-#include <meap_modules/tools/mPlaySD16.h>
-#include <meap_modules/tools/mPlaySD8.h>
+// #include <meap_modules/tools/mSD.h>
+// #include <meap_modules/tools/mPlaySD16.h>
+// #include <meap_modules/tools/mPlaySD8.h>
 
 // ---- DSP ----
+#include <meap_modules/dsp/mFIR.h>
+#include <meap_modules/dsp/mIIR.h>
 #include <meap_modules/dsp/mNaturalComb.h>
-#include <meap_modules/dsp/mNaturalCombLinear.h>
-#include <meap_modules/dsp/mSchroederAllpass.h>
-#include <meap_modules/dsp/mSchroederAllpassLinear.h>
+#include <meap_modules/dsp/mFeedbackComb.h>
+#include <meap_modules/dsp/mFeedforwardComb.h>
+#include <meap_modules/dsp/mNaturalComb.h>
 #include <meap_modules/dsp/mOnePoleLPF.h>
+#include <meap_modules/dsp/mSchroederAllpass.h>
 #include <meap_modules/dsp/mDelayLine.h>
 #include <meap_modules/dsp/mRingz.h>
 #include <meap_modules/dsp/mResonz.h>
@@ -128,7 +122,6 @@
 #include <meap_modules/effects/mPlateReverb.h>
 #include <meap_modules/effects/mDigitalDelay.h>
 #include <meap_modules/effects/mBitcrusher.h>
-// #include <meap_modules/effects/mAnalogDelay.h>
 #include <meap_modules/effects/mFlanger.h>
 #include <meap_modules/effects/mChorus.h>
 
@@ -165,6 +158,9 @@
 
 #include <meap_modules/instruments/mSamplerInstrument.h>
 
+// nonstandard instruments
+
+#include <meap_modules/instruments/mDrumRack.h>
 #include <meap_modules/instruments/mRompler.h>
 
 // ---- COMPOSITION ----

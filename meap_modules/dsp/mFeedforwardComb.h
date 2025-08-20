@@ -1,41 +1,34 @@
-// an IIR comb filter with a linearly interpolated delay line and a 1st order lowpass filter in the feedback loop
-
-#ifndef M_NATURAL_COMB_H_
-#define M_NATURAL_COMB_H_
+#ifndef M_FEEDFORWARD_COMB_H_
+#define M_FEEDFORWARD_COMB_H_
 
 #include <math.h>
 
 template <class T = int32_t, meap_interpolation INTERP = mINTERP_NONE>
 
-class mNaturalComb
+class mFeedforwardComb
 {
 public:
-    mNaturalComb(uint32_t max_delay, float delay, float feedback = 0.5, float damping = 0.5)
+    mFeedforwardComb(uint32_t max_delay, float delay, float feedforward = 0.5)
     {
-        init(max_delay, delay, feedback, damping);
+        init(max_delay, delay, feedforward);
     };
 
-    mNaturalComb() {
+    mFeedforwardComb() {
 
     };
 
-    void init(uint32_t max_delay, float delay, float feedback = 0.5, float damping = 0.5)
+    void init(uint32_t max_delay, float delay, float feedforward = 0.5)
     {
         max_delay_samples_ = max_delay;
         delay_samples_ = delay;
 
         delay_buffer_ = (T *)calloc(max_delay_samples_, sizeof(T));
-        feedback_ = feedback;
+        feedforward_ = feedforward;
         write_pointer_ = 0;
         read_pointer_ = ((float)write_pointer_ + ((float)max_delay_samples_ - delay_samples_));
-
-        lpf_in_ = 1 - damping;
-        lpf_fb_ = damping;
-
-        lpf_mem_ = 0;
     };
 
-    ~mNaturalComb()
+    ~mFeedforwardComb()
     {
         free(delay_buffer_);
     };
@@ -50,35 +43,27 @@ public:
         }
     }
 
-    void setFeedback(float feedback)
+    void setFeedforward(float feedforward)
     {
-        feedback_ = feedback;
-    }
-
-    void setDamping(float damping)
-    {
-        lpf_in_ = 1 - damping;
-        lpf_fb_ = damping;
+        feedforward_ = feedforward;
     }
 
     T next(T in_sample)
     {
         if (INTERP == mINTERP_NONE)
         {
-            out_sample = in_sample + delay_buffer_[(int)read_pointer_];
-            delay_buffer_[write_pointer_] = (out_sample * feedback_) * lpf_in_ + lpf_mem_ * lpf_fb_; // lowpassed feedback
-            lpf_mem_ = delay_buffer_[write_pointer_];
+            out_sample = in_sample + feedforward_ * delay_buffer_[(int)read_pointer_];
+            delay_buffer_[write_pointer_] = in_sample;
         }
         else if (INTERP == mINTERP_LINEAR)
         {
+
             int_component = (int)read_pointer_;
             frac_component = read_pointer_ - int_component;
             next_sample = (int_component + 1) % max_delay_samples_;
 
             out_sample = in_sample + delay_buffer_[int_component] + frac_component * (delay_buffer_[next_sample] - delay_buffer_[int_component]);
-
-            delay_buffer_[write_pointer_] = (out_sample * feedback_) * lpf_in_ + lpf_mem_ * lpf_fb_; // lowpassed feedback
-            lpf_mem_ = delay_buffer_[write_pointer_];
+            delay_buffer_[write_pointer_] = in_sample;
         }
         write_pointer_ = (write_pointer_ + 1) % max_delay_samples_;
         read_pointer_ = read_pointer_ + 1;
@@ -103,11 +88,7 @@ public:
     int32_t next_sample;
     int32_t int_component;
 
-    float lpf_in_;
-    float lpf_fb_;
-    T lpf_mem_;
-
-    float feedback_;
+    float feedforward_;
 };
 
-#endif // M_NATURAL_COMB_H_
+#endif // M_FEEDFORWARD_COMB_H_

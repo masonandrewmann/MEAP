@@ -7,7 +7,7 @@
 
 // A polyphonic sampler instrument
 
-template <uint64_t TABLE_SIZE, class T = int8_t, uint16_t mPOLYPHONY = 4, uint8_t INTERP = mINTERP_NONE>
+template <uint64_t TABLE_SIZE, class T = int8_t, uint16_t mPOLYPHONY = 4, meap_interpolation INTERP = mINTERP_NONE>
 class mSamplerInstrument : public mInstrument<mPOLYPHONY>
 {
 public:

@@ -4,7 +4,6 @@
 #include <tables/saw8192_int8.h> // loads saw wavetable
 #include <tables/sin8192_int8.h> // loads sin wavetable
 
-template <class T = int8_t>
 class mStringSynthVoice
 {
 public:
@@ -38,7 +37,7 @@ public:
     {
         adsr_.update();
         delay_samples = 128 + phaser_lfo.next();
-        float my_detune_freq = my_freq + (my_freq / 50) * detune / 127.0;
+        float my_detune_freq = my_freq + (my_freq / 50) * detune;
         osc_[1].setFreq(my_detune_freq);
     }
 
@@ -48,12 +47,12 @@ public:
         adsr_.setADLevels(255, s_l);
     }
 
-    void setCutoffFreqAndResonance(uint32_t c, uint32_t r)
+    void setCutoffFreqAndResonance(uint8_t c, uint8_t r)
     {
         filter_.setCutoffFreqAndResonance(c, r);
     }
 
-    void setDetune(uint32_t d_v)
+    void setDetune(float d_v)
     {
         detune = d_v;
     }
@@ -73,7 +72,7 @@ public:
     {
         my_freq = mtof(note);
         osc_[0].setFreq(my_freq);
-        float my_detune_freq = my_freq + (my_freq / 50) * detune / 127.0;
+        float my_detune_freq = my_freq + (my_freq / 50) * detune;
         osc_[1].setFreq(my_detune_freq);
         phaser_lfo.setPhase(Meap<MEAP_DEFAULT_VERSION>::irand(0, 8191));
         osc_[1].setPhase(Meap<MEAP_DEFAULT_VERSION>::irand(0, 8191));
@@ -120,7 +119,7 @@ public:
     ADSR<CONTROL_RATE, AUDIO_RATE> adsr_;
     MultiResonantFilter<uint8_t> filter_; /**< Filter for left channel */
 
-    uint32_t detune;
+    float detune;
     uint32_t ensemble_mix;
     float phaser_freq;
 };

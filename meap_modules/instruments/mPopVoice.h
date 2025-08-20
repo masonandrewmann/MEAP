@@ -26,7 +26,6 @@ float MEAP_pop_spectra_[6][16] = {
     {1, 3, 5, 7, 9, 11, 13, 15, 17, 14, 12, 10, 8, 6, 4, 2}                         // mixed
 };
 
-template <class T = int32_t>
 class mPopVoice
 {
 public:
@@ -91,9 +90,9 @@ public:
     }
 
     // 0-6
-    void setSpectraMap(int index)
+    void setSpectraMap(MEAP_pop_spectra_labels index)
     {
-        spectrum = (MEAP_pop_spectra_labels)index;
+        spectrum = index;
         setSpectra(ratio_);
     }
 
@@ -153,7 +152,7 @@ public:
         mod_env_.noteOff();
     }
 
-    T next()
+    int32_t next()
     {
         carrier_env_.update();
         mod_env_.update();
@@ -170,17 +169,12 @@ public:
         feedback_val_1_ = mod1_.phMod(mod1_val);
         feedback_val_2_ = mod2_.phMod(mod2_val);
 
-        // T out_sample = carrier_.next(feedback_val_A_ + feedback_val_B_);
-
         int32_t mod_input = ((float)(((feedback_val_1_ + feedback_val_2_) * mod_env_val) >> 8)) * modulation_amount_;
 
         UFix<16, 16> deviation = 1.0;
         auto modulation = deviation * toSFraction((int16_t)(mod_input));
 
-        T out_sample = ((carrier_.phMod(modulation) * carrier_env_.next()) >> 8);
-        // T out_sample = (carrier_.next() * carrier_env_.next()) >> 8;
-        // T out_sample = carrier_.next();
-        // return (last_out_ * env_val_ * gain_) >> shift_val_; // returns a 16 bit sample
+        int32_t out_sample = ((carrier_.phMod(modulation) * carrier_env_.next()) >> 8);
 
         return out_sample;
     }
@@ -199,8 +193,8 @@ public:
     float mod1_ratio_;
     float mod2_ratio_;
 
-    T feedback_val_1_;
-    T feedback_val_2_;
+    int32_t feedback_val_1_;
+    int32_t feedback_val_2_;
 
     float feedback_amount_;
 

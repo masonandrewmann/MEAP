@@ -1,27 +1,25 @@
 // Basic karplus-strong string model
 
-#ifndef MSTRING_H_
-#define MSTRING_H_
+#ifndef MSTRINGVOICE_H_
+#define MSTRINGVOICE_H_
 
 #include <math.h>
 #include <Meap.h>
 #include <mozzi_midi.h>
 
-// template for audio vs control rate
-template <class T = int32_t>
-class mString
+class mStringVoice
 {
 public:
-    mString() {
+    mStringVoice() {
 
     };
 
-    mString(float freq, float lowest_freq)
+    mStringVoice(float freq, float lowest_freq)
     {
         init(freq, lowest_freq);
     };
 
-    ~mString()
+    ~mStringVoice()
     {
         free(delay_buffer_);
     };
@@ -30,7 +28,7 @@ public:
     {
         lowest_freq_ = lowest_freq;
         max_delay_length_ = (float)AUDIO_RATE / lowest_freq_;
-        delay_buffer_ = (T *)calloc((int)max_delay_length_, sizeof(T));
+        delay_buffer_ = (int32_t *)calloc((int)max_delay_length_, sizeof(int32_t));
         write_pointer_ = 0;
         setFreq(freq);
         setLoopGain(0.999);
@@ -62,7 +60,7 @@ public:
     void trigger(int velocity)
     {
         velocity = velocity << 7;
-        T last_sample = 0;
+        int32_t last_sample = 0;
         for (int i = max_delay_length_; --i >= 0;)
         {
             delay_buffer_[i] = 0.1 * Meap<MEAP_DEFAULT_VERSION>::irand(-velocity, velocity) + 0.9 * last_sample;
@@ -75,7 +73,7 @@ public:
         loop_gain_ = loop_gain;
     }
 
-    float next()
+    int32_t next()
     {
         float fake_int;
         float frac_component = modf(read_pointer_, &fake_int);
@@ -83,9 +81,9 @@ public:
         int_component = int_component % max_delay_length_;
         int32_t next_sample = (int_component + 1) % max_delay_length_;
 
-        T delay_output = delay_buffer_[int_component] + frac_component * (delay_buffer_[next_sample] - delay_buffer_[int_component]);
+        int32_t delay_output = delay_buffer_[int_component] + frac_component * (delay_buffer_[next_sample] - delay_buffer_[int_component]);
 
-        T out_sample = (delay_output >> 1) + (filter_sample_ >> 1);
+        int32_t out_sample = (delay_output >> 1) + (filter_sample_ >> 1);
         filter_sample_ = delay_output;
         delay_buffer_[write_pointer_] = out_sample * loop_gain_;
         write_pointer_ = (write_pointer_ + 1) % max_delay_length_;
@@ -102,10 +100,10 @@ public:
     float lowest_freq_;
     int32_t delay_length_;
     int32_t max_delay_length_;
-    T *delay_buffer_;
+    int32_t *delay_buffer_;
     float read_pointer_;
     int32_t write_pointer_;
-    T filter_sample_;
+    int32_t filter_sample_;
     float loop_gain_;
 };
-#endif // MSTRING_H_
+#endif // MSTRINGVOICE_H_

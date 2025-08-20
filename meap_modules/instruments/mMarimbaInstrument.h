@@ -7,7 +7,7 @@
 
 // A polyphonic physical modeling based marimba instrument
 
-template <uint16_t mPOLYPHONY = 4, uint8_t INTERP = mINTERP_NONE>
+template <uint16_t mPOLYPHONY = 4>
 class mMarimbaInstrument : public mInstrument<mPOLYPHONY>
 {
 public:

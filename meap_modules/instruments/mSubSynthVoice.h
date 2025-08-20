@@ -5,7 +5,7 @@
 
 #include <Portamento.h> // from mozzi
 
-template <uint32_t mNUM_CELLS, uint32_t mNUM_OSC = 1, class T = int8_t>
+template <uint32_t mNUM_CELLS, class T = int16_t, uint32_t mNUM_OSC = 1>
 class mSubSynthVoice
 {
 public:

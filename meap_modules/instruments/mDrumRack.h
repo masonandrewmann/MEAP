@@ -7,22 +7,7 @@ template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mNUM_SAMPLES, class T = int8_t>
 class mDrumRack
 {
 public:
-    mDrumRack()
-    {
-        init(NULL, NULL, NULL);
-    };
-
-    mDrumRack(const T **sample_list, uint32_t *sample_lengths)
-    {
-        init(sample_list, sample_lengths, NULL);
-    };
-
-    mDrumRack(const T **sample_list, uint32_t *sample_lengths, uint8_t *base_address)
-    {
-        init(sample_list, sample_lengths, base_address);
-    };
-
-    void init(const T **sample_list, uint32_t *sample_lengths, uint8_t *base_address)
+    mDrumRack(const T **sample_list, uint32_t *sample_lengths, uint8_t *base_address = NULL)
     {
         sample_list_ = sample_list;
         sample_lengths_ = sample_lengths;
@@ -57,8 +42,7 @@ public:
         {
             shift_val_ = 7; // just 7 bits down for velocity
         }
-    }
-
+    };
     void begin()
     {
         // start_time = millis();
@@ -155,14 +139,6 @@ public:
     void setSampleVolume(uint16_t sample_num, uint16_t volume)
     {
         sample_gain_[sample_num] = volume;
-    }
-
-    void update()
-    {
-        // for (int i = mNUM_SAMPLES; --i >= 0;)
-        // {
-        //     sample_bank_[i].update();
-        // }
     }
 
     int32_t next()

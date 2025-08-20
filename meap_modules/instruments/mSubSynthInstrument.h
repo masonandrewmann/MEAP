@@ -4,14 +4,15 @@
 #include <dependencies/LinkedList/LinkedList.h>
 #include "mInstrument.h"
 #include "mSubSynthVoice.h"
+#include <tables/saw8192_int16.h> // loads saw wavetable
 
 // Polyphonic subtractive synthesizer
 
-template <uint32_t mNUM_CELLS, uint32_t mNUM_OSC = 1, uint16_t mPOLYPHONY = 4, class T = int8_t>
+template <uint32_t mNUM_CELLS = saw8192_int16_NUM_CELLS, class T = int16_t, uint32_t mNUM_OSC = 1, uint16_t mPOLYPHONY = 4>
 class mSubSynthInstrument : public mInstrument<mPOLYPHONY>
 {
 public:
-    mSubSynthInstrument(const T *TABLE_NAME = NULL, uint8_t *midi_table_name = NULL) : mInstrument<mPOLYPHONY>(midi_table_name)
+    mSubSynthInstrument(const T *TABLE_NAME = saw8192_int16_DATA, uint8_t *midi_table_name = NULL) : mInstrument<mPOLYPHONY>(midi_table_name)
     {
         for (uint16_t i = 0; i < mPOLYPHONY; i++)
         {
@@ -52,6 +53,7 @@ public:
         }
     }
 
+    // 0 to 255
     void setOscGain(uint16_t osc_num, uint16_t osc_gain)
     {
         for (int16_t i = mPOLYPHONY; --i >= 0;)
@@ -194,7 +196,7 @@ public:
     }
 
     // CLASS VARIABLES
-    mSubSynthVoice<mNUM_CELLS, mNUM_OSC, T> voices[mPOLYPHONY];
+    mSubSynthVoice<mNUM_CELLS, T, mNUM_OSC> voices[mPOLYPHONY];
 };
 
 #endif // MSUBSYNTH_INSTRUMENT_H_

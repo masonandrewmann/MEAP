@@ -4,7 +4,7 @@
 #include <Meap.h>
 #include <dependencies/LinkedList/LinkedList.h>
 
-template <uint32_t mNUM_CELLS, uint16_t mPOLYPHONY = 4, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
+template <uint32_t mNUM_CELLS, uint16_t mPOLYPHONY = 4, class T = int8_t, meap_interpolation INTERP = mINTERP_NONE>
 
 class mRealSamplerPoly
 {

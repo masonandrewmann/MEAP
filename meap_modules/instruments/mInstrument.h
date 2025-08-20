@@ -111,8 +111,6 @@ public:
             _curr_voice = _free_voices.shift(); // remove head element
         }
 
-        // voices[curr_voice_].noteOn(note, vel);
-
         // store note in pressed notes queue
         MeapNoteAndVoice *my_note = new MeapNoteAndVoice;
         my_note->note_num = note;

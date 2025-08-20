@@ -1,7 +1,7 @@
 #ifndef MEAP_SAMPLER_H_
 #define MEAP_SAMPLER_H_
 
-template <uint32_t mSAMPLE_LENGTH, class T = int16_t, uint8_t INTERP = mINTERP_NONE>
+template <uint32_t mSAMPLE_LENGTH, class T = int16_t, meap_interpolation INTERP = mINTERP_NONE>
 class mSampler
 {
 public:

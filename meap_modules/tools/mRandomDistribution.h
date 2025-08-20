@@ -81,9 +81,9 @@ public:
      * Generates a random sample in a decreasing exponential distribution with specified lambda
      @param lambd 1.0 divided by desired mean
     */
-    static float exponential(float lambd)
+    static float exponential(float lambda)
     {
-        return -log(1.0 - Meap<MEAP_DEFAULT_VERSION>::frand()) / lambd;
+        return -log(1.0 - Meap<MEAP_DEFAULT_VERSION>::frand()) / lambda;
     }
 
     /** linear.

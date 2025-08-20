@@ -53,7 +53,7 @@ The usage is:
 char2mozzi.py infilename outfilename tablename samplerate
 */
 // template <uint16_t NUM_TABLE_CELLS, uint16_t UPDATE_RATE, bool DITHER_PHASE=false>
-template <uint16_t NUM_TABLE_CELLS, uint32_t UPDATE_RATE, class T = int8_t, uint8_t INTERP = mINTERP_NONE>
+template <uint16_t NUM_TABLE_CELLS, uint32_t UPDATE_RATE, class T = int8_t, meap_interpolation INTERP = mINTERP_NONE>
 class mOscil
 {
 

@@ -5,21 +5,22 @@ template <class T = int32_t>
 class mFlanger
 {
 public:
-    mFlanger()
+    mFlanger(float mod_freq_ = 0.2, float mod_depth_ = 1.f, float allpass_gain_ = 0.7, float feedback_ = 0.7, float mix_ = 0.5)
     {
         max_delay_length = 200;
         delay_length = 100;
         delay_buffer = (T *)calloc(max_delay_length, sizeof(T));
         read_index = 0;
         write_index = 100;
-        gain = 0.7;
-        feedback = 0.7;
-        mix = 0.5;
-        mod_depth = 1.f;
+        setAllpassGain(0.7);
+        setFeedback(0.7);
+        setMix(0.5);
+        setModDepth(mod_depth_);
         lfo.init(0.2, 98);
+        setModFreq(mod_freq_);
     }
 
-    void setGain(float gain_)
+    void setAllpassGain(float gain_)
     {
         gain = gain_;
     }

@@ -7,7 +7,7 @@
 
 // polyphonic recreation of fors pop max for live device
 
-template <uint16_t mPOLYPHONY = 4, class T = int32_t>
+template <uint16_t mPOLYPHONY = 4>
 class mPopInstrument : public mInstrument<mPOLYPHONY>
 {
 public:
@@ -19,11 +19,11 @@ public:
         }
     }
 
-    void setADSR(uint32_t a_t, uint32_t d_t, uint16_t s_l, uint32_t r_t)
+    void setADSR(uint32_t attack_time, uint32_t delay_time, uint16_t sustain_level, uint32_t release_time)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i].setADSR(a_t, d_t, s_l, r_t);
+            voices[i].setADSR(attack_time, delay_time, sustain_level, release_time);
         }
     }
 
@@ -51,7 +51,7 @@ public:
         }
     }
 
-    void setModSustain(uint32_t sustain_level)
+    void setModSustain(uint16_t sustain_level)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
@@ -67,11 +67,11 @@ public:
         }
     }
 
-    void setFeedback(float fdbk)
+    void setFeedback(float feedback)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i].setFeedback(fdbk);
+            voices[i].setFeedback(feedback);
         }
     }
 
@@ -83,7 +83,7 @@ public:
         }
     }
 
-    void setSpectraMap(int index)
+    void setSpectraMap(MEAP_pop_spectra_labels index)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
@@ -143,7 +143,7 @@ public:
         return out_sample;
     }
 
-    mPopVoice<T> voices[mPOLYPHONY];
+    mPopVoice voices[mPOLYPHONY];
 };
 
 #endif // MPOP_INST_H_

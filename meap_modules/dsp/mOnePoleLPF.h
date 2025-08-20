@@ -21,7 +21,7 @@ public:
     {
         damping_ = damping;
         d1_ = 1 - damping;
-        last_val_ = 0;
+        out_sample = 0;
     }
 
     void setDamping(float damping)
@@ -32,15 +32,14 @@ public:
 
     T next(T in_sample)
     {
-        T out_sample = in_sample * d1_ + last_val_ * damping_;
-        last_val_ = out_sample;
+        out_sample = in_sample * d1_ + out_sample * damping_;
         return out_sample;
     }
 
     // CLASS VARIABLES
     float damping_;
     float d1_;
-    T last_val_;
+    T out_sample;
 };
 
 #endif // MONEPOLELPF_H_
