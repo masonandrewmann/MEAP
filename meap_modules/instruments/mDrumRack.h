@@ -7,12 +7,12 @@ template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mNUM_SAMPLES, class T = int8_t>
 class mDrumRack
 {
 public:
-    mDrumRack(const T **sample_list, uint32_t *sample_lengths, uint8_t *base_address = NULL)
+    mDrumRack(const T **sample_list, uint32_t *sample_lengths, uint8_t *midi_table_name = NULL)
     {
         sample_list_ = sample_list;
         sample_lengths_ = sample_lengths;
 
-        base_address_ = base_address;
+        midi_table_name_ = midi_table_name;
 
         playing_ = false;
 
@@ -43,11 +43,11 @@ public:
             shift_val_ = 7; // just 7 bits down for velocity
         }
     };
-    void begin()
+    void midiStart()
     {
         // start_time = millis();
         playing_ = true;
-        current_address_ = base_address_;
+        current_address_ = midi_table_name_;
         pulse_counter_ = 0;
         message_type_ = current_address_[0];
         data1_ = current_address_[1];
@@ -55,7 +55,7 @@ public:
         time_ = (current_address_[3] << 8) + current_address_[4];
     }
 
-    void stop()
+    void midiStop()
     {
         // stop all notes
         playing_ = false;
@@ -112,23 +112,17 @@ public:
         return playing_;
     }
 
-    void noteOn(uint16_t sample_num, uint16_t vel, float freq)
+    void noteOn(uint16_t sample_num, uint16_t vel, float speed)
     {
-        sample_bank_[sample_num].setFreq(freq);
+        sample_bank_[sample_num].setFreq(speed * default_freq_);
         sample_bank_[sample_num].start();
         velocity_[sample_num] = vel * sample_gain_[sample_num];
     }
 
-    void noteOn(uint16_t sample_num, uint16_t vel)
+    void noteOn(uint16_t sample_num, uint16_t vel = 127)
     {
         sample_bank_[sample_num].start();
         velocity_[sample_num] = vel * sample_gain_[sample_num];
-    }
-
-    void noteOn(uint16_t sample_num)
-    {
-        sample_bank_[sample_num].start();
-        velocity_[sample_num] = 127 * sample_gain_[sample_num];
     }
 
     void noteOff(uint16_t sample_num)
@@ -160,7 +154,7 @@ public:
     uint32_t *sample_lengths_;
     uint16_t sample_gain_[mNUM_SAMPLES];
 
-    uint8_t *base_address_;
+    uint8_t *midi_table_name_;
     uint8_t *current_address_;
 
     uint8_t shift_val_;

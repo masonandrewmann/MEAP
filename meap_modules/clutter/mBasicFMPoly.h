@@ -9,6 +9,8 @@
 #include <meap_mozzi/mOscil.h>
 #include <meap_mozzi/mEad.h>
 
+#include "mBasicFM.h"
+
 // implements a hardcoded FM synth
 // algorithm
 //   ___  ___
@@ -68,7 +70,7 @@ public:
         pulse_counter_ = 0;
     };
 
-    void begin()
+    void midiStart()
     {
         // start_time = millis();
         playing_ = true;
@@ -143,7 +145,7 @@ public:
         }
     }
 
-    void stop()
+    void midiStop()
     {
         // send noteoffs to everything
         playing_ = false;

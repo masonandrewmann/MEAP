@@ -1,7 +1,4 @@
-/*
-  Meap.h - Library accompanying MEAP boards.
-  Created by Mason Mann, January 24, 2024.
-*/
+
 #ifndef MEAP_CLASSES_MM_H_1
 #define MEAP_CLASSES_MM_H_1
 
@@ -254,25 +251,25 @@ public:
   /**
    * @brief Generates a random integer within a specified range, inclusive of the limit numbers.
    *
-   * @param howsmall is the lower limit of the range, inclusive
-   * @param howbig is the upper limit of the range, inclusive
+   * @param min is the lower limit of the range, inclusive
+   * @param max is the upper limit of the range, inclusive
    * @return long returns the random number
    */
-  inline static long irand(long howsmall, long howbig)
+  inline static int64_t irand(int64_t min, int64_t max)
   {
     {
-      howbig++;
-      if (howsmall >= howbig)
+      max++;
+      if (min >= max)
       {
-        return howsmall;
+        return min;
       }
-      long diff = howbig - howsmall;
-      return (xorshift96() % diff) + howsmall;
+      int64_t diff = max - min;
+      return (xorshift96() % diff) + min;
     }
   }
 
   /**
-   * @brief Generates a random decimal between 0 and 1, inclusive, with four decimal points of precision
+   * @brief Generates a random decimal between 0 and 1
    *
    * @return float returns the random number
    */
@@ -299,6 +296,7 @@ public:
     // read dips and buttons
     for (int i = 8; --i >= 0;)
     {
+      setMuxChannel(i); // repeated several times to allow address signals to propogate through multiplexers
       setMuxChannel(i); // repeated several times to allow address signals to propogate through multiplexers
 
       // process the touch pads
@@ -433,7 +431,7 @@ public:
    */
   inline static void setCodecMicGain(int gain)
   {
-    SGwrite(CHIP_MIC_CTRL, gain);
+    SGmodify(CHIP_MIC_CTRL, gain, 0b11);
   }
 
   /**

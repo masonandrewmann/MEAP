@@ -1,3 +1,7 @@
+/*
+  Meap.h - Library accompanying MEAP boards.
+  Created by Mason Mann, January 24, 2024.
+*/
 #ifndef MEAP_H_
 #define MEAP_H_
 
@@ -156,7 +160,7 @@
 #include <meap_modules/instruments/mMarimbaVoice.h>
 #include <meap_modules/instruments/mMarimbaInstrument.h>
 
-#include <meap_modules/instruments/mSamplerInstrument.h>
+// #include <meap_modules/instruments/mSamplerInstrument.h>
 
 // nonstandard instruments
 

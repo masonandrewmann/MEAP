@@ -64,7 +64,7 @@ public:
         }
     }
 
-    void begin()
+    void midiStart()
     {
         playing_ = true;
         current_midi_address_ = midi_table_name_;
@@ -75,7 +75,7 @@ public:
         time_ = (current_midi_address_[3] << 8) + current_midi_address_[4];
     }
 
-    void stop()
+    void midiStop()
     {
         // send noteoffs to everything
         playing_ = false;

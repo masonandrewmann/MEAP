@@ -6,15 +6,7 @@
 class mNoise
 {
 public:
-    mNoise()
-    {
-        b0 = 0;
-        b1 = 0;
-        b2 = 0;
-        b3 = 0;
-        b4 = 0;
-        b5 = 0;
-        b6 = 0;
+    mNoise() {
     };
 
     //! Compute and return one 16-bit signed (-32768 to 32767) output sample.
@@ -29,20 +21,31 @@ public:
         return white();
     }
 
+    // coefficients for sr=32768 calculated using matlab script at http://www.cooperbaker.com/home/code/pink%20noise/
     int16_t pink()
     {
         white_sample = white();
-        b0 = 0.99886 * b0 + white_sample * 0.0555179;
-        b1 = 0.99332 * b1 + white_sample * 0.0750759;
-        b2 = 0.96900 * b2 + white_sample * 0.1538520;
-        b3 = 0.86650 * b3 + white_sample * 0.3104856;
-        b4 = 0.55000 * b4 + white_sample * 0.5329522;
-        b5 = -0.7616 * b5 - white_sample * 0.0168980;
-        pink_sample = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white_sample * 0.5362;
-        b6 = white_sample * 0.115926;
+
+        filter_states[0] = 0.000244094 * white_sample + (0.999755906) * filter_states[0];
+        filter_states[1] = 0.000976375 * white_sample + (0.999023625) * filter_states[1];
+        filter_states[2] = 0.003905501 * white_sample + (0.996094499) * filter_states[2];
+        filter_states[3] = 0.015622004 * white_sample + (0.984377996) * filter_states[3];
+        filter_states[4] = 0.062488016 * white_sample + (0.937511984) * filter_states[4];
+        filter_states[5] = 0.249952063 * white_sample + (0.750047937) * filter_states[5];
+        filter_states[6] = 0.999808252 * white_sample + (0.000191748) * filter_states[6];
+
+        pink_sample = (filter_states[0] +
+                       filter_states[1] * 0.501187234 +
+                       filter_states[2] * 0.251188643 +
+                       filter_states[3] * 0.125892541 +
+                       filter_states[4] * 0.063095734 +
+                       filter_states[5] * 0.031622777 +
+                       filter_states[6] * 0.015848932) *
+                      5;
         return pink_sample;
     }
-    int16_t b0, b1, b2, b3, b4, b5, b6, tmp, white_sample, pink_sample;
+    int16_t white_sample, pink_sample;
+    int16_t filter_states[7];
 };
 
 #endif // M_NOISE_H_

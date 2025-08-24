@@ -35,7 +35,7 @@ public:
         _midi_message.time = 0;
     }
 
-    void midiPlay()
+    void midiStart()
     {
         _playing = true;
         _current_midi_address = _midi_table_name;

@@ -28,7 +28,7 @@ public:
         transpose_ = 0;
     };
 
-    void begin()
+    void midiStart()
     {
         // start_time = millis();
         playing_ = true;
@@ -66,7 +66,7 @@ public:
         sample.setTimes(attack, decay, 4294967295, release);
     }
 
-    void stop()
+    void midiStop()
     {
         // send noteoffs to everything
         playing_ = false;
