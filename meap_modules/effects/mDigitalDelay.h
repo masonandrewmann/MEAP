@@ -11,18 +11,12 @@ class mDigitalDelay
 public:
     mDigitalDelay(float delay = 0, uint32_t max_delay = 4095, float feedback = 0.5, float mix = 0.5)
     {
-        init(delay, max_delay, feedback, mix);
-    };
-
-    void init(float delay = 0, uint32_t max_delay = 4095, float feedback = 0.5, float mix = 0.5)
-    {
         max_delay_samples_ = max_delay;
-        delay_samples_ = delay;
         delay_buffer_ = (T *)calloc(max_delay_samples_, sizeof(T));
         mix_ = mix;
         feedback_ = feedback;
         write_pointer_ = 0;
-        read_pointer_ = ((float)write_pointer_ + ((float)max_delay_samples_ - delay_samples_));
+        setDelay(delay);
     };
 
     ~mDigitalDelay()
@@ -83,9 +77,8 @@ public:
         {
             next_index -= max_delay_samples_;
         }
-        T out_sample = delay_buffer_[int_component] + frac_component * (delay_buffer_[next_index] + delay_buffer_[int_component]);
+        T out_sample = delay_buffer_[int_component] + frac_component * (delay_buffer_[next_index] - delay_buffer_[int_component]);
 
-        // delay_buffer_[write_pointer_] = (out_sample * feedback_) * lpf_in_ + lpf_mem_ * lpf_fb_; // lowpassed feedback
         delay_buffer_[write_pointer_] = out_sample * feedback_ + in_sample;
 
         out_sample = out_sample * mix_ + (1 - mix_) * in_sample;
@@ -107,7 +100,8 @@ public:
     float read_pointer_;
     uint32_t write_pointer_;
 
-    T lpf_mem_;
+    uint32_t int_component;
+    float frac_component;
 
     float mix_;
     float feedback_;

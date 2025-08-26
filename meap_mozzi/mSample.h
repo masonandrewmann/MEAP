@@ -172,6 +172,7 @@ public:
             }
         }
         T out;
+
         if (INTERP == mINTERP_LINEAR)
         {
             // WARNNG this is hard coded for when SAMPLE_F_BITS is 16
@@ -183,6 +184,42 @@ public:
         else
         {
             out = FLASH_OR_RAM_READ<const T>(table + (phase_fractional >> SAMPLE_F_BITS));
+        }
+        incrementPhase();
+        return out;
+    }
+
+    inline T nextMalloc()
+    {
+        if (phase_fractional > endpos_fractional)
+        {
+            if (looping)
+            {
+                phase_fractional = startpos_fractional + (phase_fractional - endpos_fractional);
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        T out;
+        if (INTERP == mINTERP_LINEAR)
+        {
+            // WARNNG this is hard coded for when SAMPLE_F_BITS is 16
+            uint64_t index = phase_fractional >> SAMPLE_F_BITS;
+            uint64_t next_index = (index + 1) % NUM_TABLE_CELLS;
+            // out = FLASH_OR_RAM_READ<const T>(table + index);
+            // out = table[index];
+            out = table[0];
+            // out = out + (((phase_fractional & 0b1111111111111111) >> 8) * ((FLASH_OR_RAM_READ<const T>(table + next_index) - out)) >> 8);
+            // out = out + (((phase_fractional & 0b1111111111111111) >> 8) * (((table[next_index]) - out)) >> 8);
+            out = out + (((phase_fractional & 0b1111111111111111) >> 8) * (((table[0]) - out)) >> 8);
+        }
+        else
+        {
+            // out = FLASH_OR_RAM_READ<const T>(table + (phase_fractional >> SAMPLE_F_BITS));
+            // out = table[phase_fractional >> SAMPLE_F_BITS];
+            out = table[0];
         }
         incrementPhase();
         return out;

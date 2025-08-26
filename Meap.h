@@ -128,6 +128,7 @@
 #include <meap_modules/effects/mBitcrusher.h>
 #include <meap_modules/effects/mFlanger.h>
 #include <meap_modules/effects/mChorus.h>
+#include <meap_modules/effects/mAnalogDelay.h>
 
 // ---- GENERATORS ----
 #include <meap_modules/generators/mSineLFO.h>
