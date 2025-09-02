@@ -383,6 +383,17 @@ public:
   }
 
   /**
+   * @brief Normalizes input from potentiometers to 0-1 range
+   *
+   * @param input number between 0 and 4095
+   * @return float number between 0 and 1
+   */
+  inline float normalize(int16_t input)
+  {
+    return ((float)input) * 0.000244140625;
+  }
+
+  /**
    * @brief Turns a built-in led on or off
    *
    * @param led_num number of the led (0 or 1)
@@ -601,6 +612,8 @@ public:
   // input smoothing
   float meap_alpha = 0.92;
   float meap_one_minus_alpha = 0.08;
+
+  uint32_t max_sustain = 4294967294;
 
   uint8_t MEAP_MUX_CONTROL_PIN_A;
   uint8_t MEAP_MUX_CONTROL_PIN_B;

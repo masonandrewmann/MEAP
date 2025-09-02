@@ -87,7 +87,7 @@ void setup() {
   int drum_glitch_pitches = true;
   // while writing this patch I made a mistake initializing the pitch of my drums
   // but I thought it sounded nice so I left it in
-  // if you want to play your drums at the pitch they were recorded at, set drum_glitch_pitches to false and look at the "else" block below 
+  // if you want to play your drums at the pitch they were recorded at, set drum_glitch_pitches to false and look at the "else" block below
   if (drum_glitch_pitches) {
     drum_bank[0].setFreq(((float)kick_SAMPLERATE / (float)kick_NUM_CELLS) / 6);
     drum_bank[1].setFreq(((float)snare1_SAMPLERATE / (float)snare1_NUM_CELLS) / 4);
@@ -117,7 +117,7 @@ void updateControl() {
   // ---------- YOUR updateControl CODE BELOW ----------
 
   if (metro.ready()) {
-    metro_period = map(meap.pot_vals[0], 0, 4095, 300, 50); // pot 0 controls tempo
+    metro_period = map(meap.pot_vals[0], 0, 4095, 300, 50);  // pot 0 controls tempo
     metro.start(metro_period);
     int curr_step = pattern_index;  // what step to we play next?
 
@@ -128,15 +128,13 @@ void updateControl() {
     for (int i = 0; i < NUM_DRUMS; i++) {  // check which drums play on current step and trigger them
       if (sample_pattern[i][curr_step] == 1) {
         if (drum_enable[i]) {
-          drum_bank[i].start();
+            drum_bank[i].start();
         }
       }
     }
 
     pattern_index = (pattern_index + 1) % 32;  // move to next step and cycle to beginning if at end
   }
-
-
 }
 
 /** Called automatically at rate specified by AUDIO_RATE macro, for calculating samples sent to DAC, too much code in here can disrupt your output

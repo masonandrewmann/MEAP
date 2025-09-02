@@ -129,6 +129,7 @@
 #include <meap_modules/effects/mFlanger.h>
 #include <meap_modules/effects/mChorus.h>
 #include <meap_modules/effects/mAnalogDelay.h>
+#include <meap_modules/effects/mBufferOverride.h>
 
 // ---- GENERATORS ----
 #include <meap_modules/generators/mSineLFO.h>
@@ -166,6 +167,9 @@
 // nonstandard instruments
 
 #include <meap_modules/instruments/mDrumRack.h>
+
+#include <meap_modules/instruments/mDrumRackInstrument.h>
+
 #include <meap_modules/instruments/mRompler.h>
 
 // ---- COMPOSITION ----

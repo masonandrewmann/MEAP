@@ -43,9 +43,9 @@ public:
 
     // sets delay as a number of sixteenth notes at a tempo
     // returns delay time in samples
-    int32_t setDelaySixteenths(uint16_t num_sixteenths, uint16_t bpm)
+    int32_t setDelaySixteenths(uint16_t num_sixteenths, float bpm)
     {
-        setDelay(num_sixteenths * (15.f / (float)bpm) * ((float)AUDIO_RATE));
+        setDelay(num_sixteenths * (15.f / bpm) * ((float)AUDIO_RATE));
         return delay_samples_;
     }
 

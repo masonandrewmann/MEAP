@@ -14,7 +14,7 @@ class mStringSynthInstrument : public mInstrument<mPOLYPHONY>
 public:
     mStringSynthInstrument(uint8_t *midi_table_name = NULL) : mInstrument<mPOLYPHONY>(midi_table_name)
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (uint16_t i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].init();
         }
@@ -63,7 +63,7 @@ public:
     void midiStop()
     {
         mInstrument<mPOLYPHONY>::midiStop();
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (uint16_t i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].noteOff();
         }
@@ -87,7 +87,7 @@ public:
     void flush()
     {
         mInstrument<mPOLYPHONY>::flush();
-        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        for (uint16_t i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].noteOff();
         }
@@ -95,7 +95,7 @@ public:
 
     void update()
     {
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (uint16_t i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].update();
         }
@@ -104,7 +104,7 @@ public:
     int32_t next()
     {
         int32_t out_sample = 0;
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        for (uint16_t i = mPOLYPHONY; --i >= 0;)
         {
             out_sample += voices[i].next();
         }

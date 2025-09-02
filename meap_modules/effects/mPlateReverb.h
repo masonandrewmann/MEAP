@@ -8,7 +8,7 @@ template <class T = int32_t>
 class mPlateReverb
 {
 public:
-    mPlateReverb(float decay = 0.6, float damping = 0.8, float bandwidth = 0.2, float mix = 0.5)
+    mPlateReverb(float decay = 0.6, float damping = 0.8, float bandwidth = 0.3, float mix = 0.5)
     {
         init(decay, damping, bandwidth, mix);
     };

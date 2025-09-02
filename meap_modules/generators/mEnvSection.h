@@ -13,7 +13,16 @@ template <uint32_t UPDATE_RATE = CONTROL_RATE>
 class mEnvSection
 {
 public:
+    mEnvSection()
+    {
+    }
+
     mEnvSection(uint32_t length_ms, float starting_level, float ending_level, MEAP_ENV_CURVES curve_type = mCURVE_LINEAR, float exp = -4.3)
+    {
+        init(length_ms, starting_level, ending_level, curve_type, exp);
+    }
+
+    void init(uint32_t length_ms, float starting_level, float ending_level, MEAP_ENV_CURVES curve_type = mCURVE_LINEAR, float exp = -4.3)
     {
         ms_to_samples = 0.001 * UPDATE_RATE;
         setExpRate(exp);
@@ -21,7 +30,7 @@ public:
         setLevels(starting_level, ending_level);
         sample_count = length_samples; // start at ending point of envelope before triggering it,, prob should rework this!
         curve = curve_type;
-    };
+    }
 
     void trigger()
     {

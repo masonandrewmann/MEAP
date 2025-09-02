@@ -35,6 +35,11 @@ public:
         _midi_message.time = 0;
     }
 
+    void setMidiTable(uint8_t *midi_table_name)
+    {
+        _midi_table_name = midi_table_name;
+    }
+
     void midiStart()
     {
         _playing = true;
