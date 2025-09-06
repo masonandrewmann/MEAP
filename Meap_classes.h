@@ -366,7 +366,7 @@ public:
    * @param tempo in BPM
    * @return float number of milliseconds in one quarter note at the specified BPM
    */
-  inline float tempoToPeriod(float tempo)
+  inline float tempoToQuarter(float tempo)
   {
     return 60000.f / tempo;
   }
