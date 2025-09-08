@@ -14,6 +14,7 @@ template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mPOLYPHONY, class T = int8_t, mea
 class mRompler
 {
 public:
+
     mRompler(const T **sample_list_, uint64_t *sample_lengths_)
     {
         sample_list = sample_list_;

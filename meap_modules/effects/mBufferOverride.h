@@ -9,7 +9,7 @@ template <class T = int32_t>
 class mBufferOverride
 {
 public:
-    mBufferOverride(uint32_t forced_buffer_size_, float buffer_divisor_, float mix_ = 0.5, uint32_t max_buffer_size_ = 32768)
+    mBufferOverride(uint32_t forced_buffer_size_ = 32760, float buffer_divisor_ = 1, float mix_ = 0.5, uint32_t max_buffer_size_ = 32768)
     {
         max_buffer_size = max_buffer_size_;
         record_buffer = (T *)calloc(max_buffer_size, sizeof(T));
@@ -32,22 +32,13 @@ public:
     void setDivisor(float divisor_)
     {
         buffer_divisor = divisor_;
+        divisor_length = (float)forced_buffer_size / buffer_divisor;
     }
 
     // length of forced_buffer_size (1 to max_buffer_size)
     void setBufferSize(uint32_t size)
     {
         forced_buffer_size = size;
-    }
-
-    void setDelay(float delay_samples)
-    {
-        // delay_samples_ = delay_samples;
-        // read_pointer_ = (float)write_pointer_ - delay_samples;
-        // if (read_pointer_ < 0)
-        // {
-        //     read_pointer_ += max_delay_samples_;
-        // }
     }
 
     // sets delay as a number of milliseconds

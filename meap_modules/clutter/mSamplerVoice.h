@@ -60,6 +60,16 @@ public:
     //     adsr_.setADLevels(a_t, d_t);
     // }
 
+    void setLoopingOn()
+    {
+        sample.setLoopingOn();
+    }
+
+    void setLoopingOff()
+    {
+        sample.setLoopingOff();
+    }
+
     void setADSR(int attack, int decay, int sustain, int release)
     {
         sample.setADLevels(255, sustain);

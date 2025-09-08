@@ -49,6 +49,22 @@ public:
         }
     }
 
+    void setLoopingOn()
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setLoopingOn();
+        }
+    }
+
+    void setLoopingOff()
+    {
+        for (uint16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setLoopingOff();
+        }
+    }
+
     void flush()
     {
         mInstrument<mPOLYPHONY>::flush();
@@ -77,7 +93,7 @@ public:
 
     void update()
     {
-        for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].update();
         }

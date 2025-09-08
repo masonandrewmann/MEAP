@@ -394,6 +394,28 @@ public:
   }
 
   /**
+   * @brief Convert a value in milliseconds to a value in samples at sampling rate of 32768
+   *
+   * @param input number between 0 and 4095
+   * @return float number between 0 and 1
+   */
+  inline float msToSamples(float ms)
+  {
+    return ms * 32.768;
+  }
+
+  /**
+   * @brief Convert a value in samples at sampling rate of 32768 to a value in milliseconds
+   *
+   * @param input number between 0 and 4095
+   * @return float number between 0 and 1
+   */
+  inline float samplesToMs(float samples)
+  {
+    return samples * 0.03051757812;
+  }
+
+  /**
    * @brief Turns a built-in led on or off
    *
    * @param led_num number of the led (0 or 1)
