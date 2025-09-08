@@ -167,7 +167,8 @@ public:
 
       cap1280_write_reg(0x0, 0b00000000);  // make sure we are in active state
       cap1280_write_reg(0x24, 0b00000000); // set averaging and sampling
-      cap1280_write_reg(0x1F, 0b00001111); // set sensitivity (default 0 010 1111)
+      cap1280_write_reg(0x1F, 0b00111111); // set sensitivity (default 0 010 1111)
+
       cap1280_write_reg(0x44, 0b01000000); // set interrupt on release
       cap1280_write_reg(0x28, 0b00000000); // disable retriggering
       cap1280_write_reg(0x27, 0b11111111); // enable all interrupts
