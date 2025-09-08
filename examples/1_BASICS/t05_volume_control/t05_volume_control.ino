@@ -42,10 +42,8 @@ void updateControl()
  */
 AudioOutput_t updateAudio()
 {
-  int32_t out_sample = 0;
-  out_sample = out_sample + ((sine_0.next() * meap.pot_vals[0]) >> 12);
-  out_sample = out_sample + ((sine_1.next() * meap.pot_vals[1]) >> 12);
-  return StereoOutput::fromNBit(17, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
+  int32_t out_sample = sine_0.next() * meap.pot_vals[0] + sine_1.next() * meap.pot_vals[1];
+  return StereoOutput::fromNBit(29, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
 /**
