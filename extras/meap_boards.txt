@@ -1,0 +1,450 @@
+##############################################################
+
+meap4c.name=MEAP 4C
+
+meap4c.bootloader.tool=esptool_py
+meap4c.bootloader.tool.default=esptool_py
+
+meap4c.upload.tool=esptool_py
+meap4c.upload.tool.default=esptool_py
+meap4c.upload.tool.network=esp_ota
+
+meap4c.upload.maximum_size=1310720
+meap4c.upload.maximum_data_size=327680
+meap4c.upload.flags=
+meap4c.upload.extra_flags=
+meap4c.upload.use_1200bps_touch=false
+meap4c.upload.wait_for_upload_port=false
+
+meap4c.serial.disableDTR=false
+meap4c.serial.disableRTS=false
+
+meap4c.build.tarch=xtensa
+meap4c.build.bootloader_addr=0x0
+meap4c.build.target=esp32s3
+meap4c.build.mcu=esp32s3
+meap4c.build.core=esp32
+meap4c.build.variant=esp32s3
+meap4c.build.board=ESP32S3_DEV
+
+meap4c.build.usb_mode=1
+meap4c.build.cdc_on_boot=0
+meap4c.build.msc_on_boot=0
+meap4c.build.dfu_on_boot=0
+meap4c.build.f_cpu=240000000L
+meap4c.build.flash_size=4MB
+meap4c.build.flash_freq=80m
+meap4c.build.flash_mode=dio
+meap4c.build.boot=qio
+meap4c.build.boot_freq=80m
+meap4c.build.partitions=default
+meap4c.build.defines=
+meap4c.build.loop_core=
+meap4c.build.event_core=
+meap4c.build.psram_type=qspi
+meap4c.build.memory_type={build.boot}_{build.psram_type}
+
+## IDE 2.0 Seems to not update the value
+
+meap4c.menu.PSRAM.opi=OPI PSRAM
+meap4c.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+meap4c.menu.PSRAM.opi.build.psram_type=opi
+meap4c.menu.PSRAM.enabled=QSPI PSRAM
+meap4c.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
+meap4c.menu.PSRAM.enabled.build.psram_type=qspi
+meap4c.menu.PSRAM.disabled=Disabled
+meap4c.menu.PSRAM.disabled.build.defines=
+meap4c.menu.PSRAM.disabled.build.psram_type=qspi
+
+
+
+meap4c.menu.FlashMode.qio=QIO 80MHz
+meap4c.menu.FlashMode.qio.build.flash_mode=dio
+meap4c.menu.FlashMode.qio.build.boot=qio
+meap4c.menu.FlashMode.qio.build.boot_freq=80m
+meap4c.menu.FlashMode.qio.build.flash_freq=80m
+meap4c.menu.FlashMode.qio120=QIO 120MHz
+meap4c.menu.FlashMode.qio120.build.flash_mode=dio
+meap4c.menu.FlashMode.qio120.build.boot=qio
+meap4c.menu.FlashMode.qio120.build.boot_freq=120m
+meap4c.menu.FlashMode.qio120.build.flash_freq=80m
+meap4c.menu.FlashMode.dio=DIO 80MHz
+meap4c.menu.FlashMode.dio.build.flash_mode=dio
+meap4c.menu.FlashMode.dio.build.boot=dio
+meap4c.menu.FlashMode.dio.build.boot_freq=80m
+meap4c.menu.FlashMode.dio.build.flash_freq=80m
+meap4c.menu.FlashMode.opi=OPI 80MHz
+meap4c.menu.FlashMode.opi.build.flash_mode=dout
+meap4c.menu.FlashMode.opi.build.boot=opi
+meap4c.menu.FlashMode.opi.build.boot_freq=80m
+meap4c.menu.FlashMode.opi.build.flash_freq=80m
+
+meap4c.menu.FlashSize.16M=16MB (128Mb)
+meap4c.menu.FlashSize.16M.build.flash_size=16MB
+meap4c.menu.FlashSize.4M=4MB (32Mb)
+meap4c.menu.FlashSize.4M.build.flash_size=4MB
+meap4c.menu.FlashSize.8M=8MB (64Mb)
+meap4c.menu.FlashSize.8M.build.flash_size=8MB
+meap4c.menu.FlashSize.32M=32MB (256Mb)
+meap4c.menu.FlashSize.32M.build.flash_size=32MB
+
+meap4c.menu.USBMode.hwcdc=Hardware CDC and JTAG
+meap4c.menu.USBMode.hwcdc.build.usb_mode=1
+meap4c.menu.USBMode.default=USB-OTG (TinyUSB)
+meap4c.menu.USBMode.default.build.usb_mode=0
+
+meap4c.menu.CDCOnBoot.cdc=Enabled
+meap4c.menu.CDCOnBoot.cdc.build.cdc_on_boot=1
+meap4c.menu.CDCOnBoot.default=Disabled
+meap4c.menu.CDCOnBoot.default.build.cdc_on_boot=0
+
+meap4c.menu.UploadMode.default=UART0 / Hardware CDC
+meap4c.menu.UploadMode.default.upload.use_1200bps_touch=false
+meap4c.menu.UploadMode.default.upload.wait_for_upload_port=false
+meap4c.menu.UploadMode.cdc=USB-OTG CDC (TinyUSB)
+meap4c.menu.UploadMode.cdc.upload.use_1200bps_touch=true
+meap4c.menu.UploadMode.cdc.upload.wait_for_upload_port=true
+
+
+meap4c.menu.PartitionScheme.custom=Default (16MB APP)
+meap4c.menu.PartitionScheme.custom.build.partitions=meap
+meap4c.menu.PartitionScheme.custom.upload.maximum_size=16646144
+meap4c.menu.PartitionScheme.default=4MB with spiffs (1.2MB APP/1.5MB SPIFFS)
+meap4c.menu.PartitionScheme.default.build.partitions=default
+meap4c.menu.PartitionScheme.defaultffat=4MB with ffat (1.2MB APP/1.5MB FATFS)
+meap4c.menu.PartitionScheme.defaultffat.build.partitions=default_ffat
+meap4c.menu.PartitionScheme.default_8MB=8M with spiffs (3MB APP/1.5MB SPIFFS)
+meap4c.menu.PartitionScheme.default_8MB.build.partitions=default_8MB
+meap4c.menu.PartitionScheme.default_8MB.upload.maximum_size=3342336
+meap4c.menu.PartitionScheme.minimal=Minimal (1.3MB APP/700KB SPIFFS)
+meap4c.menu.PartitionScheme.minimal.build.partitions=minimal
+meap4c.menu.PartitionScheme.no_fs=No FS 4MB (2MB APP x2)
+meap4c.menu.PartitionScheme.no_fs.build.partitions=no_fs
+meap4c.menu.PartitionScheme.no_fs.upload.maximum_size=2031616
+meap4c.menu.PartitionScheme.no_ota=No OTA (2MB APP/2MB SPIFFS)
+meap4c.menu.PartitionScheme.no_ota.build.partitions=no_ota
+meap4c.menu.PartitionScheme.no_ota.upload.maximum_size=2097152
+meap4c.menu.PartitionScheme.noota_3g=No OTA (1MB APP/3MB SPIFFS)
+meap4c.menu.PartitionScheme.noota_3g.build.partitions=noota_3g
+meap4c.menu.PartitionScheme.noota_3g.upload.maximum_size=1048576
+meap4c.menu.PartitionScheme.noota_ffat=No OTA (2MB APP/2MB FATFS)
+meap4c.menu.PartitionScheme.noota_ffat.build.partitions=noota_ffat
+meap4c.menu.PartitionScheme.noota_ffat.upload.maximum_size=2097152
+meap4c.menu.PartitionScheme.noota_3gffat=No OTA (1MB APP/3MB FATFS)
+meap4c.menu.PartitionScheme.noota_3gffat.build.partitions=noota_3gffat
+meap4c.menu.PartitionScheme.noota_3gffat.upload.maximum_size=1048576
+meap4c.menu.PartitionScheme.huge_app=Huge APP (3MB No OTA/1MB SPIFFS)
+meap4c.menu.PartitionScheme.huge_app.build.partitions=huge_app
+meap4c.menu.PartitionScheme.huge_app.upload.maximum_size=3145728
+meap4c.menu.PartitionScheme.min_spiffs=Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)
+meap4c.menu.PartitionScheme.min_spiffs.build.partitions=min_spiffs
+meap4c.menu.PartitionScheme.min_spiffs.upload.maximum_size=1966080
+meap4c.menu.PartitionScheme.fatflash=16M Flash (2MB APP/12.5MB FATFS)
+meap4c.menu.PartitionScheme.fatflash.build.partitions=ffat
+meap4c.menu.PartitionScheme.fatflash.upload.maximum_size=2097152
+meap4c.menu.PartitionScheme.app3M_fat9M_16MB=16M Flash (3MB APP/9.9MB FATFS)
+meap4c.menu.PartitionScheme.app3M_fat9M_16MB.build.partitions=app3M_fat9M_16MB
+meap4c.menu.PartitionScheme.app3M_fat9M_16MB.upload.maximum_size=3145728
+meap4c.menu.PartitionScheme.rainmaker=RainMaker 4MB
+meap4c.menu.PartitionScheme.rainmaker.build.partitions=rainmaker
+meap4c.menu.PartitionScheme.rainmaker.upload.maximum_size=1966080
+meap4c.menu.PartitionScheme.rainmaker_4MB=RainMaker 4MB No OTA
+meap4c.menu.PartitionScheme.rainmaker_4MB.build.partitions=rainmaker_4MB_no_ota
+meap4c.menu.PartitionScheme.rainmaker_4MB.upload.maximum_size=4038656
+meap4c.menu.PartitionScheme.rainmaker_8MB=RainMaker 8MB
+meap4c.menu.PartitionScheme.rainmaker_8MB.build.partitions=rainmaker_8MB
+meap4c.menu.PartitionScheme.rainmaker_8MB.upload.maximum_size=4096000
+meap4c.menu.PartitionScheme.app5M_fat24M_32MB=32M Flash (4.8MB APP/22MB FATFS)
+meap4c.menu.PartitionScheme.app5M_fat24M_32MB.build.partitions=large_fat_32MB
+meap4c.menu.PartitionScheme.app5M_fat24M_32MB.upload.maximum_size=4718592
+meap4c.menu.PartitionScheme.app5M_little24M_32MB=32M Flash (4.8MB APP/22MB LittleFS)
+meap4c.menu.PartitionScheme.app5M_little24M_32MB.build.partitions=large_littlefs_32MB
+meap4c.menu.PartitionScheme.app5M_little24M_32MB.upload.maximum_size=4718592
+meap4c.menu.PartitionScheme.app13M_data7M_32MB=32M Flash (13MB APP/6.75MB SPIFFS)
+meap4c.menu.PartitionScheme.app13M_data7M_32MB.build.partitions=default_32MB
+meap4c.menu.PartitionScheme.app13M_data7M_32MB.upload.maximum_size=13107200
+meap4c.menu.PartitionScheme.esp_sr_16=ESP SR 16M (3MB APP/7MB SPIFFS/2.9MB MODEL)
+meap4c.menu.PartitionScheme.esp_sr_16.upload.maximum_size=3145728
+meap4c.menu.PartitionScheme.esp_sr_16.upload.extra_flags=0xD10000 {build.path}/srmodels.bin
+meap4c.menu.PartitionScheme.esp_sr_16.build.partitions=esp_sr_16
+meap4c.menu.PartitionScheme.zigbee_zczr=Zigbee ZCZR 4MB with spiffs
+meap4c.menu.PartitionScheme.zigbee_zczr.build.partitions=zigbee_zczr
+meap4c.menu.PartitionScheme.zigbee_zczr.upload.maximum_size=1310720
+meap4c.menu.PartitionScheme.zigbee_zczr_8MB=Zigbee ZCZR 8MB with spiffs
+meap4c.menu.PartitionScheme.zigbee_zczr_8MB.build.partitions=zigbee_zczr_8MB
+meap4c.menu.PartitionScheme.zigbee_zczr_8MB.upload.maximum_size=3407872
+
+
+meap4c.menu.CPUFreq.240=240MHz (WiFi)
+meap4c.menu.CPUFreq.240.build.f_cpu=240000000L
+meap4c.menu.CPUFreq.160=160MHz (WiFi)
+meap4c.menu.CPUFreq.160.build.f_cpu=160000000L
+meap4c.menu.CPUFreq.80=80MHz (WiFi)
+meap4c.menu.CPUFreq.80.build.f_cpu=80000000L
+meap4c.menu.CPUFreq.40=40MHz
+meap4c.menu.CPUFreq.40.build.f_cpu=40000000L
+meap4c.menu.CPUFreq.20=20MHz
+meap4c.menu.CPUFreq.20.build.f_cpu=20000000L
+meap4c.menu.CPUFreq.10=10MHz
+meap4c.menu.CPUFreq.10.build.f_cpu=10000000L
+
+meap4c.menu.UploadSpeed.921600=921600
+meap4c.menu.UploadSpeed.921600.upload.speed=921600
+meap4c.menu.UploadSpeed.115200=115200
+meap4c.menu.UploadSpeed.115200.upload.speed=115200
+meap4c.menu.UploadSpeed.256000.windows=256000
+meap4c.menu.UploadSpeed.256000.upload.speed=256000
+meap4c.menu.UploadSpeed.230400.windows.upload.speed=256000
+meap4c.menu.UploadSpeed.230400=230400
+meap4c.menu.UploadSpeed.230400.upload.speed=230400
+meap4c.menu.UploadSpeed.460800.linux=460800
+meap4c.menu.UploadSpeed.460800.macosx=460800
+meap4c.menu.UploadSpeed.460800.upload.speed=460800
+meap4c.menu.UploadSpeed.512000.windows=512000
+meap4c.menu.UploadSpeed.512000.upload.speed=512000
+
+meap4c.menu.DebugLevel.none=None
+meap4c.menu.DebugLevel.none.build.code_debug=0
+meap4c.menu.DebugLevel.error=Error
+meap4c.menu.DebugLevel.error.build.code_debug=1
+meap4c.menu.DebugLevel.warn=Warn
+meap4c.menu.DebugLevel.warn.build.code_debug=2
+meap4c.menu.DebugLevel.info=Info
+meap4c.menu.DebugLevel.info.build.code_debug=3
+meap4c.menu.DebugLevel.debug=Debug
+meap4c.menu.DebugLevel.debug.build.code_debug=4
+meap4c.menu.DebugLevel.verbose=Verbose
+meap4c.menu.DebugLevel.verbose.build.code_debug=5
+
+meap4c.menu.EraseFlash.none=Disabled
+meap4c.menu.EraseFlash.none.upload.erase_cmd=
+meap4c.menu.EraseFlash.all=Enabled
+meap4c.menu.EraseFlash.all.upload.erase_cmd=-e
+
+##############################################################
+
+
+
+meap4b.name=MEAP 4B
+
+meap4b.bootloader.tool=esptool_py
+meap4b.bootloader.tool.default=esptool_py
+
+meap4b.upload.tool=esptool_py
+meap4b.upload.tool.default=esptool_py
+meap4b.upload.tool.network=esp_ota
+
+meap4b.upload.maximum_size=1310720
+meap4b.upload.maximum_data_size=327680
+meap4b.upload.flags=
+meap4b.upload.extra_flags=
+meap4b.upload.use_1200bps_touch=false
+meap4b.upload.wait_for_upload_port=false
+
+meap4b.serial.disableDTR=false
+meap4b.serial.disableRTS=false
+
+meap4b.build.tarch=xtensa
+meap4b.build.bootloader_addr=0x0
+meap4b.build.target=esp32s3
+meap4b.build.mcu=esp32s3
+meap4b.build.core=esp32
+meap4b.build.variant=esp32s3
+meap4b.build.board=ESP32S3_DEV
+
+meap4b.build.usb_mode=1
+meap4b.build.cdc_on_boot=0
+meap4b.build.msc_on_boot=0
+meap4b.build.dfu_on_boot=0
+meap4b.build.f_cpu=240000000L
+meap4b.build.flash_size=4MB
+meap4b.build.flash_freq=80m
+meap4b.build.flash_mode=dio
+meap4b.build.boot=qio
+meap4b.build.boot_freq=80m
+meap4b.build.partitions=default
+meap4b.build.defines=
+meap4b.build.loop_core=
+meap4b.build.event_core=
+meap4b.build.psram_type=qspi
+meap4b.build.memory_type={build.boot}_{build.psram_type}
+
+## IDE 2.0 Seems to not update the value
+
+meap4b.menu.PSRAM.disabled=Disabled
+meap4b.menu.PSRAM.disabled.build.defines=
+meap4b.menu.PSRAM.disabled.build.psram_type=qspi
+meap4b.menu.PSRAM.opi=OPI PSRAM
+meap4b.menu.PSRAM.opi.build.defines=-DBOARD_HAS_PSRAM
+meap4b.menu.PSRAM.opi.build.psram_type=opi
+meap4b.menu.PSRAM.enabled=QSPI PSRAM
+meap4b.menu.PSRAM.enabled.build.defines=-DBOARD_HAS_PSRAM
+meap4b.menu.PSRAM.enabled.build.psram_type=qspi
+
+
+
+
+meap4b.menu.FlashMode.qio=QIO 80MHz
+meap4b.menu.FlashMode.qio.build.flash_mode=dio
+meap4b.menu.FlashMode.qio.build.boot=qio
+meap4b.menu.FlashMode.qio.build.boot_freq=80m
+meap4b.menu.FlashMode.qio.build.flash_freq=80m
+meap4b.menu.FlashMode.qio120=QIO 120MHz
+meap4b.menu.FlashMode.qio120.build.flash_mode=dio
+meap4b.menu.FlashMode.qio120.build.boot=qio
+meap4b.menu.FlashMode.qio120.build.boot_freq=120m
+meap4b.menu.FlashMode.qio120.build.flash_freq=80m
+meap4b.menu.FlashMode.dio=DIO 80MHz
+meap4b.menu.FlashMode.dio.build.flash_mode=dio
+meap4b.menu.FlashMode.dio.build.boot=dio
+meap4b.menu.FlashMode.dio.build.boot_freq=80m
+meap4b.menu.FlashMode.dio.build.flash_freq=80m
+meap4b.menu.FlashMode.opi=OPI 80MHz
+meap4b.menu.FlashMode.opi.build.flash_mode=dout
+meap4b.menu.FlashMode.opi.build.boot=opi
+meap4b.menu.FlashMode.opi.build.boot_freq=80m
+meap4b.menu.FlashMode.opi.build.flash_freq=80m
+
+meap4b.menu.FlashSize.16M=16MB (128Mb)
+meap4b.menu.FlashSize.16M.build.flash_size=16MB
+meap4b.menu.FlashSize.4M=4MB (32Mb)
+meap4b.menu.FlashSize.4M.build.flash_size=4MB
+meap4b.menu.FlashSize.8M=8MB (64Mb)
+meap4b.menu.FlashSize.8M.build.flash_size=8MB
+meap4b.menu.FlashSize.32M=32MB (256Mb)
+meap4b.menu.FlashSize.32M.build.flash_size=32MB
+
+meap4b.menu.USBMode.hwcdc=Hardware CDC and JTAG
+meap4b.menu.USBMode.hwcdc.build.usb_mode=1
+meap4b.menu.USBMode.default=USB-OTG (TinyUSB)
+meap4b.menu.USBMode.default.build.usb_mode=0
+
+meap4b.menu.CDCOnBoot.cdc=Enabled
+meap4b.menu.CDCOnBoot.cdc.build.cdc_on_boot=1
+meap4b.menu.CDCOnBoot.default=Disabled
+meap4b.menu.CDCOnBoot.default.build.cdc_on_boot=0
+
+meap4b.menu.UploadMode.default=UART0 / Hardware CDC
+meap4b.menu.UploadMode.default.upload.use_1200bps_touch=false
+meap4b.menu.UploadMode.default.upload.wait_for_upload_port=false
+meap4b.menu.UploadMode.cdc=USB-OTG CDC (TinyUSB)
+meap4b.menu.UploadMode.cdc.upload.use_1200bps_touch=true
+meap4b.menu.UploadMode.cdc.upload.wait_for_upload_port=true
+
+
+meap4b.menu.PartitionScheme.custom=Default (16MB APP)
+meap4b.menu.PartitionScheme.custom.build.partitions=meap
+meap4b.menu.PartitionScheme.custom.upload.maximum_size=16646144
+meap4b.menu.PartitionScheme.default=4MB with spiffs (1.2MB APP/1.5MB SPIFFS)
+meap4b.menu.PartitionScheme.default.build.partitions=default
+meap4b.menu.PartitionScheme.defaultffat=4MB with ffat (1.2MB APP/1.5MB FATFS)
+meap4b.menu.PartitionScheme.defaultffat.build.partitions=default_ffat
+meap4b.menu.PartitionScheme.default_8MB=8M with spiffs (3MB APP/1.5MB SPIFFS)
+meap4b.menu.PartitionScheme.default_8MB.build.partitions=default_8MB
+meap4b.menu.PartitionScheme.default_8MB.upload.maximum_size=3342336
+meap4b.menu.PartitionScheme.minimal=Minimal (1.3MB APP/700KB SPIFFS)
+meap4b.menu.PartitionScheme.minimal.build.partitions=minimal
+meap4b.menu.PartitionScheme.no_fs=No FS 4MB (2MB APP x2)
+meap4b.menu.PartitionScheme.no_fs.build.partitions=no_fs
+meap4b.menu.PartitionScheme.no_fs.upload.maximum_size=2031616
+meap4b.menu.PartitionScheme.no_ota=No OTA (2MB APP/2MB SPIFFS)
+meap4b.menu.PartitionScheme.no_ota.build.partitions=no_ota
+meap4b.menu.PartitionScheme.no_ota.upload.maximum_size=2097152
+meap4b.menu.PartitionScheme.noota_3g=No OTA (1MB APP/3MB SPIFFS)
+meap4b.menu.PartitionScheme.noota_3g.build.partitions=noota_3g
+meap4b.menu.PartitionScheme.noota_3g.upload.maximum_size=1048576
+meap4b.menu.PartitionScheme.noota_ffat=No OTA (2MB APP/2MB FATFS)
+meap4b.menu.PartitionScheme.noota_ffat.build.partitions=noota_ffat
+meap4b.menu.PartitionScheme.noota_ffat.upload.maximum_size=2097152
+meap4b.menu.PartitionScheme.noota_3gffat=No OTA (1MB APP/3MB FATFS)
+meap4b.menu.PartitionScheme.noota_3gffat.build.partitions=noota_3gffat
+meap4b.menu.PartitionScheme.noota_3gffat.upload.maximum_size=1048576
+meap4b.menu.PartitionScheme.huge_app=Huge APP (3MB No OTA/1MB SPIFFS)
+meap4b.menu.PartitionScheme.huge_app.build.partitions=huge_app
+meap4b.menu.PartitionScheme.huge_app.upload.maximum_size=3145728
+meap4b.menu.PartitionScheme.min_spiffs=Minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)
+meap4b.menu.PartitionScheme.min_spiffs.build.partitions=min_spiffs
+meap4b.menu.PartitionScheme.min_spiffs.upload.maximum_size=1966080
+meap4b.menu.PartitionScheme.fatflash=16M Flash (2MB APP/12.5MB FATFS)
+meap4b.menu.PartitionScheme.fatflash.build.partitions=ffat
+meap4b.menu.PartitionScheme.fatflash.upload.maximum_size=2097152
+meap4b.menu.PartitionScheme.app3M_fat9M_16MB=16M Flash (3MB APP/9.9MB FATFS)
+meap4b.menu.PartitionScheme.app3M_fat9M_16MB.build.partitions=app3M_fat9M_16MB
+meap4b.menu.PartitionScheme.app3M_fat9M_16MB.upload.maximum_size=3145728
+meap4b.menu.PartitionScheme.rainmaker=RainMaker 4MB
+meap4b.menu.PartitionScheme.rainmaker.build.partitions=rainmaker
+meap4b.menu.PartitionScheme.rainmaker.upload.maximum_size=1966080
+meap4b.menu.PartitionScheme.rainmaker_4MB=RainMaker 4MB No OTA
+meap4b.menu.PartitionScheme.rainmaker_4MB.build.partitions=rainmaker_4MB_no_ota
+meap4b.menu.PartitionScheme.rainmaker_4MB.upload.maximum_size=4038656
+meap4b.menu.PartitionScheme.rainmaker_8MB=RainMaker 8MB
+meap4b.menu.PartitionScheme.rainmaker_8MB.build.partitions=rainmaker_8MB
+meap4b.menu.PartitionScheme.rainmaker_8MB.upload.maximum_size=4096000
+meap4b.menu.PartitionScheme.app5M_fat24M_32MB=32M Flash (4.8MB APP/22MB FATFS)
+meap4b.menu.PartitionScheme.app5M_fat24M_32MB.build.partitions=large_fat_32MB
+meap4b.menu.PartitionScheme.app5M_fat24M_32MB.upload.maximum_size=4718592
+meap4b.menu.PartitionScheme.app5M_little24M_32MB=32M Flash (4.8MB APP/22MB LittleFS)
+meap4b.menu.PartitionScheme.app5M_little24M_32MB.build.partitions=large_littlefs_32MB
+meap4b.menu.PartitionScheme.app5M_little24M_32MB.upload.maximum_size=4718592
+meap4b.menu.PartitionScheme.app13M_data7M_32MB=32M Flash (13MB APP/6.75MB SPIFFS)
+meap4b.menu.PartitionScheme.app13M_data7M_32MB.build.partitions=default_32MB
+meap4b.menu.PartitionScheme.app13M_data7M_32MB.upload.maximum_size=13107200
+meap4b.menu.PartitionScheme.esp_sr_16=ESP SR 16M (3MB APP/7MB SPIFFS/2.9MB MODEL)
+meap4b.menu.PartitionScheme.esp_sr_16.upload.maximum_size=3145728
+meap4b.menu.PartitionScheme.esp_sr_16.upload.extra_flags=0xD10000 {build.path}/srmodels.bin
+meap4b.menu.PartitionScheme.esp_sr_16.build.partitions=esp_sr_16
+meap4b.menu.PartitionScheme.zigbee_zczr=Zigbee ZCZR 4MB with spiffs
+meap4b.menu.PartitionScheme.zigbee_zczr.build.partitions=zigbee_zczr
+meap4b.menu.PartitionScheme.zigbee_zczr.upload.maximum_size=1310720
+meap4b.menu.PartitionScheme.zigbee_zczr_8MB=Zigbee ZCZR 8MB with spiffs
+meap4b.menu.PartitionScheme.zigbee_zczr_8MB.build.partitions=zigbee_zczr_8MB
+meap4b.menu.PartitionScheme.zigbee_zczr_8MB.upload.maximum_size=3407872
+
+
+meap4b.menu.CPUFreq.240=240MHz (WiFi)
+meap4b.menu.CPUFreq.240.build.f_cpu=240000000L
+meap4b.menu.CPUFreq.160=160MHz (WiFi)
+meap4b.menu.CPUFreq.160.build.f_cpu=160000000L
+meap4b.menu.CPUFreq.80=80MHz (WiFi)
+meap4b.menu.CPUFreq.80.build.f_cpu=80000000L
+meap4b.menu.CPUFreq.40=40MHz
+meap4b.menu.CPUFreq.40.build.f_cpu=40000000L
+meap4b.menu.CPUFreq.20=20MHz
+meap4b.menu.CPUFreq.20.build.f_cpu=20000000L
+meap4b.menu.CPUFreq.10=10MHz
+meap4b.menu.CPUFreq.10.build.f_cpu=10000000L
+
+meap4b.menu.UploadSpeed.921600=921600
+meap4b.menu.UploadSpeed.921600.upload.speed=921600
+meap4b.menu.UploadSpeed.115200=115200
+meap4b.menu.UploadSpeed.115200.upload.speed=115200
+meap4b.menu.UploadSpeed.256000.windows=256000
+meap4b.menu.UploadSpeed.256000.upload.speed=256000
+meap4b.menu.UploadSpeed.230400.windows.upload.speed=256000
+meap4b.menu.UploadSpeed.230400=230400
+meap4b.menu.UploadSpeed.230400.upload.speed=230400
+meap4b.menu.UploadSpeed.460800.linux=460800
+meap4b.menu.UploadSpeed.460800.macosx=460800
+meap4b.menu.UploadSpeed.460800.upload.speed=460800
+meap4b.menu.UploadSpeed.512000.windows=512000
+meap4b.menu.UploadSpeed.512000.upload.speed=512000
+
+meap4b.menu.DebugLevel.none=None
+meap4b.menu.DebugLevel.none.build.code_debug=0
+meap4b.menu.DebugLevel.error=Error
+meap4b.menu.DebugLevel.error.build.code_debug=1
+meap4b.menu.DebugLevel.warn=Warn
+meap4b.menu.DebugLevel.warn.build.code_debug=2
+meap4b.menu.DebugLevel.info=Info
+meap4b.menu.DebugLevel.info.build.code_debug=3
+meap4b.menu.DebugLevel.debug=Debug
+meap4b.menu.DebugLevel.debug.build.code_debug=4
+meap4b.menu.DebugLevel.verbose=Verbose
+meap4b.menu.DebugLevel.verbose.build.code_debug=5
+
+meap4b.menu.EraseFlash.none=Disabled
+meap4b.menu.EraseFlash.none.upload.erase_cmd=
+meap4b.menu.EraseFlash.all=Enabled
+meap4b.menu.EraseFlash.all.upload.erase_cmd=-e
+
+##############################################################
