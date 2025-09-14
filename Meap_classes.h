@@ -12,8 +12,6 @@
 #include "dependencies/sgtl_reg.h"
 
 // ---
-// #include "Meap_classes.h"
-
 #include "soc/soc_caps.h"
 
 #include <soc/sens_reg.h>
@@ -32,7 +30,7 @@
 
 #include <MozziHeadersOnly.h>
 #include <mozzi_rand.h>
-// #include "Meap.h"
+
 struct MeapNoteAndVoice
 {
   uint16_t note_num;
@@ -135,6 +133,10 @@ public:
       MEAP_I2S_DOUT = 47;
       MEAP_I2S_DIN = 48;
       touchSetCycles(1, 1);
+      pinMode(MEAP_LED_0_PIN, OUTPUT);
+      pinMode(MEAP_LED_1_PIN, OUTPUT);
+      digitalWrite(MEAP_LED_0_PIN, LOW);
+      digitalWrite(MEAP_LED_0_PIN, LOW);
 
       break;
     case mMEAP4C:
@@ -175,6 +177,10 @@ public:
       cap1280_write_reg(0x26, 0b11111111); // force calibration routine
       cap1280_write_reg(0x2A, 0b00001100); // turn off MTB
 
+      pinMode(MEAP_LED_0_PIN, OUTPUT);
+      digitalWrite(MEAP_LED_0_PIN, LOW);
+
+      pinMode(MEAP_CAP_IRQ_PIN, INPUT_PULLUP);
       attachInterrupt(digitalPinToInterrupt(MEAP_CAP_IRQ_PIN), cap1280_interrupt, CHANGE);
       break;
     }
@@ -188,9 +194,6 @@ public:
     digitalWrite(MEAP_MUX_CONTROL_PIN_C, LOW);
 
     pinMode(MEAP_MUX_DIP_PIN, INPUT); // dip mux input
-
-    pinMode(MEAP_LED_0_PIN, OUTPUT);
-    pinMode(MEAP_LED_1_PIN, OUTPUT);
 
     // adjust smoothing amount based on control rate
     if (CONTROL_RATE == 128)
@@ -239,7 +242,7 @@ public:
     // REG_SET_FIELD(RTC_CNTL_TOUCH_CTRL1_REG, RTC_CNTL_TOUCH_MEAS_NUM, 1); // only one reading
     // REG_SET_FIELD(SENS_SAR_TOUCH_CONF_REG, SENS_TOUCH_OUTEN, 1 << 1);    // choose channel 1 to begin
 
-    pinMode(18, INPUT); // for external multiplexer
+    // pinMode(18, INPUT); // for external multiplexer
 
     codecInit();
 
@@ -646,8 +649,8 @@ public:
   uint8_t MEAP_POT_0_PIN;
   uint8_t MEAP_POT_1_PIN;
   uint8_t MEAP_VOLUME_POT_PIN;
-  uint8_t MEAP_MIDI_IN_PIN;
-  uint8_t MEAP_MIDI_OUT_PIN;
+  int8_t MEAP_MIDI_IN_PIN;
+  int8_t MEAP_MIDI_OUT_PIN;
   uint8_t MEAP_CV1_PIN;
   uint8_t MEAP_CV2_PIN;
   uint8_t MEAP_LED_0_PIN;
