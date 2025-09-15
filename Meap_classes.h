@@ -347,6 +347,12 @@ public:
     pot_vals[0] = (pot_vals[0] * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_POT_0_PIN));
     pot_vals[1] = (pot_vals[1] * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_POT_1_PIN));
     volume_val = (volume_val * meap_alpha) + (meap_one_minus_alpha * analogRead(MEAP_VOLUME_POT_PIN));
+
+    // deadzone for volume pot
+    if (volume_val < 15)
+    {
+      volume_val = 0;
+    }
   }
 
   /**
@@ -724,11 +730,15 @@ public:
   inline bool sgtlInit()
   {
     delay(5);
-    SGwrite(CHIP_LINREG_CTRL, 0x006C);   // VDDA & VDDIO both over 3.1V
-    SGwrite(CHIP_REF_CTRL, 0x01FF);      // VAG=1.575, slow ramp, +12.5% bias current
+    SGwrite(CHIP_LINREG_CTRL, 0x006C); // VDDA & VDDIO both over 3.1V
+    SGwrite(CHIP_REF_CTRL, 0x01FF);    // VAG=1.575, slow ramp, +12.5% bias current
+
     SGwrite(CHIP_LINE_OUT_CTRL, 0x0322); // LO_VAGCNTRL=1.65V, OUT_CURRENT=0.36mA
-    SGwrite(CHIP_DIG_POWER, 0x0073);     // power up all digital stuff
-    SGwrite(CHIP_ANA_POWER, 0x42FB);     // 4afb
+
+    SGwrite(CHIP_LINE_OUT_VOL, 0xFFFF); // LO_VAGCNTRL=1.65V, OUT_CURRENT=0.36mA
+
+    SGwrite(CHIP_DIG_POWER, 0x0073); // power up all digital stuff
+    SGwrite(CHIP_ANA_POWER, 0x42FB); // 4afb
 
     SGwrite(CHIP_CLK_CTRL, 0x0000); // 32 kHz, 256*Fs
     SGwrite(CHIP_I2S_CTRL, 0x0030); // SCLK=64*Fs, 16bit, I2S format

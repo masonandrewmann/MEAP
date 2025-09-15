@@ -10,7 +10,7 @@
   Received MIDI messages are logged on the serial port
 */
 
-#define CONTROL_RATE 128 
+#define CONTROL_RATE 128
 #include <Meap.h>
 
 Meap meap;
@@ -36,14 +36,18 @@ void loop()
 {
   audioHook(); // handles Mozzi audio generation behind the scenes
 
-  if (millis() > midi_timer){
-	midi_timer = millis()+500;
-        if(midi_state){
-		MIDI.sendNoteOn(60, 100, 1);
-	} else {
-		MIDI.sendNoteOff(60, 0, 1);
-	}
-        midi_state = !midi_state;  
+  if (millis() > midi_timer)
+  {
+    midi_timer = millis() + 500;
+    if (midi_state)
+    {
+      MIDI.sendNoteOn(60, 100, 1);
+    }
+    else
+    {
+      MIDI.sendNoteOff(60, 0, 1);
+    }
+    midi_state = !midi_state;
   }
 
   if (MIDI.read()) // Is there a MIDI message incoming ?
@@ -68,7 +72,7 @@ AudioOutput_t updateAudio()
 {
   int32_t left_sample = osc1.next();
   int32_t right_sample = osc2.next();
-  return StereoOutput::fromNBit(16, (left_sample * meap.volume_val) >> 12, (right_sample * meap.volume_val) >> 12);
+  return StereoOutput::fromNBit(18, (left_sample * meap.volume_val) >> 12, (right_sample * meap.volume_val) >> 12);
 }
 
 /**
