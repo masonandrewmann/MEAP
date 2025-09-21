@@ -70,8 +70,8 @@ void updateControl()
  */
 AudioOutput_t updateAudio()
 {
-  int32_t left_sample = osc1.next();
-  int32_t right_sample = osc2.next();
+  int64_t left_sample = osc1.next();
+  int64_t right_sample = osc2.next();
   return StereoOutput::fromNBit(18, (left_sample * meap.volume_val) >> 12, (right_sample * meap.volume_val) >> 12);
 }
 

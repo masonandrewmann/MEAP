@@ -44,7 +44,7 @@ void updateControl()
  */
 AudioOutput_t updateAudio()
 {
-  int32_t out_sample = (my_sine.next() * my_envelope.next()) >> 8;
+  int64_t out_sample = (my_sine.next() * my_envelope.next()) >> 8;
   return StereoOutput::fromNBit(16, (out_sample * meap.volume_val) >> 12, (out_sample * meap.volume_val) >> 12);
 }
 
