@@ -175,6 +175,7 @@
 // ---- COMPOSITION ----
 
 #include <meap_modules/composition/mMML.h>
+#include <meap_modules/composition/mTransitionTable.h>
 
 i2s_chan_handle_t tx_handle;
 i2s_chan_handle_t rx_handle;
