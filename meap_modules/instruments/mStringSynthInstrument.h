@@ -1,12 +1,9 @@
-#ifndef MSTRING_SYNTH_INSTRUMENT_H_
-#define MSTRING_SYNTH_INSTRUMENT_H_
+#ifndef MSTRINGSYNTH_INSTRUMENT_H_
+#define MSTRINGSYNTH_INSTRUMENT_H_
 
 #include <dependencies/LinkedList/LinkedList.h>
-
 #include "mInstrument.h"
-#include "mStringSynthVoice.h"
-
-// Polyphic string synth, inspired by ARP Solina
+#include "mStringSynthInstrument.h"
 
 template <uint16_t mPOLYPHONY = 4>
 class mStringSynthInstrument : public mInstrument<mPOLYPHONY>
@@ -14,11 +11,11 @@ class mStringSynthInstrument : public mInstrument<mPOLYPHONY>
 public:
     mStringSynthInstrument(uint8_t *midi_table_name = NULL) : mInstrument<mPOLYPHONY>(midi_table_name)
     {
-        for (uint16_t i = mPOLYPHONY; --i >= 0;)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].init();
         }
-    }
+    };
 
     void setADSR(uint32_t attack_time, uint32_t decay_time, uint16_t sustain_level, uint32_t release_time)
     {
@@ -44,26 +41,10 @@ public:
         }
     }
 
-    // void setEnsembleMix(uint32_t mix)
-    // {
-    //     for (int i = mPOLYPHONY; --i >= 0;)
-    //     {
-    //         voices[i].setEnsembleMix(mix);
-    //     }
-    // }
-
-    // void setPhaserFreq(float phaser_freq)
-    // {
-    //     for (int i = mPOLYPHONY; --i >= 0;)
-    //     {
-    //         voices[i].setPhaserFreq(phaser_freq);
-    //     }
-    // }
-
     void midiStop()
     {
         mInstrument<mPOLYPHONY>::midiStop();
-        for (uint16_t i = mPOLYPHONY; --i >= 0;)
+        for (int16_t i = 0; i < mPOLYPHONY; i++)
         {
             voices[i].noteOff();
         }
@@ -87,7 +68,7 @@ public:
     void flush()
     {
         mInstrument<mPOLYPHONY>::flush();
-        for (uint16_t i = mPOLYPHONY; --i >= 0;)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].noteOff();
         }
@@ -95,7 +76,7 @@ public:
 
     void update()
     {
-        for (uint16_t i = mPOLYPHONY; --i >= 0;)
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].update();
         }
@@ -104,11 +85,10 @@ public:
     int32_t next()
     {
         int32_t out_sample = 0;
-        for (uint16_t i = mPOLYPHONY; --i >= 0;)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             out_sample += voices[i].next();
         }
-
         return out_sample;
     }
 
@@ -116,4 +96,4 @@ public:
     mStringSynthVoice voices[mPOLYPHONY];
 };
 
-#endif // MSTRING_SYNTH_INSTRUMENT_H_
+#endif // MSTRINGSYNTH_INSTRUMENT_H_

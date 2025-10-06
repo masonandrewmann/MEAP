@@ -58,7 +58,9 @@ public:
         setReverseOff();
         phase_fractional = endpos_fractional;
         startpos_fractional = 0;
-        // rangeWholeSample();
+        default_freq = ((float)AUDIO_RATE) / ((float)NUM_TABLE_CELLS);
+        setFreq(default_freq);
+        rangeWholeSample();
     }
 
     /** Constructor.
@@ -71,7 +73,9 @@ public:
         setReverseOff();
         phase_fractional = endpos_fractional;
         startpos_fractional = 0;
-        // rangeWholeSample();
+        default_freq = ((float)AUDIO_RATE) / ((float)NUM_TABLE_CELLS);
+        setFreq(default_freq);
+        rangeWholeSample();
     }
 
     /** Change the sound table which will be played by the Sample.
@@ -233,6 +237,11 @@ public:
         return phase_fractional < endpos_fractional;
     }
 
+    inline void setSpeed(float speed)
+    {
+        setFreq(default_freq * speed);
+    }
+
     // Not readjusted for arbitrary table length yet
     //
     //  Returns the next sample given a phase modulation value.
@@ -363,6 +372,7 @@ public:
     const T *table;
     bool looping;
     bool forwards;
+    float default_freq;
     int64_t startpos_fractional, endpos_fractional;
 };
 

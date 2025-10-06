@@ -66,6 +66,7 @@ public:
     mOscil(const T *TABLE_NAME) : table(TABLE_NAME)
     {
         cells_1 = NUM_TABLE_CELLS - 1;
+        setFreq(220);
     }
 
     /** Constructor.
@@ -77,6 +78,7 @@ public:
     mOscil()
     {
         cells_1 = NUM_TABLE_CELLS - 1;
+        setFreq(220);
     }
 
     /** Updates the phase according to the current frequency and returns the sample at the new phase position.

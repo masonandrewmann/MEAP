@@ -15,19 +15,19 @@ public:
     void init()
     {
         detune = 0;
-        ensemble_mix = 0;
-        phaser_freq = 0.63;
+        // ensemble_mix = 0;
+        // phaser_freq = 0.63;
 
         my_freq = 220;
         osc_[0].setFreq(my_freq);
         osc_[0].setTable(SAW8192_DATA);
         osc_[1].setFreq(my_freq);
         osc_[1].setTable(SAW8192_DATA);
-        adsr_.setTimes(10, 10, 4294967295, 500);
+        adsr_.setTimes(10, 10, 100000000, 500);
         adsr_.setADLevels(255, 255);
 
-        phaser_lfo.setFreq(phaser_freq);
-        phaser_lfo.setTable(SIN8192_DATA);
+        // phaser_lfo.setFreq(phaser_freq);
+        // phaser_lfo.setTable(SIN8192_DATA);
 
         filter_.setCutoffFreqAndResonance(255, 127);
     }
@@ -36,9 +36,7 @@ public:
     void update()
     {
         adsr_.update();
-        delay_samples = 128 + phaser_lfo.next();
-        float my_detune_freq = my_freq + (my_freq / 50) * detune;
-        osc_[1].setFreq(my_detune_freq);
+        // delay_samples = 128 + phaser_lfo.next();
     }
 
     void setADSR(uint32_t a_t, uint32_t d_t, uint16_t s_l, uint32_t r_t)
@@ -57,24 +55,24 @@ public:
         detune = d_v;
     }
 
-    void setEnsembleMix(uint32_t e_v)
-    {
-        ensemble_mix = e_v;
-    }
+    // void setEnsembleMix(uint32_t e_v)
+    // {
+    //     ensemble_mix = e_v;
+    // }
 
-    void setPhaserFreq(float p_f)
-    {
-        phaser_freq = p_f;
-        phaser_lfo.setFreq(phaser_freq);
-    }
+    // void setPhaserFreq(float p_f)
+    // {
+    //     phaser_freq = p_f;
+    //     phaser_lfo.setFreq(phaser_freq);
+    // }
 
     void noteOn(uint16_t note, uint16_t vel)
     {
         my_freq = mtof(note);
         osc_[0].setFreq(my_freq);
-        float my_detune_freq = my_freq + (my_freq / 50) * detune;
+        float my_detune_freq = my_freq + (my_freq * 0.02) * detune;
         osc_[1].setFreq(my_detune_freq);
-        phaser_lfo.setPhase(Meap<MEAP_DEFAULT_VERSION>::irand(0, 8191));
+        // phaser_lfo.setPhase(Meap<MEAP_DEFAULT_VERSION>::irand(0, 8191));
         osc_[1].setPhase(Meap<MEAP_DEFAULT_VERSION>::irand(0, 8191));
 
         adsr_.noteOn();
@@ -108,20 +106,20 @@ public:
 
     // CLASS VARIABLES
 
-    Oscil<8192, AUDIO_RATE> osc_[2];
+    mOscil<8192, AUDIO_RATE, int8_t> osc_[2];
 
-    Oscil<8192, CONTROL_RATE> phaser_lfo;
+    // mOscil<8192, CONTROL_RATE, int8_t> phaser_lfo;
     float my_freq;
 
-    AudioDelay<512, int32_t> delay_line;
+    // AudioDelay<512, int32_t> delay_line;
     int32_t delay_samples;
 
     ADSR<CONTROL_RATE, AUDIO_RATE> adsr_;
-    MultiResonantFilter<uint8_t> filter_; /**< Filter for left channel */
+    MultiResonantFilter<uint8_t> filter_;
 
     float detune;
-    uint32_t ensemble_mix;
-    float phaser_freq;
+    // uint32_t ensemble_mix;
+    // float phaser_freq;
 };
 
 #endif // MSTRINGSYNTH_H_

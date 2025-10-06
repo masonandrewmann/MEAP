@@ -296,7 +296,7 @@ public:
    */
   inline void readInputs()
   {
-
+ 
     // read dips and buttons
     for (int i = 8; --i >= 0;)
     {

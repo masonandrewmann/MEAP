@@ -12,15 +12,16 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI); // defines MIDI in/out port
 #include <tables/sq8192_4harm_int8.h>
 
 EventDelay metro1;
-int metro1_period; // period will be set by sequence below
+int metro1_period; // period will be set by the sequence below
+
 mOscil<sq8192_4harm_int8_NUM_CELLS, AUDIO_RATE> oscil1(sq8192_4harm_int8_DATA);
 ADSR<AUDIO_RATE, AUDIO_RATE> env1;
 
-int sequence_length = 20;
+int sequence_length = 20; // 20 notes in the melody
 int sequence_pitches[20] = {mCs3, mFs3, mCs3, mA2, mCs3, mE3, mD3, mCs3, mB2, mA2, mCs3, mE3, mCs3, mA2, mCs3, mE3, mD3, mCs3, mB2, mA2};
-int sequence_rhythms[20] = {2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1};
-int sequence_index = 0;
-int sixteenth_length = 125;
+int sequence_rhythms[20] = {2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1}; // length of note in sixteenths
+int sequence_index = 0;                                                                  // which note is currently being played
+int sixteenth_length = 125;                                                              // length of sixteenth note in milliseconds
 
 void setup()
 {
