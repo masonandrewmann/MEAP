@@ -237,6 +237,7 @@ public:
         return phase_fractional < endpos_fractional;
     }
 
+    // plays back the sample at the specified speed: 1.0 will play sample at same speed it was recorded at, 2.0 plays at double speed, 0.5 at half speed
     inline void setSpeed(float speed)
     {
         setFreq(default_freq * speed);

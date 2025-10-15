@@ -16,24 +16,19 @@ using.
 @tparam T This is the bit-rate of the wavetable being used. It can be found as datatype of the
 data array of the table your are using or often in the name of the ".h" file. Typically int16_t or int8_t.
  */
-template <uint32_t NUM_CELLS, class T = int8_t>
+
+#include <tables/sin8192_int16.h> // loads saw wavetable
+
+template <uint32_t NUM_CELLS = sin8192_int16_NUM_CELLS, class T = int16_t>
 class mOperator
 {
 public:
-    /** Constructor.
-    Declare an mOperator without specifying a wavetable to use
-    */
-    mOperator()
-    {
-        init(NULL);
-    };
-
     /** Constructor.
     @param TABLE_NAME the name of the array the mOscil will be using. This
     can be found in the table ".h" file if you are using a table made for
     Mozzi by the int8_t2mozzi.py python script in Mozzi's python
     folder.*/
-    mOperator(const T *TABLE_NAME)
+    mOperator(const T *TABLE_NAME = sin8192_int16_DATA)
     {
         init(TABLE_NAME);
     };
@@ -256,6 +251,20 @@ public:
     void setReleaseTime(uint32_t r_)
     {
         env_.setReleaseTime(r_);
+    }
+
+    /** setADSR
+     * Sets release time of envelope
+     *
+    @param a attack time in ms
+    @param d decay time in ms
+    @param s sustain level from 0 to 255
+    @param r release time in ms
+     * */
+    void setADSR(int a, int d, int s, int r)
+    {
+        env_.setTimes(a, d, 4294967290, r);
+        sustain_level_ = s;
     }
 
     /** setTimes
