@@ -138,7 +138,7 @@ public:
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i].setGain(operator_num);
+            voices[i].setGain(operator_num, gain);
         }
     }
 
