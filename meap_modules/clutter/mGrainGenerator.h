@@ -30,13 +30,16 @@ public:
         env_.setADLevels(255, 0);
         env_.setTimes(grain_duration_ / 2, grain_duration_ / 2, 1, 1);
 
+        l_pan_val_ = m_power_curve_DATA[255 - grain_pan_];
+        r_pan_val_ = m_power_curve_DATA[grain_pan_];
+
         if (sizeof(T) == sizeof(int16_t))
         {
-            shift_val_ = 8;
+            shift_val_ = 16;
         }
         else
         {
-            shift_val_ = 0;
+            shift_val_ = 8;
         }
     }
 
@@ -65,6 +68,8 @@ public:
     void setPan(int16_t pan)
     {
         grain_pan_ = pan;
+        l_pan_val_ = m_power_curve_DATA[255 - grain_pan_];
+        r_pan_val_ = m_power_curve_DATA[grain_pan_];
     }
 
     void noteOn(float freq)
@@ -83,14 +88,22 @@ public:
     // to be called in audio loop, always outputs 16 bits
     int32_t next()
     {
+        // env_.update();
+        // int64_t output_sample = osc_.next() * grain_amplitude_ * env_.next() >> shift_val_; // 24 bits
+
         env_.update();
-        int64_t output_sample = osc_.next() * grain_amplitude_ * env_.next() >> shift_val_; // 24 bits
+
+        int64_t output_sample = osc_.next() * grain_amplitude_ * env_.next() >> shift_val_;
+
+        l_sample_ = (l_pan_val_ * output_sample) >> 8; // down to 16 bits
+        r_sample_ = (r_pan_val_ * output_sample) >> 8;
+
         // int64_t output_sample = osc_.next() * env_.next(); // 24 bits
 
         // l_sample_ = (m_sin1024_uint_DATA[255 - grain_pan_] * output_sample) >> 16; // down to 16 bits
         // r_sample_ = (m_sin1024_uint_DATA[grain_pan_] * output_sample) >> 16;
 
-        return output_sample;
+        return l_sample_;
     }
 
     // CLASS VARIABLES
@@ -104,6 +117,9 @@ public:
     int32_t grain_duration_;
     float grain_frequency_;
     int16_t grain_pan_;
+
+    int l_pan_val_;
+    int r_pan_val_;
 
     int shift_val_;
 };

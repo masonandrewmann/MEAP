@@ -109,10 +109,7 @@ public:
 
     void update()
     {
-        if (continuous_mode_)
-        {
-        }
-        else
+        if (!continuous_mode_)
         {
             if (millis() > cloud_end_time_)
             {
