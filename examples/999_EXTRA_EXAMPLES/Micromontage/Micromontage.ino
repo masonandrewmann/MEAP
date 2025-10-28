@@ -1,5 +1,14 @@
 /*
-  Basic template for working with a stock MEAP board.
+  // pot 0: time between sample triggers
+  // volume pot: DOESNT CONTROL VOLUME. CONTROLS THRESHOLD WHEN DIP 4 IS ENGAGED
+  // pot 1: pitch of samples
+
+  // DIP 0: generates new sequences when up, repeats same sequence when down
+  // DIP 1: randomizes tempo at end of each sequence when up
+  // DIP 2: UNUSED
+  // DIP 3: speeds up sequence towards end when up
+  // DIP 4: enables input envelope following. samples will only be triggered when audio sent to line input is louder than threshold set by volume pot
+
  */
 
 #define CONTROL_RATE 128 // Hz, powers of 2 are most reliable
@@ -21,8 +30,8 @@ int row_index = 0;
 int row_transpose = 0;
 
 EventDelay metro;
-int metro_period = 200;
-int tempo_mult = 1;
+float metro_period = 200;
+float tempo_mult = 1;
 
 // int time_mult = 1;
 float mult_vals[] = {1, 2, 1, 0.5, 0.25, 0.125};

@@ -5,11 +5,11 @@ class mBitcrusher
 {
 public:
     //! Class constructor.
-    mBitcrusher(void)
+    mBitcrusher(int sample_rate = 32768, int bits = 0)
     {
         last_sample_ = 0;
-        setSampleRate(32768);
-        setBits(0);
+        setSampleRate(sample_rate);
+        setBits(bits);
         repeat_counter = 0;
         repeat_target = 0;
     };
