@@ -1,5 +1,6 @@
 /*
-  Basic template for working with a stock MEAP board.
+  Hold pad 0 to record audio from the line input
+  Press pad 1 to play the audio back
  */
 
 #define CONTROL_RATE 128 // Hz, powers of 2 are most reliable
@@ -10,12 +11,10 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI); // defines MIDI in/out port
 
 // ---------- YOUR GLOBAL VARIABLES BELOW ----------
 
-#define BUFFER_LENGTH 131072 // 32768 samples/second * 4 seconds
-int16_t input_buffer[BUFFER_LENGTH] = {0};
+#define BUFFER_LENGTH 327680 // 32768 samples/second * 10 seconds
+int16_t *input_buffer;       // we need to dynamically allocate our buffer in setup() so it can be stored in MEAP's external RAM chip
 
 mSample<BUFFER_LENGTH, AUDIO_RATE, int16_t> my_sample(input_buffer);
-
-float default_freq;
 
 int record_index = 0;
 int sample_length = 0;
@@ -29,8 +28,9 @@ void setup()
   startMozzi(CONTROL_RATE);
 
   // ---------- YOUR SETUP CODE BELOW ----------
-  default_freq = (float)32768 / (float)BUFFER_LENGTH;
-  my_sample.setFreq(default_freq);
+
+  input_buffer = (int16_t *)calloc(BUFFER_LENGTH, sizeof(int16_t)); // allocate the record buffer
+  my_sample.setTable(input_buffer);                                 // point the sample to the record buffer
 }
 
 void loop()
@@ -54,9 +54,9 @@ AudioOutput_t updateAudio()
 
   if (recording)
   {
-    input_buffer[record_index++] = meap_input_frame[0];
+    input_buffer[record_index++] = meap_input_frame[0]; // store left sample of line input in the record buffer
 
-    if (record_index >= BUFFER_LENGTH)
+    if (record_index >= BUFFER_LENGTH) // if we have filled up the entire record buffer
     {
       sample_length = BUFFER_LENGTH;
       my_sample.setEnd(sample_length);

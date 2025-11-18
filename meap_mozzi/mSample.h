@@ -243,6 +243,14 @@ public:
         setFreq(default_freq * speed);
     }
 
+    /**
+    @return current sample being played
+    */
+    uint32_t getIndex()
+    {
+        return phase_fractional >> 16;
+    }
+
     // Not readjusted for arbitrary table length yet
     //
     //  Returns the next sample given a phase modulation value.
