@@ -14,8 +14,7 @@ template <uint64_t mMAX_SAMPLE_LENGTH, uint8_t mPOLYPHONY, class T = int8_t, mea
 class mRompler
 {
 public:
-
-    mRompler(const T **sample_list_, uint64_t *sample_lengths_)
+    mRompler(const T **sample_list_, uint64_t *sample_lengths_, uint8_t *midi_table_name = NULL)
     {
         sample_list = sample_list_;
         sample_lengths = sample_lengths_;
@@ -40,6 +39,16 @@ public:
 
             sample_frequencies[i] = sample_bank[0].default_freq_ * pow(2.f, ((float)(i - 60)) / 12.f);
         }
+
+        _curr_voice = 0;
+        _midi_table_name = midi_table_name;
+        _playing = false;
+        _pulse_counter = 0;
+
+        _midi_message.message_type = 0;
+        _midi_message.data1 = 0;
+        _midi_message.data2 = 0;
+        _midi_message.time = 0;
     };
 
     void setAttackTime(uint32_t attack_time_)
@@ -106,7 +115,12 @@ public:
         }
         else
         {
-            return; // no free voices, move along...
+            uint8_t voice_num = nonfree_voices_.get(0)->voice_num; // voice num of note to turn off
+            // voices[voice_num].noteOff();                           // turn note off
+            free_voices_.add(voice_num);        // re-add voice to free queue
+            delete (nonfree_voices_.get(0));    // delete voice from pressed queue
+            nonfree_voices_.remove(0);          // remove freed voice from pressed queue
+            curr_voice_ = free_voices_.shift(); // remove head element
         }
         sample_bank[curr_voice_].setTableAndEnd(sample_list[curr_program], sample_lengths[curr_program]);
         sample_bank[curr_voice_].setTimes(attack_time, decay_time, 4294967295, release_time);
@@ -131,7 +145,13 @@ public:
         }
         else
         {
-            return; // no free voices, move along...
+            // return; // no free voices, move along...
+            uint8_t voice_num = nonfree_voices_.get(0)->voice_num; // voice num of note to turn off
+            // voices[voice_num].noteOff();                           // turn note off
+            free_voices_.add(voice_num);        // re-add voice to free queue
+            delete (nonfree_voices_.get(0));    // delete voice from pressed queue
+            nonfree_voices_.remove(0);          // remove freed voice from pressed queue
+            curr_voice_ = free_voices_.shift(); // remove head element
         }
         sample_bank[curr_voice_].setTableAndEnd(sample_list[program_override], sample_lengths[program_override]);
         sample_bank[curr_voice_].setTimes(attack_time, decay_time, 4294967295, release_time);
@@ -233,6 +253,62 @@ public:
         return output_sample;
     }
 
+    void midiStart()
+    {
+        _playing = true;
+        _current_midi_address = _midi_table_name;
+        _pulse_counter = 0;
+
+        _midi_message.message_type = _current_midi_address[0];
+        _midi_message.data1 = _current_midi_address[1];
+        _midi_message.data2 = _current_midi_address[2];
+        _midi_message.time = (_current_midi_address[3] << 8) + _current_midi_address[4];
+    }
+
+    void midiStop()
+    {
+        _playing = false;
+    }
+
+    bool isPlaying()
+    {
+        return _playing;
+    }
+
+    void updateMidi()
+    {
+        if (_playing)
+        {
+            _pulse_counter += 1;
+            while (_pulse_counter >= _midi_message.time)
+            {
+                switch (_midi_message.message_type) // notes are indexed from 0 on sample_bank starting from C-1 (0)
+                {
+                case 0x80: // note off
+                    noteOff(_midi_message.data1);
+                    break;
+                case 0x90: // note on
+                    if (_midi_message.data1 != 127)
+                    {
+                        noteOn(_midi_message.data1, _midi_message.data2);
+                    }
+                    break;
+                case 255: // end of file
+                    _playing = false;
+                    return;
+                    break;
+                }
+                _current_midi_address += 5;
+                _pulse_counter = 0;
+
+                _midi_message.message_type = _current_midi_address[0];
+                _midi_message.data1 = _current_midi_address[1];
+                _midi_message.data2 = _current_midi_address[2];
+                _midi_message.time = (_current_midi_address[3] << 8) + _current_midi_address[4];
+            }
+        }
+    }
+
     // CLASS VARIABLES
 
     mSampler<mMAX_SAMPLE_LENGTH, T, INTERP> sample_bank[mPOLYPHONY];
@@ -248,6 +324,14 @@ public:
 
     LinkedList<int16_t> free_voices_;
     LinkedList<RomplerNote *> nonfree_voices_;
+
+    uint8_t *_midi_table_name;
+    uint8_t *_current_midi_address;
+    bool _playing;
+    uint64_t _pulse_counter;
+    MidiMessage _midi_message;
+
+    uint16_t _curr_voice;
 };
 
 #endif // MROMPLER_H_
