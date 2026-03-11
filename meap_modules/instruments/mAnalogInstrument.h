@@ -163,7 +163,7 @@ public:
         }
     }
 
-    void setLfoFade(delay_ms, voice_num = 0)
+    void setLfoFade(int delay_ms, int voice_num = 0)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
