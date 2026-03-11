@@ -22,10 +22,10 @@ public:
     void midiStop()
     {
         mInstrument<mPOLYPHONY>::midiStop();
-        for (uint16_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].noteOff();
-        }
+        // for (uint16_t i = 0; i < mPOLYPHONY; i++)
+        // {
+        //     voices[i].noteOff();
+        // }
     }
 
     void noteOn(uint16_t note, uint16_t vel)
@@ -42,10 +42,10 @@ public:
     void flush()
     {
         mInstrument<mPOLYPHONY>::flush();
-        for (uint8_t i = 0; i < mPOLYPHONY; i++)
-        {
-            voices[i].noteOff();
-        }
+        // for (uint8_t i = 0; i < mPOLYPHONY; i++)
+        // {
+        //     voices[i].noteOff();
+        // }
     }
 
     void setLoopGain(float loop_gain)

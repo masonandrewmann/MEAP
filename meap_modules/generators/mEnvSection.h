@@ -40,6 +40,10 @@ public:
     void setLength(uint32_t length_ms)
     {
         length_samples = length_ms * ms_to_samples;
+        if (length_samples <= 0)
+        {
+            length_samples = 1;
+        }
         t1_inv = 1.f / (float)length_samples;
     }
 

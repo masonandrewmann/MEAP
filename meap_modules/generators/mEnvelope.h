@@ -15,6 +15,7 @@ public:
         _num_sections = num_sections;
         _starting_level = levels[0];
         _last_out = _starting_level;
+        _rtz = true;
         for (int i = 0; i < _num_sections; i++)
         {
             _env_sections[i] = new mEnvSection<UPDATE_RATE>(times[i], levels[i], levels[i + 1], curve_types[i]);
@@ -33,7 +34,14 @@ public:
     {
         _envelope_state = 0;
         _env_sections[0]->trigger();
-        _env_sections[0]->setStartLevel(_last_out); // set next env section to start at current env value to prevent clicks (no RTZ)
+        if (_rtz)
+        {
+            _env_sections[0]->setStartLevel(_starting_level);
+        }
+        else
+        {
+            _env_sections[0]->setStartLevel(_last_out); // set next env section to start at current env value to prevent clicks (no RTZ)
+        }
     }
 
     void noteOff()
@@ -45,6 +53,14 @@ public:
         }
         _env_sections[_envelope_state]->setStartLevel(_last_out); // set next env section to start at current env value to prevent clicks
         _env_sections[_envelope_state]->trigger();
+    }
+
+    // Turns on/off rtz (return to zero) mode
+    // if rtz mode is enabled, when the envelope receives a noteOn, it will start from the starting value of the first envelope set
+    // if rtz mode is disabled, the envlope will start at whatever value it is currently at
+    void setRTZ(bool rtz)
+    {
+        _rtz = rtz;
     }
 
     float next()
@@ -60,6 +76,7 @@ public:
             {
                 _envelope_state++;
                 _env_sections[_envelope_state]->trigger();
+                // Serial.println(_envelope_state);
             }
             _last_out = _env_sections[_envelope_state]->next();
             return _last_out;
@@ -70,7 +87,7 @@ public:
     int32_t _release_step;
     float _starting_level;
     float _last_out;
-    // bool _rtz;
+    bool _rtz;
     int32_t _num_sections;
     mEnvSection<UPDATE_RATE> **_env_sections;
 };

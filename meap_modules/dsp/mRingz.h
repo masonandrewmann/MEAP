@@ -4,9 +4,9 @@
 class mRingz
 {
 public:
-    mRingz() {};
+    // mRingz() {};
 
-    mRingz(float freq, float decay_time)
+    mRingz(float freq = 110, float decay_time = 1)
     {
         init(freq, decay_time);
     };
