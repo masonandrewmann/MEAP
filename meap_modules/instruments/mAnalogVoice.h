@@ -134,6 +134,24 @@ public:
         }
     }
 
+    // sets gain of each oscillator
+    void setOscGain(float gain, int voice_num = 0)
+    {
+        switch (voice_num)
+        {
+        case 0: // both filters
+            osc1_gain = gain;
+            osc2_gain = gain;
+            break;
+        case 1: // voice 1 filter
+            osc1_gain = gain;
+            break;
+        case 2: // voice 2 filter
+            osc2_gain = gain;
+            break;
+        }
+    }
+
     // sets oscillator's wavetable to one of the following
     //      kANALOG_TRI,
     //      kANALOG_SIN,
@@ -231,16 +249,17 @@ public:
         case 0: // both filters
             osc1_octave = octave;
             osc2_octave = octave;
-            osc1_pitch_flag = true;
-            osc2_pitch_flag = true;
+            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
+            osc2_pitch_offset = 12 * osc2_octave + osc2_transpose + osc2_detune;
             break;
         case 1: // voice 1 filter
             osc1_octave = octave;
-            osc1_pitch_flag = true;
+            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
+
             break;
         case 2: // voice 2 filter
             osc2_octave = octave;
-            osc2_pitch_flag = true;
+            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
             break;
         }
     }
@@ -255,16 +274,18 @@ public:
         case 0: // both filters
             osc1_transpose = transpose;
             osc2_transpose = transpose;
-            osc1_pitch_flag = true;
-            osc2_pitch_flag = true;
+            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
+            osc2_pitch_offset = 12 * osc2_octave + osc2_transpose + osc2_detune;
+
             break;
         case 1: // voice 1 filter
             osc1_transpose = transpose;
-            osc1_pitch_flag = true;
+            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
+
             break;
         case 2: // voice 2 filter
             osc2_transpose = transpose;
-            osc2_pitch_flag = true;
+            osc2_pitch_offset = 12 * osc2_octave + osc2_transpose + osc2_detune;
             break;
         }
     }
@@ -279,16 +300,16 @@ public:
         case 0: // both filters
             osc1_detune = detune;
             osc2_detune = detune;
-            osc1_pitch_flag = true;
-            osc2_pitch_flag = true;
+            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
+            osc2_pitch_offset = 12 * osc2_octave + osc2_transpose + osc2_detune;
             break;
         case 1: // voice 1 filter
             osc1_detune = detune;
-            osc1_pitch_flag = true;
+            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
             break;
         case 2: // voice 2 filter
             osc2_detune = detune;
-            osc2_pitch_flag = true;
+            osc2_pitch_offset = 12 * osc2_octave + osc2_transpose + osc2_detune;
             break;
         }
     }
@@ -624,12 +645,16 @@ public:
     // must be called in updateControl
     void update()
     {
-        int lfo1_val = lfo1.next();
-        float lfo1_val_norm = lfo1_val * 0.00003051850948; // scaled to -1 to 1
-        lfo1_level_val = 1.0 - (lfo1_val_norm * 0.5 + 0.5) * lfo1_level_amt;
+
+        if (lfo1_enable)
+        {
+            lfo1_val = lfo1.next();
+            lfo1_val_norm = lfo1_val * 0.00003051850948; // scaled to -1 to 1
+            lfo1_level_val = 1.0 - (lfo1_val_norm * 0.5 + 0.5) * lfo1_level_amt;
+        }
 
         float filter_env_val = filter1_env->next();
-        int cutoff_val = filter1_cutoff + (filter_env_val * filter1_env_cutoff_amt * 32768 + (32768.f * lfo1_val_norm * lfo1_filter_cutoff_amt));
+        int cutoff_val = filter1_cutoff + 32768 * (filter_env_val * filter1_env_cutoff_amt + lfo1_val_norm * lfo1_filter_cutoff_amt);
         if (cutoff_val > 65535)
         {
             cutoff_val = 65535;
@@ -639,7 +664,7 @@ public:
             cutoff_val = 0;
         }
 
-        int res_val = filter1_resonance + (filter_env_val * filter1_env_res_amt * 32768 + (32768.f * lfo1_val_norm * lfo1_filter_cutoff_amt));
+        int res_val = filter1_resonance + 32768 * (filter_env_val * filter1_env_res_amt + lfo1_val_norm * lfo1_filter_cutoff_amt);
         if (res_val > 65535)
         {
             res_val = 65535;
@@ -650,17 +675,27 @@ public:
         }
 
         filter1.setCutoffFreqAndResonance(cutoff_val, res_val);
-        osc1_hz = mtof(last_note + 12 * osc1_octave + osc1_transpose + osc1_detune + lfo1_val_norm * 12 * lfo1_osc_amt * lfo1_fade->next());
+        if (lfo1_enable)
+        {
+            osc1_hz = mtof(last_note + osc1_pitch_offset + lfo1_val_norm * 12 * lfo1_osc_amt * lfo1_fade->next());
+        }
+        else
+        {
+            osc1_hz = mtof(last_note + osc1_pitch_offset);
+        }
         osc1.setFreq(osc1_hz * osc1_pitch_env.next());
 
         // ==== OSC 2 ====
 
-        int lfo2_val = lfo2.next();
-        float lfo2_val_norm = lfo2_val * 0.00003051850948; // scaled to -1 to 1
-        lfo2_level_val = 1.0 - (lfo2_val_norm * 0.5 + 0.5) * lfo2_level_amt;
+        if (lfo2_enable)
+        {
+            lfo2_val = lfo2.next();
+            lfo2_val_norm = lfo2_val * 0.00003051850948; // scaled to -1 to 1
+            lfo2_level_val = 1.0 - (lfo2_val_norm * 0.5 + 0.5) * lfo2_level_amt;
+        }
 
         filter_env_val = filter2_env->next();
-        cutoff_val = filter2_cutoff + (filter_env_val * filter2_env_cutoff_amt * 32768 + (32768.f * lfo2_val_norm * lfo2_filter_cutoff_amt));
+        cutoff_val = filter2_cutoff + 32768 * (filter_env_val * filter2_env_cutoff_amt + lfo2_val_norm * lfo2_filter_cutoff_amt);
         if (cutoff_val > 65535)
         {
             cutoff_val = 65535;
@@ -670,7 +705,7 @@ public:
             cutoff_val = 0;
         }
 
-        res_val = filter2_resonance + (filter_env_val * filter2_env_res_amt * 32768 + (32768.f * lfo2_val_norm * lfo2_filter_cutoff_amt));
+        res_val = filter2_resonance + 32768 * (filter_env_val * filter2_env_res_amt + lfo2_val_norm * lfo2_filter_cutoff_amt);
         if (res_val > 65535)
         {
             res_val = 65535;
@@ -681,7 +716,14 @@ public:
         }
 
         filter2.setCutoffFreqAndResonance(cutoff_val, res_val);
-        osc2_hz = mtof(last_note + 12 * osc2_octave + osc2_transpose + osc2_detune + lfo2_val_norm * 12 * lfo2_osc_amt * lfo2_fade->next());
+        if (lfo2_enable)
+        {
+            osc2_hz = mtof(last_note + osc2_pitch_offset + lfo2_val_norm * 12 * lfo2_osc_amt * lfo2_fade->next());
+        }
+        else
+        {
+            osc2_hz = mtof(last_note + osc2_pitch_offset);
+        }
         osc2.setFreq(osc2_hz * osc2_pitch_env.next());
     }
 
@@ -689,8 +731,8 @@ public:
     int32_t next()
     {
         int32_t out_sample = 0;
-        int32_t osc1_sample = osc1.next();
-        int32_t osc2_sample = osc2.next();
+        int32_t osc1_sample = osc1.next() * osc1_gain;
+        int32_t osc2_sample = osc2.next() * osc2_gain;
 
         filter1.next((1.0 - osc1_filtersend) * osc1_sample + (1.0 - osc2_filtersend) * osc2_sample);
 
@@ -740,16 +782,17 @@ public:
 
     // ==== OSC 1 ====
     mSyncOsc<saw8192_int16_NUM_CELLS, AUDIO_RATE, int16_t> osc1;
-    float osc1_octave = 0;     // -3 to +3
-    float osc1_transpose = 0;  // -12 to +12
-    float osc1_detune = 0;     // -3 to 3 (in semitones)
+    float osc1_octave = 0;    // -3 to +3
+    float osc1_transpose = 0; // -12 to +12
+    float osc1_detune = 0;    // -3 to 3 (in semitones)
+    float osc1_pitch_offset = 0;
     float osc1_filtersend = 0; // crossfade between sending to filter 1 (at 0) and filter 2 (at 1)
     mEnvSection<CONTROL_RATE> osc1_pitch_env;
     float osc1_sync_percent = 0;
     float osc1_sub_level = 0;
-    bool osc1_pitch_flag = false;
     int osc1_note = 0;
     float osc1_hz = 220;
+    float osc1_gain = 1.0;
 
     float last_osc1_hz = 220;
 
@@ -760,7 +803,7 @@ public:
     int32_t filter1_resonance = 0;
     float filter_1_to_2_send = 0;
     mEnvelope<CONTROL_RATE> *filter1_env;
-    float filter1_env_cutoff_amt = 1.0;
+    float filter1_env_cutoff_amt = 0.0;
     float filter1_env_res_amt = 0.0;
 
     // ==== AMP 1 ====
@@ -780,19 +823,21 @@ public:
     float lfo1_level_amt = 0.0;
     bool lfo1_retrig = true;
     float lfo1_level_val = 1.0;
+    bool lfo1_enable = true;
 
     // ==== OSC 2 ====
     mSyncOsc<saw8192_int16_NUM_CELLS, AUDIO_RATE, int16_t> osc2;
-    float osc2_octave = 0;     // -3 to +3
-    float osc2_transpose = 0;  // -12 to +12
-    float osc2_detune = 0;     // -3 to 3 (in semitones)
+    float osc2_octave = 0;    // -3 to +3
+    float osc2_transpose = 0; // -12 to +12
+    float osc2_detune = 0;    // -3 to 3 (in semitones)
+    float osc2_pitch_offset = 0;
     float osc2_filtersend = 1; // crossfade between sending to filter 1 (at 0) and filter 2 (at 1)
     mEnvSection<CONTROL_RATE> osc2_pitch_env;
     float osc2_sync_percent = 0;
     float osc2_sub_level = 0;
-    bool osc2_pitch_flag = false;
     int osc2_note = 0;
     float osc2_hz = 220;
+    float osc2_gain = 1.0;
 
     float last_osc2_hz = 220;
 
@@ -802,7 +847,7 @@ public:
     int32_t filter2_cutoff = 65500;
     int32_t filter2_resonance = 0;
     mEnvelope<CONTROL_RATE> *filter2_env;
-    float filter2_env_cutoff_amt = 1.0;
+    float filter2_env_cutoff_amt = 0.0;
     float filter2_env_res_amt = 0.0;
 
     // ==== AMP 2 ====
@@ -822,6 +867,12 @@ public:
     float lfo2_level_amt = 0.0;
     bool lfo2_retrig = true;
     float lfo2_level_val = 1.0;
+    bool lfo2_enable = true;
+
+    int lfo1_val = 0;
+    float lfo1_val_norm = 0;
+    int lfo2_val = 0;
+    float lfo2_val_norm = 0;
 };
 
 #endif // MANALOGVOICE_H_

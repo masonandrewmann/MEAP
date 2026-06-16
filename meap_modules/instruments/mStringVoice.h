@@ -32,7 +32,6 @@ public:
         write_pointer_ = 0;
         setFreq(freq);
         setLoopGain(0.999);
-
         filter_sample_ = 0;
     }
 
@@ -63,7 +62,7 @@ public:
         int32_t last_sample = 0;
         for (int i = max_delay_length_; --i >= 0;)
         {
-            delay_buffer_[i] = 0.1 * Meap<MEAP_DEFAULT_VERSION>::irand(-velocity, velocity) + 0.9 * last_sample;
+            delay_buffer_[i] = 0.05 * Meap<MEAP_DEFAULT_VERSION>::irand(-velocity, velocity) + 0.95 * last_sample;
             last_sample = delay_buffer_[i];
         }
     }

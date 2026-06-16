@@ -243,6 +243,13 @@ public:
         setFreq(default_freq * speed);
     }
 
+    // sets sample to play all the way through once in the specified number of milliseconds
+    inline void setSpeedMs(float ms)
+    {
+        float speed = ((float)NUM_TABLE_CELLS) / (ms * ((float)UPDATE_RATE) * 0.001);
+        setFreq(default_freq * speed);
+    }
+
     /**
     @return current sample being played
     */

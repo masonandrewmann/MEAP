@@ -28,7 +28,7 @@ public:
     can be found in the table ".h" file if you are using a table made for
     Mozzi by the int8_t2mozzi.py python script in Mozzi's python
     folder.*/
-    mOperator(const T *TABLE_NAME = sin8192_int16_DATA)
+    mOperator(const T *TABLE_NAME = NULL)
     {
         init(TABLE_NAME);
     };
@@ -144,6 +144,7 @@ public:
     void setFixedFreq(float fixed_freq)
     {
         fixed_freq_ = fixed_freq;
+        osc_.setFreq(fixed_freq_);
     }
 
     /** setLoopingOn

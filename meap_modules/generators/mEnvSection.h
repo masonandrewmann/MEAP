@@ -30,11 +30,14 @@ public:
         setLevels(starting_level, ending_level);
         sample_count = length_samples; // start at ending point of envelope before triggering it,, prob should rework this!
         curve = curve_type;
+        linear_accumulator = 0;
+        linear_increment = 0.0001;
     }
 
     void trigger()
     {
         sample_count = 0;
+        linear_accumulator = v0;
     }
 
     void setLength(uint32_t length_ms)
@@ -45,6 +48,7 @@ public:
             length_samples = 1;
         }
         t1_inv = 1.f / (float)length_samples;
+        linear_increment = t1_inv * level_diff;
     }
 
     // sets curve for exponential segments
@@ -63,12 +67,14 @@ public:
     {
         v0 = start_level;
         level_diff = v1 - v0;
+        linear_increment = t1_inv * level_diff;
     }
 
     void setEndLevel(float end_level)
     {
         v1 = end_level;
         level_diff = v1 - v0;
+        linear_increment = t1_inv * level_diff;
     }
 
     void setLevels(float start_level, float end_level)
@@ -88,23 +94,25 @@ public:
     {
         switch (curve)
         {
-        case mCURVE_EXPONENTIAL:
+        case mCURVE_LINEAR:
             if (sample_count <= length_samples)
             {
                 sample_count++;
-                // return v0 + level_diff * (1.f - pow(2, exp_rate * (float)sample_count * t1_inv));
-                return v0 + level_diff * (1.f - exp2_lut(exp_rate * (float)sample_count * t1_inv)) * exp_overshoot;
+                linear_accumulator += linear_increment;
+                return linear_accumulator;
+                // return v0 + level_diff * (float)sample_count * t1_inv;
             }
             else
             {
                 return v1;
             }
             break;
-        case mCURVE_LINEAR:
+        case mCURVE_EXPONENTIAL:
             if (sample_count <= length_samples)
             {
                 sample_count++;
-                return v0 + level_diff * (float)sample_count * t1_inv;
+                // return v0 + level_diff * (1.f - pow(2, exp_rate * (float)sample_count * t1_inv));
+                return v0 + level_diff * (1.f - exp2_lut(exp_rate * (float)sample_count * t1_inv)) * exp_overshoot;
             }
             else
             {
@@ -119,6 +127,8 @@ public:
     float t1_inv;
     float v0;
     float v1;
+    float linear_accumulator;
+    float linear_increment;
     float level_diff;
     float exp_rate;
     float exp_overshoot;

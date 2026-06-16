@@ -128,6 +128,17 @@ public:
         }
     }
 
+    void setADSR(int a, int d, int s_l, int r)
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setAttackTime(a);
+            voices[i].setDecayTime(d);
+            voices[i].setSustainLevel(s_l);
+            voices[i].setReleaseTime(r);
+        }
+    }
+
     void setNoiseGain(uint32_t noise_gain)
     {
         for (int16_t i = mPOLYPHONY; --i >= 0;)
@@ -144,11 +155,36 @@ public:
         }
     }
 
-    void setFilterAttackTime(uint32_t time)
+    void setFilterEnvTimes(uint32_t a_, uint32_t d_, uint32_t s_, uint32_t r_)
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setFilterEnvTimes(a_, d_, s_, r_);
+        }
+    }
+
+    void setTimes(uint32_t a_, uint32_t d_, uint32_t s_, uint32_t r_)
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setTimes(a_, d_, s_, r_);
+        }
+    }
+
+    void
+    setFilterAttackTime(uint32_t time)
     {
         for (int16_t i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].setFilterAttackTime(time);
+        }
+    }
+
+    void setPortamentoTime(uint32_t port_time_ms)
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setPortamentoTime(port_time_ms);
         }
     }
 
@@ -173,6 +209,17 @@ public:
         for (int16_t i = mPOLYPHONY; --i >= 0;)
         {
             voices[i].setFilterSustainLevel(level);
+        }
+    }
+
+    void setFilterADSR(int a, int d, int s_l, int r)
+    {
+        for (int16_t i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i].setFilterAttackTime(a);
+            voices[i].setFilterDecayTime(d);
+            voices[i].setFilterSustainLevel(s_l);
+            voices[i].setFilterReleaseTime(r);
         }
     }
 

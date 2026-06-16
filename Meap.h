@@ -177,6 +177,57 @@
 #include <meap_modules/composition/mMML.h>
 #include <meap_modules/composition/mTransitionTable.h>
 
+// ---- WINDOWS ----
+// adapted from pippi https://git.sr.ht/~hecanjog/pippi
+#include <windows/WIN_BART.h>
+#include <windows/WIN_BLACK.h>
+#include <windows/WIN_COS.h>
+#include <windows/WIN_GAUSS.h>
+#include <windows/WIN_GAUSSIN.h>
+#include <windows/WIN_GAUSSOUT.h>
+#include <windows/WIN_HAMM.h>
+#include <windows/WIN_HANN.h>
+#include <windows/WIN_HANNIN.h>
+#include <windows/WIN_HANNOUT.h>
+#include <windows/WIN_NONE.h>
+#include <windows/WIN_PLUCKIN.h>
+#include <windows/WIN_PLUCKOUT.h>
+#include <windows/WIN_RSAW.h>
+#include <windows/WIN_SAW.h>
+#include <windows/WIN_SINC.h>
+#include <windows/WIN_SINE.h>
+#include <windows/WIN_SINEIN.h>
+#include <windows/WIN_SINEOUT.h>
+#include <windows/WIN_TRI.h>
+
+const uint16_t *MEAP_WINDOWS[] = { //  20 windows
+    WIN_BART_DATA,
+    WIN_BLACK_DATA,
+    WIN_COS_DATA,
+    WIN_GAUSS_DATA,
+    WIN_GAUSSIN_DATA,
+    WIN_GAUSSOUT_DATA,
+    WIN_HAMM_DATA,
+    WIN_HANN_DATA,
+    WIN_HANNIN_DATA,
+    WIN_HANNOUT_DATA,
+    WIN_NONE_DATA,
+    WIN_PLUCKIN_DATA,
+    WIN_PLUCKOUT_DATA,
+    WIN_RSAW_DATA,
+    WIN_SAW_DATA,
+    WIN_SINC_DATA,
+    WIN_SINE_DATA,
+    WIN_SINEIN_DATA,
+    WIN_SINEOUT_DATA,
+    WIN_TRI_DATA};
+
+// ---- WAVETABLES ----
+#include <wavetables/WT_SAW.h>
+#include <wavetables/WT_SINE.h>
+#include <wavetables/WT_SQUARE.h>
+#include <wavetables/WT_TRI.h>
+
 i2s_chan_handle_t tx_handle;
 i2s_chan_handle_t rx_handle;
 

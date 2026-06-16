@@ -87,7 +87,8 @@ public:
     inline T next()
     {
         incrementPhase();
-        return readTable();
+        last_sample = readTable();
+        return last_sample;
     }
 
     /** Change the sound table which will be played by the Oscil.
@@ -311,7 +312,6 @@ each direction. This fixed point math number is interpreted as a SFix<15,16> int
         phase_increment_fractional = phaseinc_fractional;
     }
 
-private:
     /** Used for shift arithmetic in setFreq() and its variations.
      */
     static const uint16_t ADJUST_FOR_NUM_TABLE_CELLS = (NUM_TABLE_CELLS < 2048) ? 8 : 0;
@@ -354,6 +354,7 @@ private:
     uint32_t phase_increment_fractional;
     const T *table;
     uint32_t cells_1;
+    T last_sample;
 };
 
 /**

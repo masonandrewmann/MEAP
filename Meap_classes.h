@@ -1,10 +1,11 @@
 
 #ifndef MEAP_CLASSES_MM_H_1
 #define MEAP_CLASSES_MM_H_1
-
+#include "Arduino.h"
 #include <Wire.h>
 #include <hal/adc_hal.h>
 #include <esp32-hal-adc.h>
+#include <esp32-hal-touch.h>
 #include "tables/m_sin1024_uint8.h"
 #include "tables/m_power_curve.h" // 7-bit quarter cycle of sine
 #include "esp32-hal-touch.h"
@@ -132,7 +133,33 @@ public:
       MEAP_I2S_WS = 39;
       MEAP_I2S_DOUT = 47;
       MEAP_I2S_DIN = 48;
-      touchSetCycles(1, 1);
+      // touch_pad_set_charge_discharge_times(1);
+      // touch_pad_set_measurement_interval(1);
+      // touchSetCycles(1, 1);
+      // touchDetachBus(1);
+      // touchDetachBus(2);
+      // touchDetachBus(3);
+      // touchDetachBus(4);
+      // touchDetachBus(5);
+      // touchDetachBus(6);
+      // touchDetachBus(7);
+      // touchDetachBus(8);
+      touchSetTiming(1, 1);
+      touchSetConfig(1, TOUCH_VOLT_LIM_L_0V5, TOUCH_VOLT_LIM_H_2V2);
+      // touchEnable();
+      // touchRead(1); // letting the API finish setup for me again, hey it works!
+      // touchRead(2);
+      // touchRead(3);
+      // touchRead(4);
+      // touchRead(5);
+      // touchRead(6);
+      // touchRead(7);
+      // touchRead(8);
+      // // Touch pad SleepCycle Time
+      // SET_PERI_REG_BITS(SENS_SAR_TOUCH_CTRL2_REG, SENS_TOUCH_SLEEP_CYCLES, 1, SENS_TOUCH_SLEEP_CYCLES_S);
+      // // Touch Pad Measure Time
+      // SET_PERI_REG_BITS(SENS_SAR_TOUCH_CTRL1_REG, SENS_TOUCH_MEAS_DELAY, 1, SENS_TOUCH_MEAS_DELAY_S);
+
       pinMode(MEAP_LED_0_PIN, OUTPUT);
       pinMode(MEAP_LED_1_PIN, OUTPUT);
       digitalWrite(MEAP_LED_0_PIN, LOW);
@@ -296,7 +323,7 @@ public:
    */
   inline void readInputs()
   {
- 
+    // Serial.println(touch_avgs[0]);
     // read dips and buttons
     for (int i = 8; --i >= 0;)
     {
@@ -307,6 +334,7 @@ public:
       if (hardware_version == mMEAP4B)
       {
         touch_avgs[i] = touchRead(touch_pins[i]);
+
         touch_vals[i] = touch_avgs[i] > touch_threshold;
         if (touch_vals[i] != prev_touch_vals[i])
         {

@@ -52,6 +52,7 @@ public:
             samples[i].setEnd(TABLE_SIZE);
             samples[i].setFreq(default_freq_);
             free_voices_.unshift(i); // add all voices to voice queue
+            samples[i].stop();
         }
 
         if (sizeof(T) == sizeof(int16_t))
@@ -126,6 +127,23 @@ public:
     bool isPlaying()
     {
         return playing_;
+    }
+
+    void setLoopingOn()
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            samples[i].setLoopingOn();
+        }
+    }
+
+    void setLoopingOff()
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            samples[i].setLoopingOff();
+            samples[i].stop();
+        }
     }
 
     void noteOn(uint16_t note, uint16_t vel)

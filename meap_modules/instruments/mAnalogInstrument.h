@@ -46,7 +46,7 @@ public:
     void flush()
     {
         mInstrument<mPOLYPHONY>::flush();
-        for (int i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i]->noteOff();
         }
@@ -54,7 +54,7 @@ public:
 
     void setFilterParameters(int32_t cutoff_hz, float resonance, int voice_num = 0)
     {
-        for (int i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i]->setFilterParameters(cutoff_hz, resonance, voice_num);
         }
@@ -62,7 +62,7 @@ public:
 
     void setFilterType(AnalogFilterTypes filter_type, int voice_num = 0)
     {
-        for (int i = 0; i < mPOLYPHONY; i++)
+        for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i]->setFilterType(filter_type, voice_num);
         }
@@ -97,6 +97,14 @@ public:
         for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i]->setOscDetune(detune, voice_num);
+        }
+    }
+
+    void setOscGain(float gain, int voice_num = 0)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setOscGain(gain, voice_num);
         }
     }
 
@@ -216,6 +224,24 @@ public:
         for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i]->setOscSync(percent, voice_num);
+        }
+    }
+
+    void disableLFOs()
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->lfo1_enable = false;
+            voices[i]->lfo2_enable = false;
+        }
+    }
+
+    void enableLFOs()
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->lfo1_enable = true;
+            voices[i]->lfo2_enable = true;
         }
     }
 

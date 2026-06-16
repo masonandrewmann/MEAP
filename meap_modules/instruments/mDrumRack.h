@@ -112,14 +112,14 @@ public:
         return playing_;
     }
 
-    void noteOn(uint16_t sample_num, uint16_t vel, float speed)
+    void noteOn(uint16_t sample_num, int vel, float speed)
     {
         sample_bank_[sample_num].setFreq(speed * default_freq_);
         sample_bank_[sample_num].start();
         velocity_[sample_num] = vel * sample_gain_[sample_num];
     }
 
-    void noteOn(uint16_t sample_num, uint16_t vel = 127)
+    void noteOn(uint16_t sample_num, int vel = 127)
     {
         sample_bank_[sample_num].start();
         velocity_[sample_num] = vel * sample_gain_[sample_num];
@@ -130,7 +130,7 @@ public:
         sample_bank_[sample_num].stop();
     }
 
-    void setSampleVolume(uint16_t sample_num, uint16_t volume)
+    void setSampleVolume(uint16_t sample_num, int volume)
     {
         sample_gain_[sample_num] = volume;
     }
@@ -148,11 +148,11 @@ public:
     // CLASS VARIABLES
 
     mSample<mMAX_SAMPLE_LENGTH, AUDIO_RATE, T> sample_bank_[mNUM_SAMPLES];
-    int16_t velocity_[mNUM_SAMPLES];
+    int velocity_[mNUM_SAMPLES];
 
-    const int8_t **sample_list_;
+    const T **sample_list_;
     uint32_t *sample_lengths_;
-    uint16_t sample_gain_[mNUM_SAMPLES];
+    int sample_gain_[mNUM_SAMPLES];
 
     uint8_t *midi_table_name_;
     uint8_t *current_address_;

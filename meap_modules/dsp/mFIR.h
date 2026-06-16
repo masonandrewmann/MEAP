@@ -7,7 +7,7 @@ class mFIR
 public:
     mFIR()
     {
-        b = (float *)malloc(filter_order * sizeof(float));
+        b = (float *)calloc(filter_order, sizeof(float));
 
         x = (T *)calloc(filter_order, sizeof(T));
     }
