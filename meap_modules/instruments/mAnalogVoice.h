@@ -4,6 +4,7 @@
 #include "../generators/mEnvelope.h"
 #include "../generators/mSyncOsc.h"
 #include "../../meap_mozzi/mOscil.h"
+#include "../generators/mNoise.h"
 
 #include "../../tables/sin8192_int16.h"
 #include "../../tables/saw8192_int16.h"
@@ -33,7 +34,7 @@ public:
         // ==== OSC 1 ====
         osc1.setTable(saw8192_int16_DATA);
         osc1.setFreq(mtof(48));
-        osc1_pitch_env.init(0, 0.5, 1.0, mCURVE_EXPONENTIAL);
+        osc1_pitch_env.init(0, 0.5, 1.0, mCURVE_LINEAR);
 
         // ==== FILTER 1 ====
         filter1.setCutoffFreqAndResonance(65530, 0);
@@ -60,7 +61,7 @@ public:
         // ==== OSC 2 ====
         osc2.setTable(saw8192_int16_DATA);
         osc2.setFreq(mtof(48));
-        osc2_pitch_env.init(0, 0.5, 1.0, mCURVE_EXPONENTIAL);
+        osc2_pitch_env.init(0, 0.5, 1.0, mCURVE_LINEAR);
 
         // ==== FILTER 2 ====
         filter2.setCutoffFreqAndResonance(65530, 0);
@@ -76,6 +77,9 @@ public:
         lfo2.setFreq(0.5);
         lfo2_fade = new mEnvelope<CONTROL_RATE>(lfo1_env_levels, lfo1_env_times, lfo1_curves, 2, 2);
         lfo2_fade->setRTZ(true);
+
+        // ==== NOISE ====
+        noise_filter.setCutoffFreqAndResonance(65530, 0);
     };
 
     void noteOn(uint16_t note, uint16_t vel)
@@ -259,7 +263,7 @@ public:
             break;
         case 2: // voice 2 filter
             osc2_octave = octave;
-            osc1_pitch_offset = 12 * osc1_octave + osc1_transpose + osc1_detune;
+            osc2_pitch_offset = 12 * osc2_octave + osc2_transpose + osc2_detune;
             break;
         }
     }
@@ -314,7 +318,7 @@ public:
         }
     }
 
-    // sets sync percent of oscillator betwee 0 and 1
+    // sets sync percent of oscillator betwee 0 and 100
     void setOscSync(float sync_percent, int voice_num = 0)
     {
         switch (voice_num)
@@ -401,6 +405,42 @@ public:
         }
     }
 
+    // from 0 to 1 with 0.5 being no offset
+    void setPitchEnvStart(float start, int voice_num)
+    {
+        float value = start * 2; // rescale this to -5 to +5 octave
+        switch (voice_num)
+        {
+        case 0:
+            osc1_pitch_env.setStartLevel(value);
+            osc2_pitch_env.setStartLevel(value);
+            break;
+        case 1:
+            osc1_pitch_env.setStartLevel(value);
+            break;
+        case 2:
+            osc2_pitch_env.setStartLevel(value);
+            break;
+        }
+    }
+
+    void setPitchEnvMs(int ms, int voice_num)
+    {
+        switch (voice_num)
+        {
+        case 0:
+            osc1_pitch_env.setLength(ms);
+            osc2_pitch_env.setLength(ms);
+            break;
+        case 1:
+            osc1_pitch_env.setLength(ms);
+            break;
+        case 2:
+            osc2_pitch_env.setLength(ms);
+            break;
+        }
+    }
+
     // sets LFO frequency in Hz
     void setLfoHz(float hz, int voice_num = 0)
     {
@@ -444,14 +484,14 @@ public:
         switch (voice_num)
         {
         case 0: // both filters
-            lfo1.setPhase(8192 * phase);
-            lfo2.setPhase(8192 * phase);
+            lfo1_phase = 8192 * phase;
+            lfo2_phase = 8192 * phase;
             break;
         case 1: // voice 1 filter
-            lfo1.setPhase(8192 * phase);
+            lfo1_phase = 8192 * phase;
             break;
         case 2: // voice 2 filter
-            lfo2.setPhase(8192 * phase);
+            lfo2_phase = 8192 * phase;
             break;
         }
     }
@@ -581,6 +621,29 @@ public:
             break;
         }
     }
+    // sets amount that filter 1's output is sent to filter 2 (0 to 1)
+    void setFilter1Send(float send)
+    {
+        filter_1_to_2_send = send;
+    }
+
+    // sets gain at amplifier stage (0 to 1)
+    void setAmpLevel(float gain, int voice_num = 0)
+    {
+        switch (voice_num)
+        {
+        case 0: // both filters
+            amp1_level = gain;
+            amp2_level = gain;
+            break;
+        case 1: // voice 1 filter
+            amp1_level = gain;
+            break;
+        case 2: // voice 2 filter
+            amp2_level = gain;
+            break;
+        }
+    }
 
     // sets parameters of amplitude envelope: ADR in ms, sustain between 0 and 1
     void setADSR(int attack, int decay, float sustain, int release, int voice_num = 0)
@@ -642,6 +705,26 @@ public:
         }
     }
 
+    // 0 to 1
+    void setNoiseGain(float gain)
+    {
+        noise_gain = gain;
+    }
+
+    // crossfades how much noise is sent to each filter
+    // at 0, noise will be only sent to filter 0, at 1 noise will only be sent to filter 1
+
+    void setNoiseFilterSend(float send)
+    {
+        noise_filtersend = send;
+    }
+
+    // sets cutoff of noise lowpass filter 0 to 1
+    void setNoiseColor(float color)
+    {
+        noise_filter.setCutoffFreqAndResonance(color * 65530, 0);
+    }
+
     // must be called in updateControl
     void update()
     {
@@ -664,7 +747,7 @@ public:
             cutoff_val = 0;
         }
 
-        int res_val = filter1_resonance + 32768 * (filter_env_val * filter1_env_res_amt + lfo1_val_norm * lfo1_filter_cutoff_amt);
+        int res_val = filter1_resonance + 32768 * (filter_env_val * filter1_env_res_amt + lfo1_val_norm * lfo1_filter_res_amt);
         if (res_val > 65535)
         {
             res_val = 65535;
@@ -705,7 +788,7 @@ public:
             cutoff_val = 0;
         }
 
-        res_val = filter2_resonance + 32768 * (filter_env_val * filter2_env_res_amt + lfo2_val_norm * lfo2_filter_cutoff_amt);
+        res_val = filter2_resonance + 32768 * (filter_env_val * filter2_env_res_amt + lfo2_val_norm * lfo2_filter_res_amt);
         if (res_val > 65535)
         {
             res_val = 65535;
@@ -731,8 +814,8 @@ public:
     int32_t next()
     {
         int32_t out_sample = 0;
-        int32_t osc1_sample = osc1.next() * osc1_gain;
-        int32_t osc2_sample = osc2.next() * osc2_gain;
+        int32_t osc1_sample = osc1.next();
+        int32_t osc2_sample = osc2.next();
 
         filter1.next((1.0 - osc1_filtersend) * osc1_sample + (1.0 - osc2_filtersend) * osc2_sample);
 
@@ -873,6 +956,12 @@ public:
     float lfo1_val_norm = 0;
     int lfo2_val = 0;
     float lfo2_val_norm = 0;
+
+    // ==== NOISE ====
+    mNoise noise;
+    MultiResonantFilter<uint16_t> noise_filter;
+    float noise_gain = 0;
+    float noise_filtersend = 0;
 };
 
 #endif // MANALOGVOICE_H_

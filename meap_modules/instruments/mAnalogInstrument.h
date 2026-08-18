@@ -76,19 +76,43 @@ public:
         }
     }
 
-    void setOscOctave(float detune, int voice_num = 0)
+    void setNoiseGain(float gain)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i]->setOscOctave(detune, voice_num);
+            voices[i]->setNoiseGain(gain);
         }
     }
 
-    void setOscTranspose(float detune, int voice_num = 0)
+    void setNoiseFilterSend(float send)
     {
         for (int i = mPOLYPHONY; --i >= 0;)
         {
-            voices[i]->setOscTranspose(detune, voice_num);
+            voices[i]->setNoiseFilterSend(send);
+        }
+    }
+
+    void setNoiseColor(float color)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setNoiseColor(color);
+        }
+    }
+
+    void setOscOctave(float octave, int voice_num = 0)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setOscOctave(octave, voice_num);
+        }
+    }
+
+    void setOscTranspose(float transpose, int voice_num = 0)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setOscTranspose(transpose, voice_num);
         }
     }
 
@@ -136,6 +160,22 @@ public:
         for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i]->setOscFilterSend(filtersend, voice_num);
+        }
+    }
+
+    void setPitchEnvStart(float start, int voice_num = 0)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setPitchEnvStart(start, voice_num);
+        }
+    }
+
+    void setPitchEnvMs(float ms, int voice_num = 0)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setPitchEnvMs(ms, voice_num);
         }
     }
 
@@ -216,6 +256,22 @@ public:
         for (int i = mPOLYPHONY; --i >= 0;)
         {
             voices[i]->setLfoLevelAmt(amt, voice_num);
+        }
+    }
+
+    void setFilter1Send(float send)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setFilter1Send(send);
+        }
+    }
+
+    void setAmpLevel(float gain, int voice_num = 0)
+    {
+        for (int i = mPOLYPHONY; --i >= 0;)
+        {
+            voices[i]->setAmpLevel(gain, voice_num);
         }
     }
 
